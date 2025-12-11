@@ -5,12 +5,16 @@ module.exports = {
     checkoutPage: (req, res) => {
         const cart = req.session.cart || [];
         let total = 0;
+
         cart.forEach(item => {
             total += item.price * item.qty;
         });
 
-        res.render("checkout", { total: total.toFixed(2) });
-
+        // Send BOTH cart and total to the view
+        res.render("checkout", { 
+            cart: cart,
+            total: total.toFixed(2)
+        });
     },
 
     processPayment: (req, res) => {

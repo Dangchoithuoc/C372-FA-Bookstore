@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <div class="pill">The Bookmark</div>
+    <h1>Create your account</h1>
+    <p class="auth-muted">Save your picks and move to checkout faster.</p>
+
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+
+    <form method="POST" action="/register">
+      <div>
+        <label for="name">Full name</label><br>
+        <input id="name" name="name" type="text" placeholder="Alex Tan" required>
+      </div>
+      <div>
+        <label for="email">Email</label><br>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required>
+      </div>
+      <div>
+        <label for="password">Password</label><br>
+        <input id="password" name="password" type="password" placeholder="********" required>
+      </div>
+      <button class="auth-cta" type="submit">Register</button>
+    </form>
+
+    <p class="auth-muted">Already have an account? <a href="/login">Log in</a></p>
+    <p class="auth-muted"><a href="/">Back to homepage</a></p>
+  </div>
+</body>
+</html>

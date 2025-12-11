@@ -8,6 +8,8 @@ const path = require("path");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+// Static assets
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -20,6 +22,18 @@ app.use(session({
 }));
 
 const CheckoutController = require("./controllers/CheckoutController");
+const BookController = require("./controllers/BookController");
+const UserController = require("./controllers/UserController");
+
+// Homepage
+app.get("/", BookController.homePage);
+
+// Auth routes
+app.get("/login", UserController.loginPage);
+app.post("/login", UserController.login);
+app.get("/register", UserController.registerPage);
+app.post("/register", UserController.register);
+app.get("/logout", UserController.logout);
 
 // TEMP test cart to simulate items
 app.get("/add-test-cart", (req, res) => {
@@ -37,8 +51,8 @@ app.get("/add-test-cart", (req, res) => {
         <h2>Test Cart Added!</h2>
         <p>Your temporary cart data has been created:</p>
         <ul>
-            <li>Sample Book 1 - $5.50 × 1 = $5.50</li>
-            <li>Python Guide - $12.00 × 2 = $24.00</li>
+            <li>Sample Book 1 - $5.50 A- 1 = $5.50</li>
+            <li>Python Guide - $12.00 A- 2 = $24.00</li>
         </ul>
         <p><strong>Total: $${total.toFixed(2)}</strong></p>
         <p><strong>Next:</strong> <a href="/checkout">Proceed to Checkout</a></p>

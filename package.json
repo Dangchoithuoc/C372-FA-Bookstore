@@ -18,8 +18,10 @@
   "homepage": "https://github.com/Dangchoithuoc/C372-FA-Bookstore#readme",
   "description": "",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
     "express": "^5.2.1",
-    "express-session": "^1.18.2"
+    "express-session": "^1.18.2",
+    "mysql2": "^3.15.3"
   }
 }

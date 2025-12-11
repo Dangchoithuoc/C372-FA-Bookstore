@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bookmark | Independent Bookstore</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header>
+    <div class="shell header-inner">
+      <div class="brand">The Bookmark</div>
+      <nav>
+        <a href="#staff-picks">Staff Picks</a>
+        <a href="#shelves">Shelves</a>
+        <a href="/checkout">Checkout</a>
+        <a href="/login">Login</a>
+      </nav>
+      <button class="cta" onclick="location.href='/add-test-cart'">Sample cart</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">
+          Featured Spotlight
+          <span><%= spotlight.badge %></span>
+        </div>
+        <h1><%= spotlight.title %></h1>
+        <p class="muted">by <strong><%= spotlight.author %></strong></p>
+        <p class="price">$<%= spotlight.price.toFixed(2) %></p>
+        <p><%= spotlight.tagline %></p>
+        <p class="muted"><%= spotlight.description %></p>
+        <button class="cta" onclick="location.href='/checkout'">Reserve a copy</button>
+      </div>
+      <div class="cover">
+        <h3><%= spotlight.title %></h3>
+        <p class="muted">First edition jacket</p>
+      </div>
+    </section>
+
+    <section id="staff-picks">
+      <div class="row">
+        <h2>Staff picks</h2>
+        <span class="muted">Hand-picked by booksellers on shift this week.</span>
+      </div>
+      <div class="grid">
+        <% staffPicks.forEach(function(book) { %>
+          <article class="card">
+            <span class="tag"><%= book.badge %></span>
+            <h3><%= book.title %></h3>
+            <p class="muted">by <%= book.author %></p>
+            <p class="muted"><%= book.vibe %></p>
+            <div class="row">
+              <span><strong>$<%= book.price.toFixed(2) %></strong></span>
+              <button class="cta" onclick="location.href='/checkout'">Add</button>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+    </section>
+
+    <section id="shelves">
+      <div class="row">
+        <h2>Browse by shelf</h2>
+        <span class="muted">Shortlist of sections in-store today.</span>
+      </div>
+      <div class="shelves">
+        <% shelves.forEach(function(shelf) { %>
+          <article class="shelf" style="--accent: <%= shelf.accent || '#f3f4f6' %>;">
+            <strong><%= shelf.label %></strong>
+            <small><%= shelf.blurb %></small>
+            <a class="tag" href="/checkout">See picks</a>
+          </article>
+        <% }); %>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">
+      Open late, seven days a week. Visit the reading room or preorder online.
+    </div>
+  </footer>
+</body>
+</html>

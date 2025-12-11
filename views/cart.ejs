@@ -1,0 +1,92 @@
+<!-- 
+I declare that this code was written by me. 
+I will not copy or allow others to copy my code. 
+I understand that copying code is considered as plagiarism.
+
+Student Name: Lin Yuhan
+Student ID: 24023516
+Class: C372-003
+Date created: 11 December 2025
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - Bookstore</title>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Shopping Cart</h1>
+
+        <% if (typeof message !== 'undefined' && message) { %>
+            <div class="success-message"><%= message %></div>
+        <% } %>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error-message"><%= error %></div>
+        <% } %>
+
+        <% if (typeof cart !== 'undefined' && cart.length > 0) { %>
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>Book Title</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Subtotal</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% cart.forEach(function(item, index) { %>
+                        <tr>
+                            <td><strong><%= item.title %></strong></td>
+                            <td class="price">$<%= parseFloat(item.price).toFixed(2) %></td>
+                            <td>
+                                <div class="quantity-control">
+                                    <form method="POST" action="/cart/<%= item.id %>/update-quantity" style="display: inline-flex; gap: 5px;">
+                                        <input type="number" name="quantity" value="<%= item.qty %>" min="1" required>
+                                        <button type="submit">Update</button>
+                                    </form>
+                                </div>
+                            </td>
+                            <td class="price">$<%= (item.price * item.qty).toFixed(2) %></td>
+                            <td>
+                                <form method="POST" action="/cart/<%= item.id %>/remove" style="display: inline;">
+                                    <button type="submit" class="remove-btn">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+
+            <div class="cart-summary">
+                <div class="summary-item">
+                    <label>Total Items:</label>
+                    <div class="value"><%= totalItems || 0 %></div>
+                </div>
+                <div class="summary-item">
+                    <label>Total Price:</label>
+                    <div class="value">$<%= parseFloat(totalPrice || 0).toFixed(2) %></div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <form method="POST" action="/cart/clear" style="display: inline;">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to clear the cart?');">Clear Cart</button>
+                </form>
+                <a href="/" class="btn btn-secondary">Continue Shopping</a>
+                <a href="/checkout" class="btn btn-primary">Proceed to Checkout</a>
+            </div>
+        <% } else { %>
+            <div class="empty-cart">
+                <p>Your cart is empty</p>
+                <a href="/">Continue Shopping</a>
+            </div>
+        <% } %>
+    </div>
+</body>
+</html>

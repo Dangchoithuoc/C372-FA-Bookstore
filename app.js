@@ -24,6 +24,7 @@ app.use(session({
 const CheckoutController = require("./controllers/CheckoutController");
 const BookController = require("./controllers/BookController");
 const UserController = require("./controllers/UserController");
+const CartController = require("./controllers/CartController");
 
 // Homepage
 app.get("/", BookController.homePage);
@@ -59,7 +60,12 @@ app.get("/add-test-cart", (req, res) => {
     `);
 });
 
-
+// Cart routes
+app.get("/cart", CartController.list);
+app.get("/cart/:id", CartController.getById);
+app.post("/cart/:id/quantity", CartController.updateQuantity);
+app.delete("/cart/:id", CartController.removeItem);
+app.delete("/cart", CartController.clearCart);
 
 // Checkout routes
 app.get("/checkout", CheckoutController.checkoutPage);

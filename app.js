@@ -25,34 +25,11 @@ const CheckoutController = require("./controllers/CheckoutController");
 const BookController = require("./controllers/BookController");
 const UserController = require("./controllers/UserController");
 const CartController = require("./controllers/CartController");
-const CartModel = require("./models/Cart");
-
-// Middleware to require login before cart actions
-function requireLogin(req, res, next) {
-    if (!req.session.user) {
-        return res.redirect("/login");
-    }
-    next();
-}
-
-// Middleware to require items in cart before checkout
-async function requireCartItems(req, res, next) {
-    try {
-        const userId = req.session.user && req.session.user.id;
-        if (!userId) return res.redirect("/login");
-        const { items } = await CartModel.getCart(userId);
-        if (!items || !items.length) {
-            return res.redirect("/cart");
-        }
-        next();
-    } catch (err) {
-        console.error("Cart check error", err);
-        res.redirect("/cart");
-    }
-}
+const { requireLogin, requireCartItems } = require("./middleware/auth");
 
 // Homepage
 app.get("/", BookController.homePage);
+app.get("/books/:id", BookController.bookDetails);
 
 // Auth routes
 app.get("/login", UserController.loginPage);
@@ -60,6 +37,13 @@ app.post("/login", UserController.login);
 app.get("/register", UserController.registerPage);
 app.post("/register", UserController.register);
 app.get("/logout", UserController.logout);
+app.get("/profile", requireLogin, UserController.profilePage);
+app.post("/profile", requireLogin, UserController.updateProfile);
+
+// Admin routes
+app.get("/admin/users", requireLogin, UserController.adminUsersPage);
+app.get("/admin/users/:id", requireLogin, UserController.adminEditUserPage);
+app.post("/admin/users/:id", requireLogin, UserController.adminUpdateUser);
 
 // Cart routes (login required)
 app.get("/cart", requireLogin, CartController.viewCart);

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Users | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <%- include("partials/navbar", { user: sessionUser }) %>
+
+  <main class="profile-shell">
+    <div class="profile-card">
+      <div class="pill">Admin</div>
+      <h1>Manage users</h1>
+      <p class="muted">Select a user to edit details.</p>
+
+      <div class="admin-table">
+        <div class="admin-row admin-header">
+          <div>ID</div>
+          <div>Name</div>
+          <div>Email</div>
+          <div>Role</div>
+          <div>Action</div>
+        </div>
+        <% users.forEach(function(u) { %>
+          <div class="admin-row">
+            <div>#<%= u.id %></div>
+            <div><%= u.username %></div>
+            <div><%= u.email %></div>
+            <div><span class="tag"><%= u.role %></span></div>
+            <div><a class="cta admin-cta" href="/admin/users/<%= u.id %>">Edit</a></div>
+          </div>
+        <% }); %>
+      </div>
+
+      <% if (selectedUser) { %>
+        <div style="margin-top:18px;">
+          <h2>Edit user #<%= selectedUser.id %></h2>
+          <p class="muted">Leave password blank to keep it unchanged.</p>
+        </div>
+
+        <% if (error) { %>
+          <div class="error"><%= error %></div>
+        <% } %>
+        <% if (success) { %>
+          <div class="profile-success"><%= success %></div>
+        <% } %>
+
+        <form class="profile-form" method="POST" action="/admin/users/<%= selectedUser.id %>">
+          <div class="profile-row">
+            <div>
+              <label for="name">Name</label><br>
+              <input id="name" name="name" type="text" value="<%= selectedUser.username %>" required>
+            </div>
+            <div>
+              <label for="email">Email</label><br>
+              <input id="email" name="email" type="email" value="<%= selectedUser.email %>" required>
+            </div>
+          </div>
+          <div class="profile-row">
+            <div>
+              <label for="contact_number">Contact number</label><br>
+              <input id="contact_number" name="contact_number" type="text" value="<%= selectedUser.contact_number || '' %>">
+            </div>
+            <div>
+              <label for="address">Address</label><br>
+              <input id="address" name="address" type="text" value="<%= selectedUser.address || '' %>">
+            </div>
+          </div>
+          <div class="profile-row">
+            <div>
+              <label for="role">Role</label><br>
+              <select id="role" name="role" required>
+                <option value="buyer" <%= selectedUser.role === "buyer" ? "selected" : "" %>>buyer</option>
+                <option value="seller" <%= selectedUser.role === "seller" ? "selected" : "" %>>seller</option>
+                <option value="admin" <%= selectedUser.role === "admin" ? "selected" : "" %>>admin</option>
+              </select>
+            </div>
+            <div>
+              <label for="password">New password</label><br>
+              <input id="password" name="password" type="password" placeholder="Leave blank to keep current password">
+            </div>
+          </div>
+          <button class="auth-cta" type="submit">Save changes</button>
+        </form>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

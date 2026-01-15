@@ -44,7 +44,7 @@ module.exports = {
 
     async findById(id) {
         const [rows] = await pool.execute(
-            "SELECT book_id AS id, title, author, price, genre AS vibe FROM books WHERE book_id = ? LIMIT 1",
+            "SELECT book_id AS id, title, author, price, genre AS vibe, genre FROM books WHERE book_id = ? LIMIT 1",
             [id]
         );
         return rows[0] || null;

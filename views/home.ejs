@@ -7,21 +7,7 @@
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <header>
-    <div class="shell header-inner">
-      <div class="brand">The Bookmark</div>
-      <nav>
-        <a href="#staff-picks">Staff Picks</a>
-        <a href="#shelves">Shelves</a>
-        <a href="/cart">Cart</a>
-        <% if (user) { %>
-          <a href="/logout">Logout</a>
-        <% } else { %>
-          <a href="/login">Login</a>
-        <% } %>
-      </nav>
-    </div>
-  </header>
+  <%- include("partials/navbar", { user: user }) %>
 
   <main class="shell">
     <section class="hero">
@@ -30,7 +16,13 @@
           Featured Spotlight
           <span><%= spotlight.badge %></span>
         </div>
-        <h1><%= spotlight.title %></h1>
+        <h1>
+          <% if (spotlight.id) { %>
+            <a href="/books/<%= spotlight.id %>"><%= spotlight.title %></a>
+          <% } else { %>
+            <%= spotlight.title %>
+          <% } %>
+        </h1>
         <p class="muted">by <strong><%= spotlight.author %></strong></p>
         <p class="price">$<%= spotlight.price.toFixed(2) %></p>
         <p><%= spotlight.tagline %></p>
@@ -40,12 +32,24 @@
           <input type="hidden" name="title" value="<%= spotlight.title %>">
           <input type="hidden" name="price" value="<%= spotlight.price %>">
           <button class="cta" type="submit">Add to cart</button>
+          <% if (spotlight.id) { %>
+            <button class="cta" type="button" onclick="location.href='/books/<%= spotlight.id %>'">View details</button>
+          <% } %>
           <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
         </form>
       </div>
       <div class="cover">
-        <h3><%= spotlight.title %></h3>
-        <p class="muted">First edition jacket</p>
+        <% if (spotlight.id) { %>
+          <a href="/books/<%= spotlight.id %>">
+            <img class="cover-image" src="<%= spotlight.coverImage %>" alt="Cover of <%= spotlight.title %>">
+          </a>
+        <% } else { %>
+          <img class="cover-image" src="<%= spotlight.coverImage %>" alt="Cover of <%= spotlight.title %>">
+        <% } %>
+        <div class="cover-caption">
+          <h3><%= spotlight.title %></h3>
+          <p class="muted">First edition jacket</p>
+        </div>
       </div>
     </section>
 
@@ -57,8 +61,21 @@
       <div class="grid">
         <% staffPicks.forEach(function(book) { %>
           <article class="card">
+            <% if (book.id) { %>
+              <a href="/books/<%= book.id %>">
+                <img class="book-thumb" src="<%= book.coverImage %>" alt="Cover of <%= book.title %>">
+              </a>
+            <% } else { %>
+              <img class="book-thumb" src="<%= book.coverImage %>" alt="Cover of <%= book.title %>">
+            <% } %>
             <span class="tag"><%= book.badge %></span>
-            <h3><%= book.title %></h3>
+            <h3>
+              <% if (book.id) { %>
+                <a href="/books/<%= book.id %>"><%= book.title %></a>
+              <% } else { %>
+                <%= book.title %>
+              <% } %>
+            </h3>
             <p class="muted">by <%= book.author %></p>
             <p class="muted"><%= book.vibe %></p>
             <div class="row">
@@ -82,10 +99,11 @@
       </div>
       <div class="shelves">
         <% shelves.forEach(function(shelf) { %>
-          <article class="shelf" style="--accent: <%= shelf.accent || '#f3f4f6' %>;"><strong><%= shelf.label %></strong><small><%= shelf.blurb %></small><a class="tag" href="/cart">See picks</a></article>
+          <article class="shelf" style="--accent: <%= shelf.accent || '#f3f4f6' %>;"><strong><%= shelf.label %></strong><small><%= shelf.blurb %></small><span class="tag">See picks</span></article>
         <% }); %>
       </div>
     </section>
+
   </main>
 
   <footer>

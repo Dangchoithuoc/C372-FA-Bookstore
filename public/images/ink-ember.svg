@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="880" viewBox="0 0 600 880">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#3b0f1b"/>
+      <stop offset="100%" stop-color="#f04f45"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="880" rx="28" fill="url(#bg)"/>
+  <rect x="56" y="60" width="488" height="760" rx="18" fill="rgba(255,255,255,0.1)"/>
+  <path d="M110 240 C180 140 340 140 410 240 C460 300 430 380 350 430 C270 480 180 470 140 400" fill="none" stroke="#ffd7b5" stroke-width="10" opacity="0.9"/>
+  <text x="90" y="520" fill="#fff7ed" font-family="Georgia, serif" font-size="60" font-weight="700">INK</text>
+  <text x="90" y="590" fill="#fff7ed" font-family="Georgia, serif" font-size="56" font-weight="700">&amp; EMBER</text>
+  <text x="90" y="660" fill="#fde68a" font-family="Georgia, serif" font-size="26">Ravi Iyer</text>
+</svg>

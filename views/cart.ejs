@@ -7,25 +7,15 @@
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <header>
-    <div class="shell header-inner">
-      <div class="brand">The Bookmark</div>
-      <nav>
-        <a href="/">Home</a>
-        <% if (user) { %>
-          <a href="/logout">Logout</a>
-        <% } else { %>
-          <a href="/login">Login</a>
-        <% } %>
-      </nav>
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="shell" style="padding: 20px 0 60px;">
+    <div class="row" style="margin-bottom:16px;">
+      <h1>Your Cart</h1>
       <form action="/cart/clear" method="POST" style="margin:0;">
         <button class="cta" type="submit">Clear cart</button>
       </form>
     </div>
-  </header>
-
-  <main class="shell" style="padding: 20px 0 60px;">
-    <h1>Your Cart</h1>
     <% if (!cart || cart.length === 0) { %>
       <p class="muted">Your cart is empty. <a href="/">Browse books</a>.</p>
     <% } else { %>

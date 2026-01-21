@@ -1,4 +1,5 @@
 const Book = require("../models/Book");
+const Cart = require("../models/Cart");
 
 // Controller reads homepage content from MySQL-backed Book model with safe fallbacks and number coercion for prices.
 module.exports = {
@@ -32,10 +33,30 @@ module.exports = {
                 { label: "Comics & Art", blurb: "Illustrated worlds, risograph gems, and graphic novels.", accent: "#ecffe6" }
             ];
 
+            let cartSummary = null;
+            if (req.session.user && req.session.user.role === "buyer") {
+                const { items, total } = await Cart.getCart(req.session.user.id);
+                const count = items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+                cartSummary = {
+                    count,
+                    total: Number(total || 0),
+                    items: items.map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        qty: Number(item.qty || 0),
+                        price: Number(item.price || 0)
+                    }))
+                };
+            }
+
+            const featuredBooks = buildFeatured(resolvedSpotlight, resolvedStaff);
+
             res.render("home", {
                 spotlight: resolvedSpotlight,
                 staffPicks: resolvedStaff,
                 shelves: resolvedShelves,
+                featuredBooks,
+                cartSummary,
                 user: req.session.user || null
             });
         } catch (err) {
@@ -70,6 +91,8 @@ function normalizeSpotlight(item) {
         id: item.id,
         title: item.title,
         author: item.author,
+        sellerId: item.seller_id,
+        sellerName: item.seller_name || "Independent seller",
         tagline: item.tagline,
         description: item.description || item.tagline || "",
         price: normalizePrice(item.price),
@@ -84,6 +107,8 @@ function normalizeStaff(list) {
         id: b.id,
         title: b.title,
         author: b.author,
+        sellerId: b.seller_id,
+        sellerName: b.seller_name || "Independent seller",
         price: normalizePrice(b.price),
         vibe: b.vibe,
         badge: b.badge || "Staff pick",
@@ -93,21 +118,29 @@ function normalizeStaff(list) {
 
 function normalizeDetail(item) {
     if (!item) return null;
-    const tagline = item.tagline || item.vibe || item.genre || "A fresh story for your shelf.";
+    const genre = item.genre || item.vibe || "";
+    const rawTagline = item.tagline || item.vibe || item.genre || "A fresh story for your shelf.";
+    const displayTagline = isSameText(rawTagline, genre) ? "" : rawTagline;
     return {
         id: item.id,
         title: item.title,
         author: item.author,
-        genre: item.genre || item.vibe || "",
+        sellerId: item.seller_id,
+        sellerName: item.seller_name || "Independent seller",
+        genre,
         price: normalizePrice(item.price),
-        tagline,
-        description: buildDescription(item.title, tagline),
+        tagline: displayTagline,
+        description: buildDescription(item.title, rawTagline, genre),
         coverImage: coverForTitle(item.title)
     };
 }
 
-function buildDescription(title, tagline) {
-    return `Discover ${title}, a standout read for curious minds. ${tagline}`;
+function buildDescription(title, tagline, genre) {
+    const cleanTagline = isSameText(tagline, genre) ? "" : tagline;
+    if (!cleanTagline) {
+        return `Discover ${title}, a standout read for curious minds.`;
+    }
+    return `Discover ${title}, a standout read for curious minds. ${cleanTagline}`;
 }
 
 function coverForTitle(title) {
@@ -118,4 +151,20 @@ function coverForTitle(title) {
     if (key.includes("quiet hours")) return "/images/quiet-hours.svg";
     if (key.includes("comics") || key.includes("art")) return "/images/comics-art-sampler.svg";
     return "/images/default-book.svg";
+}
+
+function buildFeatured(spotlight, staffPicks) {
+    const list = [];
+    if (spotlight) list.push(spotlight);
+    (staffPicks || []).forEach(item => {
+        if (!item) return;
+        if (item.id && list.some(existing => existing.id === item.id)) return;
+        list.push(item);
+    });
+    return list.slice(0, 6);
+}
+
+function isSameText(a, b) {
+    if (!a || !b) return false;
+    return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
 }

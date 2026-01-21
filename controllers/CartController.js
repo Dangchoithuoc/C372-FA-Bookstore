@@ -22,7 +22,7 @@ module.exports = {
                 return res.status(404).send("Book not found");
             }
             await Cart.addItem(userId, book.id, qty);
-            res.redirect("/cart");
+            res.redirect(req.get("referer") || "/");
         } catch (err) {
             console.error("Add to cart error", err);
             res.status(500).send("Could not add to cart");

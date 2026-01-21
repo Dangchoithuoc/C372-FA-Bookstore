@@ -1,4 +1,9 @@
+const crypto = require("crypto");
 const pool = require("../db");
+
+function hashPassword(password) {
+    return crypto.createHash("sha1").update(password).digest("hex");
+}
 
 module.exports = {
     async findByEmail(email) {
@@ -24,13 +29,14 @@ module.exports = {
         return rows;
     },
 
-    async create({ name, email, password }) {
+    async create({ name, email, password, role, contactNumber, address }) {
         const normalizedEmail = email.toLowerCase();
+        const hashedPassword = hashPassword(password);
         const [result] = await pool.execute(
-            "INSERT INTO users (username, email, user_password, role) VALUES (?, ?, ?, 'buyer')",
-            [name, normalizedEmail, password]
+            "INSERT INTO users (username, email, user_password, role, contact_number, address) VALUES (?, ?, ?, ?, ?, ?)",
+            [name, normalizedEmail, hashedPassword, role || "buyer", contactNumber || null, address || null]
         );
-        return { id: result.insertId, name, email: normalizedEmail, role: "buyer" };
+        return { id: result.insertId, name, email: normalizedEmail, role: role || "buyer" };
     },
 
     async updateProfile({ id, username, email, contactNumber, address, password }) {
@@ -39,7 +45,7 @@ module.exports = {
         const params = [username, normalizedEmail, contactNumber || null, address || null];
         if (password) {
             fields.push("user_password = ?");
-            params.push(password);
+            params.push(hashPassword(password));
         }
         params.push(id);
         const sql = `UPDATE users SET ${fields.join(", ")} WHERE user_id = ?`;
@@ -53,11 +59,19 @@ module.exports = {
         const params = [username, normalizedEmail, contactNumber || null, address || null, role];
         if (password) {
             fields.push("user_password = ?");
-            params.push(password);
+            params.push(hashPassword(password));
         }
         params.push(id);
         const sql = `UPDATE users SET ${fields.join(", ")} WHERE user_id = ?`;
         await pool.execute(sql, params);
         return { id, username, email: normalizedEmail, contact_number: contactNumber || null, address: address || null, role };
+    },
+
+    async findSellerProfileById(id) {
+        const [rows] = await pool.execute(
+            "SELECT user_id AS id, username FROM users WHERE user_id = ? AND role = 'seller' LIMIT 1",
+            [id]
+        );
+        return rows[0] || null;
     }
 };

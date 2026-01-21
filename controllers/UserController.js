@@ -12,15 +12,23 @@ module.exports = {
 
     register: async (req, res) => {
         try {
-            const { name, email, password } = req.body;
-            if (!name || !email || !password) {
+            const { name, email, password, role, contact_number, address } = req.body;
+            if (!name || !email || !password || !role) {
                 return res.render("register", { error: "All fields are required." });
             }
+            const normalizedRole = role === "seller" ? "seller" : "buyer";
             const existing = await User.findByEmail(email);
             if (existing) {
                 return res.render("register", { error: "Email already registered. Try logging in." });
             }
-            const created = await User.create({ name, email, password });
+            const created = await User.create({
+                name,
+                email,
+                password,
+                role: normalizedRole,
+                contactNumber: (contact_number || "").trim(),
+                address: (address || "").trim()
+            });
             req.session.user = { id: created.id, name: created.name, email: created.email, role: created.role || "buyer" };
             res.redirect("/");
         } catch (err) {
@@ -33,7 +41,7 @@ module.exports = {
         try {
             const { email, password } = req.body;
             const user = await User.findByEmail(email || "");
-            if (!user || user.password_hash !== password) {
+            if (!user || user.password_hash !== hashPassword(password || "")) {
                 return res.render("login", { error: "Invalid email or password." });
             }
             req.session.user = { id: user.id, name: user.username, email: user.email, role: user.role || "buyer" };
@@ -113,6 +121,11 @@ function isBuyerOrSeller(user) {
 
 function isAdmin(user) {
     return user && user.role === "admin";
+}
+
+function hashPassword(password) {
+    const crypto = require("crypto");
+    return crypto.createHash("sha1").update(password).digest("hex");
 }
 
 module.exports.adminUsersPage = async (req, res) => {

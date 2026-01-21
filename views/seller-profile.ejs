@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= seller.username %> | Seller Profile</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="shell">
+    <section class="profile-card">
+      <div class="row">
+        <div>
+          <h1><%= seller.username %></h1>
+          <p class="muted">Independent seller</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="row">
+        <h2>Listings</h2>
+        <span class="muted"><%= books.length %> titles</span>
+      </div>
+      <div class="grid">
+        <% books.forEach(function(book) { %>
+          <article class="card">
+            <img class="book-thumb" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
+            <span class="tag"><%= book.genre || "General" %></span>
+            <h3>
+              <a href="/books/<%= book.id %>"><%= book.title %></a>
+            </h3>
+            <p class="muted">by <%= book.author %></p>
+            <div class="row">
+              <span><strong>$<%= Number(book.price || 0).toFixed(2) %></strong></span>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

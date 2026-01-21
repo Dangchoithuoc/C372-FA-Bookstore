@@ -7,6 +7,28 @@ function requireLogin(req, res, next) {
     next();
 }
 
+function requireBuyer(req, res, next) {
+    const user = req.session.user;
+    if (!user) {
+        return res.redirect("/login");
+    }
+    if (user.role !== "buyer") {
+        return res.status(403).send("Access denied.");
+    }
+    next();
+}
+
+function requireSeller(req, res, next) {
+    const user = req.session.user;
+    if (!user) {
+        return res.redirect("/login");
+    }
+    if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).send("Access denied.");
+    }
+    next();
+}
+
 async function requireCartItems(req, res, next) {
     try {
         const userId = req.session.user && req.session.user.id;
@@ -22,4 +44,4 @@ async function requireCartItems(req, res, next) {
     }
 }
 
-module.exports = { requireLogin, requireCartItems };
+module.exports = { requireLogin, requireBuyer, requireSeller, requireCartItems };

@@ -25,7 +25,8 @@ const CheckoutController = require("./controllers/CheckoutController");
 const BookController = require("./controllers/BookController");
 const UserController = require("./controllers/UserController");
 const CartController = require("./controllers/CartController");
-const { requireLogin, requireCartItems } = require("./middleware/auth");
+const SellerController = require("./controllers/SellerController");
+const { requireLogin, requireBuyer, requireSeller, requireCartItems } = require("./middleware/auth");
 
 // Homepage
 app.get("/", BookController.homePage);
@@ -45,16 +46,26 @@ app.get("/admin/users", requireLogin, UserController.adminUsersPage);
 app.get("/admin/users/:id", requireLogin, UserController.adminEditUserPage);
 app.post("/admin/users/:id", requireLogin, UserController.adminUpdateUser);
 
-// Cart routes (login required)
-app.get("/cart", requireLogin, CartController.viewCart);
-app.post("/cart/add", requireLogin, CartController.addItem);
-app.post("/cart/update", requireLogin, CartController.updateItem);
-app.post("/cart/remove", requireLogin, CartController.removeItem);
-app.post("/cart/clear", requireLogin, CartController.clearCart);
+// Cart routes (buyer only)
+app.get("/cart", requireBuyer, CartController.viewCart);
+app.post("/cart/add", requireBuyer, CartController.addItem);
+app.post("/cart/update", requireBuyer, CartController.updateItem);
+app.post("/cart/remove", requireBuyer, CartController.removeItem);
+app.post("/cart/clear", requireBuyer, CartController.clearCart);
 
-// Checkout routes (login + cart required)
-app.get("/checkout", requireLogin, requireCartItems, CheckoutController.checkoutPage);
-app.post("/checkout/pay", requireLogin, requireCartItems, CheckoutController.processPayment);
+// Seller routes (CRUD for books)
+app.get("/seller/books", requireSeller, SellerController.booksPage);
+app.get("/seller/books/:id/edit", requireSeller, SellerController.editBookPage);
+app.post("/seller/books", requireSeller, SellerController.createBook);
+app.post("/seller/books/:id", requireSeller, SellerController.updateBook);
+app.post("/seller/books/:id/delete", requireSeller, SellerController.deleteBook);
+
+// Seller public profile
+app.get("/sellers/:id", SellerController.publicProfile);
+
+// Checkout routes (buyer + cart required)
+app.get("/checkout", requireBuyer, requireCartItems, CheckoutController.checkoutPage);
+app.post("/checkout/pay", requireBuyer, requireCartItems, CheckoutController.processPayment);
 
 // Server listening at bottom
 app.listen(3000, () => {

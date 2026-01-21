@@ -3,11 +3,17 @@
     <div class="brand">The Bookmark</div>
     <nav>
       <a href="/">Home</a>
-      <a href="/cart">Cart</a>
+      <% if (user && user.role === "buyer") { %>
+        <a href="/cart">Cart</a>
+      <% } %>
       <% if (user) { %>
         <% if (user.role === "admin") { %>
           <a href="/admin/users">Admin</a>
+          <a href="/seller/books">Seller</a>
         <% } else { %>
+          <% if (user.role === "seller") { %>
+            <a href="/seller/books">Seller</a>
+          <% } %>
           <a href="/profile">Profile</a>
         <% } %>
         <a href="/logout">Logout</a>

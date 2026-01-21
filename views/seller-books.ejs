@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller | Book Manager</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="shell">
+    <section class="profile-card">
+      <div class="row">
+        <h1>Seller Book Manager</h1>
+        <span class="muted">Create, update, or remove titles.</span>
+      </div>
+
+      <% if (error) { %>
+        <div class="error"><%= error %></div>
+      <% } %>
+      <% if (success) { %>
+        <div class="profile-success"><%= success %></div>
+      <% } %>
+
+      <form class="profile-form" method="POST" action="<%= selectedBook ? `/seller/books/${selectedBook.id}` : '/seller/books' %>">
+        <div class="profile-row">
+          <div>
+            <label for="title">Title</label>
+            <input id="title" name="title" type="text" value="<%= selectedBook ? selectedBook.title : '' %>" required>
+          </div>
+          <div>
+            <label for="author">Author</label>
+            <input id="author" name="author" type="text" value="<%= selectedBook ? selectedBook.author : '' %>" required>
+          </div>
+        </div>
+        <div class="profile-row">
+          <div>
+            <label for="price">Price</label>
+            <input id="price" name="price" type="number" step="0.01" min="0" value="<%= selectedBook ? selectedBook.price : '' %>" required>
+          </div>
+          <div>
+            <label for="genre">Genre</label>
+            <input id="genre" name="genre" type="text" value="<%= selectedBook ? selectedBook.genre : '' %>">
+          </div>
+        </div>
+        <div class="row">
+          <button class="cta" type="submit"><%= selectedBook ? 'Update Book' : 'Create Book' %></button>
+          <% if (selectedBook) { %>
+            <a class="cta" href="/seller/books" style="background: linear-gradient(135deg, #1f3b5a, #3b82f6);">Cancel edit</a>
+          <% } %>
+        </div>
+      </form>
+    </section>
+
+    <section class="profile-card">
+      <div class="row">
+        <h2>Inventory</h2>
+        <span class="muted"><%= books.length %> titles</span>
+      </div>
+      <div class="seller-table">
+        <div class="seller-row seller-header">
+          <span>ID</span>
+          <span>Title</span>
+          <span>Author</span>
+          <span>Seller</span>
+          <span>Genre</span>
+          <span>Price</span>
+          <span>Actions</span>
+        </div>
+        <% books.forEach(function(book) { %>
+          <div class="seller-row">
+            <span><%= book.id %></span>
+            <span><%= book.title %></span>
+            <span><%= book.author %></span>
+            <span><%= book.seller_name || user.name %></span>
+            <span><%= book.genre || '-' %></span>
+            <span>$<%= Number(book.price || 0).toFixed(2) %></span>
+            <div class="row" style="justify-content:flex-start; gap:8px;">
+              <a class="cta admin-cta" href="/seller/books/<%= book.id %>/edit">Edit</a>
+              <form method="POST" action="/seller/books/<%= book.id %>/delete" onsubmit="return confirm('Delete this book?');" style="margin:0;">
+                <button class="cta admin-cta" type="submit">Delete</button>
+              </form>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

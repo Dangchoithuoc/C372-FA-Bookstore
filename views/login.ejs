@@ -7,11 +7,14 @@
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="auth-body">
-  <%- include("partials/navbar", { user: null }) %>
-  <div class="auth-card">
-    <div class="pill">The Bookmark</div>
-    <h1>Welcome back</h1>
-    <p class="auth-muted">Sign in to view your cart and picks.</p>
+  <div class="auth-card auth-card-wide">
+    <h1>Welcome to The Bookmark</h1>
+    <p class="auth-muted">Login to your account</p>
+
+    <div class="auth-tabs">
+      <a class="auth-tab active" href="/login">Login</a>
+      <a class="auth-tab" href="/register">Register</a>
+    </div>
 
     <% if (error) { %>
       <div class="error"><%= error %></div>
@@ -19,18 +22,17 @@
 
     <form method="POST" action="/login">
       <div>
-        <label for="email">Email</label><br>
-        <input id="email" name="email" type="email" placeholder="you@example.com" required>
+        <label for="email">Username</label>
+        <input id="email" name="email" type="email" placeholder="Enter your username" required>
       </div>
       <div>
-        <label for="password">Password</label><br>
+        <label for="password">Password</label>
         <input id="password" name="password" type="password" placeholder="********" required>
       </div>
-      <button class="auth-cta" type="submit">Log in</button>
+      <button class="auth-cta" type="submit">Login</button>
     </form>
 
-    <p class="auth-muted">New here? <a href="/register">Create an account</a></p>
-    <p class="auth-muted"><a href="/">Back to homepage</a></p>
+    <p class="auth-muted">Don't have an account? <a href="/register">Register here</a></p>
   </div>
 </body>
 </html>

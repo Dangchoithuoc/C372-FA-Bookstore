@@ -6,110 +6,181 @@
   <title>The Bookmark | Independent Bookstore</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
-  <%- include("partials/navbar", { user: user }) %>
+<body class="<%= user && user.role === 'buyer' ? 'buyer-body' : '' %>">
+  <% if (user && user.role === "buyer") { %>
+    <%- include("partials/navbar", { user: user }) %>
 
-  <main class="shell">
-    <section class="hero">
-      <div>
-        <div class="eyebrow">
-          Featured Spotlight
-          <span><%= spotlight.badge %></span>
-        </div>
-        <h1>
-          <% if (spotlight.id) { %>
-            <a href="/books/<%= spotlight.id %>"><%= spotlight.title %></a>
-          <% } else { %>
-            <%= spotlight.title %>
-          <% } %>
-        </h1>
-        <p class="muted">by <strong><%= spotlight.author %></strong></p>
-        <p class="price">$<%= spotlight.price.toFixed(2) %></p>
-        <p><%= spotlight.tagline %></p>
-        <p class="muted"><%= spotlight.description %></p>
-        <form method="POST" action="/cart/add" style="display:flex; gap:10px; align-items:center;">
-          <input type="hidden" name="bookId" value="<%= spotlight.id || '' %>">
-          <input type="hidden" name="title" value="<%= spotlight.title %>">
-          <input type="hidden" name="price" value="<%= spotlight.price %>">
-          <button class="cta" type="submit">Add to cart</button>
-          <% if (spotlight.id) { %>
-            <button class="cta" type="button" onclick="location.href='/books/<%= spotlight.id %>'">View details</button>
-          <% } %>
-          <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
-        </form>
-      </div>
-      <div class="cover">
-        <% if (spotlight.id) { %>
-          <a href="/books/<%= spotlight.id %>">
-            <img class="cover-image" src="<%= spotlight.coverImage %>" alt="Cover of <%= spotlight.title %>">
-          </a>
-        <% } else { %>
-          <img class="cover-image" src="<%= spotlight.coverImage %>" alt="Cover of <%= spotlight.title %>">
-        <% } %>
-        <div class="cover-caption">
-          <h3><%= spotlight.title %></h3>
-          <p class="muted">First edition jacket</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="staff-picks">
-      <div class="row">
-        <h2>Staff picks</h2>
-        <span class="muted">Hand-picked by booksellers on shift this week.</span>
-      </div>
-      <div class="grid">
-        <% staffPicks.forEach(function(book) { %>
-          <article class="card">
-            <% if (book.id) { %>
+    <main class="buyer-main">
+      <div class="buyer-shell">
+        <h2 class="buyer-title">Featured Books</h2>
+        <section class="buyer-grid">
+          <% featuredBooks.forEach(function(book) { %>
+            <article class="buyer-card">
               <a href="/books/<%= book.id %>">
-                <img class="book-thumb" src="<%= book.coverImage %>" alt="Cover of <%= book.title %>">
+                <img class="buyer-cover" src="<%= book.coverImage %>" alt="Cover of <%= book.title %>">
               </a>
+              <div class="buyer-card-body">
+                <h3><%= book.title %></h3>
+                <p class="muted"><%= book.author %></p>
+                <p class="buyer-desc muted"><%= book.vibe || book.tagline || "A standout read for your shelf." %></p>
+                <div class="buyer-row">
+                  <span class="buyer-price">$<%= book.price.toFixed(2) %></span>
+                  <form method="POST" action="/cart/add">
+                    <input type="hidden" name="bookId" value="<%= book.id || '' %>">
+                    <input type="hidden" name="title" value="<%= book.title %>">
+                    <input type="hidden" name="price" value="<%= book.price %>">
+                    <button class="buyer-add" type="submit">Add</button>
+                  </form>
+                </div>
+              </div>
+            </article>
+          <% }); %>
+        </section>
+      </div>
+
+      <aside class="buyer-cart">
+        <div class="buyer-cart-header">
+          <span>Shopping Cart (<%= cartSummary ? cartSummary.count : 0 %>)</span>
+        </div>
+        <% if (cartSummary && cartSummary.count) { %>
+          <div class="buyer-cart-items">
+            <% cartSummary.items.forEach(function(item) { %>
+              <div class="buyer-cart-item">
+                <span><%= item.title %> × <%= item.qty %></span>
+                <strong>$<%= (item.price * item.qty).toFixed(2) %></strong>
+              </div>
+            <% }); %>
+          </div>
+          <p class="buyer-cart-total">Total: $<%= cartSummary.total.toFixed(2) %></p>
+          <a class="buyer-cart-link" href="/cart">View cart</a>
+        <% } else { %>
+          <p class="muted">Your cart is empty</p>
+        <% } %>
+      </aside>
+    </main>
+  <% } else { %>
+    <%- include("partials/navbar", { user: user }) %>
+
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <div class="eyebrow">
+            Featured Spotlight
+            <span><%= spotlight.badge %></span>
+          </div>
+          <h1>
+            <% if (spotlight.id) { %>
+              <a href="/books/<%= spotlight.id %>"><%= spotlight.title %></a>
             <% } else { %>
-              <img class="book-thumb" src="<%= book.coverImage %>" alt="Cover of <%= book.title %>">
+              <%= spotlight.title %>
             <% } %>
-            <span class="tag"><%= book.badge %></span>
-            <h3>
-              <% if (book.id) { %>
-                <a href="/books/<%= book.id %>"><%= book.title %></a>
-              <% } else { %>
-                <%= book.title %>
+          </h1>
+          <p class="muted">
+            by <strong><%= spotlight.author %></strong> · Seller:
+            <% if (spotlight.sellerId) { %>
+              <a class="seller-link" href="/sellers/<%= spotlight.sellerId %>"><%= spotlight.sellerName %></a>
+            <% } else { %>
+              <%= spotlight.sellerName %>
+            <% } %>
+          </p>
+          <p class="price">$<%= spotlight.price.toFixed(2) %></p>
+          <p><%= spotlight.tagline %></p>
+          <p class="muted"><%= spotlight.description %></p>
+          <% if (user && user.role === "buyer") { %>
+            <form method="POST" action="/cart/add" style="display:flex; gap:10px; align-items:center;">
+              <input type="hidden" name="bookId" value="<%= spotlight.id || '' %>">
+              <input type="hidden" name="title" value="<%= spotlight.title %>">
+              <input type="hidden" name="price" value="<%= spotlight.price %>">
+              <button class="cta" type="submit">Add to cart</button>
+              <% if (spotlight.id) { %>
+                <button class="cta" type="button" onclick="location.href='/books/<%= spotlight.id %>'">View details</button>
               <% } %>
-            </h3>
-            <p class="muted">by <%= book.author %></p>
-            <p class="muted"><%= book.vibe %></p>
-            <div class="row">
-              <span><strong>$<%= book.price.toFixed(2) %></strong></span>
-              <form method="POST" action="/cart/add" style="margin:0; display:flex; gap:6px;">
-                <input type="hidden" name="bookId" value="<%= book.id || '' %>">
-                <input type="hidden" name="title" value="<%= book.title %>">
-                <input type="hidden" name="price" value="<%= book.price %>">
-                <button class="cta" type="submit">Add</button>
-              </form>
-            </div>
-          </article>
-        <% }); %>
-      </div>
-    </section>
+              <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
+            </form>
+          <% } %>
+        </div>
+        <div class="cover">
+          <% if (spotlight.id) { %>
+            <a href="/books/<%= spotlight.id %>">
+              <img class="cover-image" src="<%= spotlight.coverImage %>" alt="Cover of <%= spotlight.title %>">
+            </a>
+          <% } else { %>
+            <img class="cover-image" src="<%= spotlight.coverImage %>" alt="Cover of <%= spotlight.title %>">
+          <% } %>
+          <div class="cover-caption">
+            <h3><%= spotlight.title %></h3>
+            <p class="muted">First edition jacket</p>
+          </div>
+        </div>
+      </section>
 
-    <section id="shelves">
-      <div class="row">
-        <h2>Browse by shelf</h2>
-        <span class="muted">Shortlist of sections in-store today.</span>
-      </div>
-      <div class="shelves">
-        <% shelves.forEach(function(shelf) { %>
-          <article class="shelf" style="--accent: <%= shelf.accent || '#f3f4f6' %>;"><strong><%= shelf.label %></strong><small><%= shelf.blurb %></small><span class="tag">See picks</span></article>
-        <% }); %>
-      </div>
-    </section>
+      <section id="staff-picks">
+        <div class="row">
+          <h2>Staff picks</h2>
+          <span class="muted">Hand-picked by booksellers on shift this week.</span>
+        </div>
+        <div class="grid">
+          <% staffPicks.forEach(function(book) { %>
+            <article class="card">
+              <% if (book.id) { %>
+                <a href="/books/<%= book.id %>">
+                  <img class="book-thumb" src="<%= book.coverImage %>" alt="Cover of <%= book.title %>">
+                </a>
+              <% } else { %>
+                <img class="book-thumb" src="<%= book.coverImage %>" alt="Cover of <%= book.title %>">
+              <% } %>
+              <span class="tag"><%= book.badge %></span>
+              <h3>
+                <% if (book.id) { %>
+                  <a href="/books/<%= book.id %>"><%= book.title %></a>
+                <% } else { %>
+                  <%= book.title %>
+                <% } %>
+              </h3>
+              <p class="muted">
+                by <%= book.author %> · Seller:
+                <% if (book.sellerId) { %>
+                  <a class="seller-link" href="/sellers/<%= book.sellerId %>"><%= book.sellerName %></a>
+                <% } else { %>
+                  <%= book.sellerName %>
+                <% } %>
+              </p>
+              <p class="muted"><%= book.vibe %></p>
+              <div class="row">
+                <span><strong>$<%= book.price.toFixed(2) %></strong></span>
+                <% if (user && user.role === "buyer") { %>
+                  <form method="POST" action="/cart/add" style="margin:0; display:flex; gap:6px;">
+                    <input type="hidden" name="bookId" value="<%= book.id || '' %>">
+                    <input type="hidden" name="title" value="<%= book.title %>">
+                    <input type="hidden" name="price" value="<%= book.price %>">
+                    <button class="cta" type="submit">Add</button>
+                  </form>
+                <% } %>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+      </section>
 
-  </main>
+      <section id="shelves">
+        <div class="row">
+          <h2>Browse by shelf</h2>
+          <span class="muted">Shortlist of sections in-store today.</span>
+        </div>
+        <div class="shelves">
+          <% shelves.forEach(function(shelf) { %>
+            <article class="shelf" style="--accent: <%= shelf.accent || '#f3f4f6' %>;"><strong><%= shelf.label %></strong><small><%= shelf.blurb %></small><span class="tag">See picks</span></article>
+          <% }); %>
+        </div>
+      </section>
 
-  <footer>
-    <div class="shell">
-      Open late, seven days a week. Visit the reading room or preorder online.
-    </div>
-  </footer>
+    </main>
+
+    <footer>
+      <div class="shell">
+        Open late, seven days a week. Visit the reading room or preorder online.
+      </div>
+    </footer>
+  <% } %>
 </body>
 </html>

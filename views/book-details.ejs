@@ -17,20 +17,30 @@
       <div class="detail-info">
         <div class="eyebrow">
           Featured title
-          <span><%= book.genre || "General" %></span>
         </div>
         <h1><%= book.title %></h1>
-        <p class="muted">by <strong><%= book.author %></strong></p>
+        <p class="muted">
+          by <strong><%= book.author %></strong> · Seller:
+          <% if (book.sellerId) { %>
+            <a class="seller-link" href="/sellers/<%= book.sellerId %>"><%= book.sellerName %></a>
+          <% } else { %>
+            <%= book.sellerName %>
+          <% } %>
+        </p>
         <p class="price">$<%= book.price.toFixed(2) %></p>
-        <p><%= book.tagline %></p>
+        <% if (book.tagline) { %>
+          <p><%= book.tagline %></p>
+        <% } %>
         <p class="muted"><%= book.description %></p>
-        <form method="POST" action="/cart/add" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-          <input type="hidden" name="bookId" value="<%= book.id %>">
-          <input type="hidden" name="title" value="<%= book.title %>">
-          <input type="hidden" name="price" value="<%= book.price %>">
-          <button class="cta" type="submit">Add to cart</button>
-          <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
-        </form>
+        <% if (user && user.role === "buyer") { %>
+          <form method="POST" action="/cart/add" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input type="hidden" name="bookId" value="<%= book.id %>">
+            <input type="hidden" name="title" value="<%= book.title %>">
+            <input type="hidden" name="price" value="<%= book.price %>">
+            <button class="cta" type="submit">Add to cart</button>
+            <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
+          </form>
+        <% } %>
       </div>
     </div>
   </main>

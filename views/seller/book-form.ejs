@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= action %> Book - The Bookmark</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: #333;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .nav-links {
+            margin-top: 20px;
+        }
+        
+        .nav-links a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="shell" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="brand">
+                <a href="/" style="text-decoration:none; color:inherit;">The Bookmark</a>
+            </div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/seller/dashboard">Dashboard</a>
+                <a href="/seller/books">My Books</a>
+                <a href="/logout">Logout (<%= user.name %>)</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h1><%= action %> Book</h1>
+        
+        <% if (error) { %>
+            <div class="error-message">
+                <%= error %>
+            </div>
+        <% } %>
+        
+        <div class="form-container">
+            <form method="POST" action="<%= book ? `/seller/books/${book.book_id}/update` : '/seller/books' %>">
+                <div class="form-group">
+                    <label for="title">Book Title *</label>
+                    <input type="text" id="title" name="title" 
+                           value="<%= book ? book.title : '' %>" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="author">Author *</label>
+                    <input type="text" id="author" name="author" 
+                           value="<%= book ? book.author : '' %>" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="genre">Genre</label>
+                    <select id="genre" name="genre">
+                        <option value="">Select Genre</option>
+                        <option value="Mystery" <%= (book && book.genre === 'Mystery') ? 'selected' : '' %>>Mystery</option>
+                        <option value="Fantasy" <%= (book && book.genre === 'Fantasy') ? 'selected' : '' %>>Fantasy</option>
+                        <option value="Non-fiction" <%= (book && book.genre === 'Non-fiction') ? 'selected' : '' %>>Non-fiction</option>
+                        <option value="Romance" <%= (book && book.genre === 'Romance') ? 'selected' : '' %>>Romance</option>
+                        <option value="Comics" <%= (book && book.genre === 'Comics') ? 'selected' : '' %>>Comics</option>
+                        <option value="Fiction" <%= (book && book.genre === 'Fiction') ? 'selected' : '' %>>Fiction</option>
+                        <option value="Science Fiction" <%= (book && book.genre === 'Science Fiction') ? 'selected' : '' %>>Science Fiction</option>
+                        <option value="Biography" <%= (book && book.genre === 'Biography') ? 'selected' : '' %>>Biography</option>
+                        <option value="History" <%= (book && book.genre === 'History') ? 'selected' : '' %>>History</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="price">Price ($) *</label>
+                    <input type="number" id="price" name="price" 
+                           value="<%= book ? book.price : '' %>" 
+                           step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <%= book ? 'Update Book' : 'Create Book' %>
+                    </button>
+                    <a href="/seller/books" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="nav-links">
+            <a href="/seller/books">← Back to My Books</a>
+            <a href="/seller/dashboard">← Back to Dashboard</a>
+        </div>
+    </main>
+</body>
+</html>

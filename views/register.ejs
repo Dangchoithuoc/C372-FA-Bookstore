@@ -5,35 +5,203 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register | The Bookmark</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .role-selection {
+      margin: 20px 0;
+    }
+    
+    .role-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+    
+    .role-option {
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .role-option:hover {
+      border-color: #007bff;
+      background: #f8f9fa;
+    }
+    
+    .role-option.selected {
+      border-color: #007bff;
+      background: #e7f3ff;
+    }
+    
+    .role-option input[type="radio"] {
+      display: none;
+    }
+    
+    .role-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .role-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .role-desc {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.3;
+    }
+    
+    .invite-code-section {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #007bff;
+    }
+    
+    .invite-code-field {
+      display: block;
+    }
+    
+    .invite-note {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 8px;
+    }
+    
+    .password-feedback {
+      display: block;
+      margin-top: 5px;
+      font-size: 0.85rem;
+    }
+  </style>
 </head>
 <body class="auth-body">
   <div class="auth-card">
     <div class="pill">The Bookmark</div>
     <h1>Create your account</h1>
-    <p class="auth-muted">Save your picks and move to checkout faster.</p>
+    <p class="auth-muted">Join our community with invitation codes.</p>
 
     <% if (error) { %>
       <div class="error"><%= error %></div>
     <% } %>
 
-    <form method="POST" action="/register">
+    <form method="POST" action="/register" id="registerForm">
       <div>
         <label for="name">Full name</label><br>
-        <input id="name" name="name" type="text" placeholder="Alex Tan" required>
+        <input id="name" name="name" type="text" placeholder="Alex Tan" 
+               value="<%= name || '' %>" 
+               minlength="2"
+               required>
       </div>
       <div>
         <label for="email">Email</label><br>
-        <input id="email" name="email" type="email" placeholder="you@example.com" required>
+        <input id="email" name="email" type="email" placeholder="you@example.com" 
+               value="<%= email || '' %>" 
+               required>
       </div>
       <div>
         <label for="password">Password</label><br>
-        <input id="password" name="password" type="password" placeholder="********" required>
+        <input id="password" name="password" type="password" placeholder="********" 
+               minlength="6" 
+               required>
+        <small class="password-feedback" id="passwordFeedback"></small>
       </div>
+      
+      <div class="role-selection">
+        <label>Account Type</label><br>
+        <div class="role-options">
+          <label class="role-option" for="role-buyer">
+            <input type="radio" id="role-buyer" name="role" value="buyer" checked>
+            <div class="role-icon">📚</div>
+            <div class="role-name">Buyer</div>
+            <div class="role-desc">Browse & purchase books</div>
+          </label>
+          
+          <label class="role-option" for="role-seller">
+            <input type="radio" id="role-seller" name="role" value="seller">
+            <div class="role-icon">🏪</div>
+            <div class="role-name">Seller</div>
+            <div class="role-desc">Sell your own books</div>
+          </label>
+          
+          <label class="role-option" for="role-admin">
+            <input type="radio" id="role-admin" name="role" value="admin">
+            <div class="role-icon">⚙️</div>
+            <div class="role-name">Admin</div>
+            <div class="role-desc">Manage bookstore</div>
+          </label>
+        </div>
+        
+        <div class="invite-code-section">
+          <div class="invite-code-field">
+            <label for="inviteCode">Invitation Code</label><br>
+            <input id="inviteCode" name="inviteCode" type="text" 
+                   placeholder="Enter invitation code for your role" 
+                   required>
+            <p class="invite-note">
+              Buyer code: <strong>BUYER123</strong> | 
+              Seller code: <strong>SELLER123</strong> | 
+              Admin code: <strong>ADMIN123</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <button class="auth-cta" type="submit">Register</button>
     </form>
 
     <p class="auth-muted">Already have an account? <a href="/login">Log in</a></p>
     <p class="auth-muted"><a href="/">Back to homepage</a></p>
   </div>
+
+  <script>
+    // Role selection styling
+    document.querySelectorAll('.role-option').forEach(option => {
+      option.addEventListener('click', function() {
+        // Remove selected class from all options
+        document.querySelectorAll('.role-option').forEach(opt => {
+          opt.classList.remove('selected');
+        });
+        // Add selected class to clicked option
+        this.classList.add('selected');
+        // Check the radio button
+        this.querySelector('input[type="radio"]').checked = true;
+      });
+    });
+
+    // Set initial selected state
+    document.querySelectorAll('.role-option').forEach(option => {
+      if (option.querySelector('input[type="radio"]').checked) {
+        option.classList.add('selected');
+      }
+    });
+
+    // Password strength indicator (visual feedback only)
+    const passwordInput = document.getElementById('password');
+    const passwordFeedback = document.getElementById('passwordFeedback');
+
+    passwordInput.addEventListener('input', function() {
+      const length = this.value.length;
+      if (length === 0) {
+        passwordFeedback.textContent = '';
+        passwordFeedback.style.color = '';
+      } else if (length < 6) {
+        passwordFeedback.textContent = `${length}/6 characters`;
+        passwordFeedback.style.color = '#dc3545';
+      } else {
+        passwordFeedback.textContent = '✓ Good password';
+        passwordFeedback.style.color = '#28a745';
+      }
+    });
+
+    // No form validation - let HTML5 and backend handle it
+    // This prevents conflicts with your existing backend validation
+  </script>
 </body>
 </html>

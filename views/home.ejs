@@ -5,25 +5,288 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Bookmark | Independent Bookstore</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* Additional styles for filtering/search */
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    .search-container {
+      flex: 1;
+      max-width: 400px;
+    }
+    
+    .filters {
+      background: #f9f9f9;
+      padding: 30px 0;
+      margin: 40px 0;
+      border-radius: 8px;
+    }
+    
+    .filter-form {
+      margin-top: 20px;
+    }
+    
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .filter-group label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #333;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    
+    .filter-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .filter-actions button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    .filter-actions button[type="submit"] {
+      background: #333;
+      color: white;
+    }
+    
+    .filter-actions button[type="button"] {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .books-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 30px;
+      margin: 40px 0;
+    }
+    
+    .book-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    
+    .book-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .book-genre {
+      display: inline-block;
+      background: #e9ecef;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      margin-bottom: 10px;
+    }
+    
+    .book-title {
+      font-size: 1.2rem;
+      margin: 10px 0;
+      color: #333;
+    }
+    
+    .book-author {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+    
+    .book-price {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #333;
+      margin: 10px 0;
+    }
+    
+    .add-to-cart-btn {
+      width: 100%;
+      padding: 10px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    
+    .add-to-cart-btn:hover {
+      background: #555;
+    }
+    
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .results-count {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .no-results {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    
+    .clear-filters {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .clear-filters a {
+      color: #666;
+      text-decoration: underline;
+    }
+    
+    .active-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    
+    .active-filter-tag {
+      background: #e9ecef;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .remove-filter {
+      color: #999;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    
+    /* Seller Add Book Button */
+    .add-book-btn {
+      background: #007bff;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-right: 10px;
+    }
+    
+    .add-book-btn:hover {
+      background: #0056b3;
+    }
+    
+    @media (max-width: 768px) {
+      .header-inner {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .search-container {
+        max-width: 100%;
+      }
+      
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .books-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+      
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+    }
+  </style>
 </head>
 <body>
   <header>
     <div class="shell header-inner">
-      <div class="brand">The Bookmark</div>
+      <div class="brand">
+        <a href="/" style="text-decoration:none; color:inherit;">The Bookmark</a>
+      </div>
+      
+      <!-- Search Bar -->
+      <div class="search-container">
+        <form method="GET" action="/" style="display:flex; gap:8px;">
+          <input type="text" name="search" placeholder="Search books..." 
+                 value="<%= searchQuery || '' %>"
+                 style="flex:1; padding:10px 15px; border:1px solid #ddd; border-radius:4px; font-size:1rem;">
+          <button type="submit" style="padding:10px 20px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">
+            Search
+          </button>
+        </form>
+      </div>
+      
       <nav>
         <a href="#staff-picks">Staff Picks</a>
         <a href="#shelves">Shelves</a>
-        <a href="/cart">Cart</a>
-        <% if (user) { %>
-          <a href="/logout">Logout</a>
+        
+        <% if (user && user.role === 'seller') { %>
+          <!-- Seller Navigation -->
+          <a href="/seller/books/new" class="add-book-btn">+ Add Book</a>
+          <a href="/seller/dashboard">Dashboard</a>
+          <a href="/logout">Logout (<%= user.name %>)</a>
+        <% } else if (user && user.role === 'admin') { %>
+          <!-- Admin Navigation -->
+          <a href="/admin/dashboard">Admin Dashboard</a>
+          <a href="/logout">Logout (<%= user.name %>)</a>
+        <% } else if (user && user.role === 'buyer') { %>
+          <!-- Buyer Navigation -->
+          <a href="/cart">Cart</a>
+          <a href="/logout">Logout (<%= user.name %>)</a>
         <% } else { %>
+          <!-- Guest Navigation -->
+          <a href="/cart">Cart</a>
           <a href="/login">Login</a>
+          <a href="/register" style="background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none;">
+            Register
+          </a>
         <% } %>
       </nav>
     </div>
   </header>
 
   <main class="shell">
+    <!-- Hero Section -->
     <section class="hero">
       <div>
         <div class="eyebrow">
@@ -39,8 +302,13 @@
           <input type="hidden" name="bookId" value="<%= spotlight.id || '' %>">
           <input type="hidden" name="title" value="<%= spotlight.title %>">
           <input type="hidden" name="price" value="<%= spotlight.price %>">
-          <button class="cta" type="submit">Add to cart</button>
-          <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
+          <% if (user && user.role === 'buyer') { %>
+            <button class="cta" type="submit">Add to cart</button>
+            <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
+          <% } else if (!user || user.role !== 'seller') { %>
+            <button class="cta" type="submit">Add to cart</button>
+            <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
+          <% } %>
         </form>
       </div>
       <div class="cover">
@@ -49,9 +317,163 @@
       </div>
     </section>
 
+    <!-- Browse & Filter Section -->
+    <section class="filters">
+      <h3>Browse Books</h3>
+      <form method="GET" action="/" class="filter-form">
+        <div class="filter-grid">
+          <!-- Search -->
+          <div class="filter-group">
+            <label>Search</label>
+            <input type="text" name="search" placeholder="Title, author, or genre..." 
+                   value="<%= searchQuery || '' %>">
+          </div>
+          
+          <!-- Genre Filter -->
+          <div class="filter-group">
+            <label>Genre</label>
+            <select name="genre">
+              <option value="">All Genres</option>
+              <option value="Mystery" <%= genre === 'Mystery' ? 'selected' : '' %>>Mystery</option>
+              <option value="Fantasy" <%= genre === 'Fantasy' ? 'selected' : '' %>>Fantasy</option>
+              <option value="Non-fiction" <%= genre === 'Non-fiction' ? 'selected' : '' %>>Non-fiction</option>
+              <option value="Romance" <%= genre === 'Romance' ? 'selected' : '' %>>Romance</option>
+              <option value="Comics" <%= genre === 'Comics' ? 'selected' : '' %>>Comics</option>
+            </select>
+          </div>
+          
+          <!-- Price Range -->
+          <div class="filter-group">
+            <label>Price Range</label>
+            <select name="priceRange">
+              <option value="">Any Price</option>
+              <option value="0-15" <%= priceRange === '0-15' ? 'selected' : '' %>>Under $15</option>
+              <option value="15-20" <%= priceRange === '15-20' ? 'selected' : '' %>>$15 - $20</option>
+              <option value="20+" <%= priceRange === '20+' ? 'selected' : '' %>>Over $20</option>
+            </select>
+          </div>
+          
+          <!-- Sort By -->
+          <div class="filter-group">
+            <label>Sort By</label>
+            <select name="sortBy">
+              <option value="title_asc" <%= sortBy === 'title_asc' ? 'selected' : '' %>>Title A-Z</option>
+              <option value="title_desc" <%= sortBy === 'title_desc' ? 'selected' : '' %>>Title Z-A</option>
+              <option value="price_asc" <%= sortBy === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
+              <option value="price_desc" <%= sortBy === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="filter-actions">
+          <button type="submit">Apply Filters</button>
+          <button type="button" onclick="location.href='/'">Clear All</button>
+        </div>
+      </form>
+      
+      <!-- Active Filters Display -->
+      <% if (searchQuery || genre || priceRange) { %>
+      <div class="active-filters">
+        <% if (searchQuery) { %>
+        <div class="active-filter-tag">
+          Search: "<%= searchQuery %>"
+          <span class="remove-filter" onclick="removeFilter('search')">×</span>
+        </div>
+        <% } %>
+        <% if (genre) { %>
+        <div class="active-filter-tag">
+          Genre: <%= genre %>
+          <span class="remove-filter" onclick="removeFilter('genre')">×</span>
+        </div>
+        <% } %>
+        <% if (priceRange) { %>
+        <div class="active-filter-tag">
+          Price: <%= priceRange === '0-15' ? 'Under $15' : priceRange === '15-20' ? '$15-$20' : 'Over $20' %>
+          <span class="remove-filter" onclick="removeFilter('priceRange')">×</span>
+        </div>
+        <% } %>
+      </div>
+      <% } %>
+    </section>
+
+    <!-- All Books Display -->
+    <section id="all-books">
+      <div class="results-header">
+        <h2>
+          <% if (user && user.role === 'seller') { %>
+            Your Books
+          <% } else { %>
+            All Books
+          <% } %>
+        </h2>
+        <div class="results-count">
+          <% if (filteredBooks && filteredBooks.length > 0) { %>
+            Showing <%= filteredBooks.length %> <%= filteredBooks.length === 1 ? 'book' : 'books' %>
+          <% } %>
+        </div>
+      </div>
+      
+      <% if (filteredBooks && filteredBooks.length > 0) { %>
+        <div class="books-grid">
+          <% filteredBooks.forEach(function(book) { %>
+            <div class="book-card">
+              <span class="book-genre"><%= book.genre || 'General' %></span>
+              <h3 class="book-title"><%= book.title %></h3>
+              <p class="book-author">by <%= book.author %></p>
+              <p class="book-price">$<%= book.price.toFixed(2) %></p>
+              
+              <% if (user && user.role === 'seller') { %>
+                <!-- Seller sees Edit/Delete buttons -->
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                  <a href="/seller/books/<%= book.book_id %>/edit" 
+                     style="flex: 1; padding: 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center;">
+                    Edit
+                  </a>
+                  <form method="POST" action="/seller/books/<%= book.book_id %>/delete" style="flex: 1;">
+                    <button type="submit" 
+                            style="width: 100%; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                            onclick="return confirm('Delete this book?')">
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              <% } else if (user && user.role === 'buyer') { %>
+                <!-- Buyer sees Add to Cart button -->
+                <form method="POST" action="/cart/add">
+                  <input type="hidden" name="bookId" value="<%= book.book_id %>">
+                  <input type="hidden" name="title" value="<%= book.title %>">
+                  <input type="hidden" name="price" value="<%= book.price %>">
+                  <button class="add-to-cart-btn" type="submit">Add to Cart</button>
+                </form>
+              <% } else if (!user) { %>
+                <!-- Guest sees Add to Cart (redirects to login) -->
+                <form method="POST" action="/cart/add">
+                  <input type="hidden" name="bookId" value="<%= book.book_id %>">
+                  <input type="hidden" name="title" value="<%= book.title %>">
+                  <input type="hidden" name="price" value="<%= book.price %>">
+                  <button class="add-to-cart-btn" type="submit">Add to Cart</button>
+                </form>
+              <% } %>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="no-results">
+          <h3>No books found</h3>
+          <p>Try adjusting your search or filters</p>
+          <% if (searchQuery || genre || priceRange) { %>
+            <div class="clear-filters">
+              <a href="/">Clear all filters</a>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+    </section>
+
+    <!-- Staff Picks Section -->
     <section id="staff-picks">
       <div class="row">
-        <h2>Staff picks</h2>
+        <h2>Staff Picks</h2>
         <span class="muted">Hand-picked by booksellers on shift this week.</span>
       </div>
       <div class="grid">
@@ -63,26 +485,43 @@
             <p class="muted"><%= book.vibe %></p>
             <div class="row">
               <span><strong>$<%= book.price.toFixed(2) %></strong></span>
-              <form method="POST" action="/cart/add" style="margin:0; display:flex; gap:6px;">
-                <input type="hidden" name="bookId" value="<%= book.id || '' %>">
-                <input type="hidden" name="title" value="<%= book.title %>">
-                <input type="hidden" name="price" value="<%= book.price %>">
-                <button class="cta" type="submit">Add</button>
-              </form>
+              
+              <% if (user && user.role === 'buyer') { %>
+                <!-- Buyer sees Add button -->
+                <form method="POST" action="/cart/add" style="margin:0; display:flex; gap:6px;">
+                  <input type="hidden" name="bookId" value="<%= book.id || '' %>">
+                  <input type="hidden" name="title" value="<%= book.title %>">
+                  <input type="hidden" name="price" value="<%= book.price %>">
+                  <button class="cta" type="submit">Add</button>
+                </form>
+              <% } else if (!user || user.role !== 'seller') { %>
+                <!-- Guest sees Add button (redirects to login) -->
+                <form method="POST" action="/cart/add" style="margin:0; display:flex; gap:6px;">
+                  <input type="hidden" name="bookId" value="<%= book.id || '' %>">
+                  <input type="hidden" name="title" value="<%= book.title %>">
+                  <input type="hidden" name="price" value="<%= book.price %>">
+                  <button class="cta" type="submit">Add</button>
+                </form>
+              <% } %>
             </div>
           </article>
         <% }); %>
       </div>
     </section>
 
+    <!-- Shelves Section -->
     <section id="shelves">
       <div class="row">
-        <h2>Browse by shelf</h2>
+        <h2>Browse by Shelf</h2>
         <span class="muted">Shortlist of sections in-store today.</span>
       </div>
       <div class="shelves">
         <% shelves.forEach(function(shelf) { %>
-          <article class="shelf" style="--accent: <%= shelf.accent || '#f3f4f6' %>;"><strong><%= shelf.label %></strong><small><%= shelf.blurb %></small><a class="tag" href="/cart">See picks</a></article>
+          <article class="shelf" style="--accent: <%= shelf.accent || '#f3f4f6' %>;">
+            <strong><%= shelf.label %></strong>
+            <small><%= shelf.blurb %></small>
+            <a class="tag" href="/?genre=<%= shelf.label %>">Browse</a>
+          </article>
         <% }); %>
       </div>
     </section>
@@ -93,5 +532,24 @@
       Open late, seven days a week. Visit the reading room or preorder online.
     </div>
   </footer>
+
+  <script>
+    function removeFilter(filterName) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete(filterName);
+      window.location.href = url.toString();
+    }
+    
+    // Make shelf genre links work
+    document.querySelectorAll('.shelf a').forEach(link => {
+      if (link.href.includes('genre=')) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const genre = this.getAttribute('href').split('genre=')[1];
+          window.location.href = `/?genre=${genre}`;
+        });
+      }
+    });
+  </script>
 </body>
 </html>

@@ -25,12 +25,30 @@ const CheckoutController = require("./controllers/CheckoutController");
 const BookController = require("./controllers/BookController");
 const UserController = require("./controllers/UserController");
 const CartController = require("./controllers/CartController");
+const SellerController = require("./controllers/SellerController"); // NEW
+const AdminController = require("./controllers/AdminController"); // NEW
 const CartModel = require("./models/Cart");
 
-// Middleware to require login before cart actions
+// Middleware to require login
 function requireLogin(req, res, next) {
     if (!req.session.user) {
         return res.redirect("/login");
+    }
+    next();
+}
+
+// Middleware to require seller role
+function requireSeller(req, res, next) {
+    if (!req.session.user || req.session.user.role !== 'seller') {
+        return res.redirect("/");
+    }
+    next();
+}
+
+// Add admin middleware
+function requireAdmin(req, res, next) {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.redirect("/");
     }
     next();
 }
@@ -51,7 +69,7 @@ async function requireCartItems(req, res, next) {
     }
 }
 
-// Homepage
+// Homepage (shows different UI based on role)
 app.get("/", BookController.homePage);
 
 // Auth routes
@@ -71,6 +89,23 @@ app.post("/cart/clear", requireLogin, CartController.clearCart);
 // Checkout routes (login + cart required)
 app.get("/checkout", requireLogin, requireCartItems, CheckoutController.checkoutPage);
 app.post("/checkout/pay", requireLogin, requireCartItems, CheckoutController.processPayment);
+
+// NEW: Seller CRUD routes (login + seller role required)
+app.get("/seller/dashboard", requireLogin, requireSeller, SellerController.dashboard);
+app.get("/seller/books", requireLogin, requireSeller, SellerController.listBooks);
+app.get("/seller/books/new", requireLogin, requireSeller, SellerController.newBookPage);
+app.post("/seller/books", requireLogin, requireSeller, SellerController.createBook);
+app.get("/seller/books/:id/edit", requireLogin, requireSeller, SellerController.editBookPage);
+app.post("/seller/books/:id/update", requireLogin, requireSeller, SellerController.updateBook);
+app.post("/seller/books/:id/delete", requireLogin, requireSeller, SellerController.deleteBook);
+
+
+// Admin routes
+app.get("/admin/dashboard", requireLogin, requireAdmin, AdminController.dashboard);
+app.get("/admin/users", requireLogin, requireAdmin, AdminController.listUsers);
+app.get("/admin/books", requireLogin, requireAdmin, AdminController.listAllBooks);
+app.post("/admin/users/:id/delete", requireLogin, requireAdmin, AdminController.deleteUser);
+app.post("/admin/books/:id/delete", requireLogin, requireAdmin, AdminController.deleteBook);
 
 // Server listening at bottom
 app.listen(3000, () => {

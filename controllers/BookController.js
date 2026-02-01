@@ -1,15 +1,34 @@
 const Book = require("../models/Book");
+const pool = require("../db");
 
-// Controller reads homepage content from MySQL-backed Book model with safe fallbacks and number coercion for prices.
 module.exports = {
     homePage: async (req, res) => {
         try {
-            const [spotlight, staffPicks, shelves] = await Promise.all([
+            const { search, genre, priceRange, sortBy } = req.query;
+            const user = req.session.user;
+            
+            // Debug logging
+            console.log("Filter params:", { search, genre, priceRange, sortBy });
+            console.log("User info:", user ? { id: user.id, role: user.role } : "No user");
+            
+            const [spotlight, staffPicks, shelves, filteredBooks] = await Promise.all([
                 Book.getFeatured(),
                 Book.getStaffPicks(6),
-                Book.getShelves()
+                Book.getShelves(),
+                (search || genre || priceRange || sortBy) ? 
+                    Book.getFilteredBooks({ 
+                        search, 
+                        genre, 
+                        priceRange, 
+                        sortBy,
+                        currentUserId: user ? user.id : null,
+                        userRole: user ? user.role : 'guest'
+                    }) : 
+                    Promise.resolve(null)
             ]);
 
+            console.log("Filtered books count:", filteredBooks ? filteredBooks.length : 0);
+            
             const resolvedSpotlight = normalizeSpotlight(spotlight) || normalizeSpotlight({
                 title: "The Midnight Archive",
                 author: "Clara Wren",
@@ -32,11 +51,28 @@ module.exports = {
                 { label: "Comics & Art", blurb: "Illustrated worlds, risograph gems, and graphic novels.", accent: "#ecffe6" }
             ];
 
+            // Get seller's books if user is a seller
+            let sellerBooks = [];
+            if (user && user.role === 'seller') {
+                const [books] = await pool.execute(
+                    "SELECT * FROM books WHERE seller_id = ? ORDER BY book_id DESC LIMIT 5",
+                    [user.id]
+                );
+                sellerBooks = books;
+                console.log("Seller books found:", sellerBooks.length);
+            }
+
             res.render("home", {
                 spotlight: resolvedSpotlight,
                 staffPicks: resolvedStaff,
                 shelves: resolvedShelves,
-                user: req.session.user || null
+                filteredBooks: filteredBooks,
+                searchQuery: search || '',
+                genre: genre || '',
+                priceRange: priceRange || '',
+                sortBy: sortBy || 'title_asc',
+                user: user || null,
+                sellerBooks: sellerBooks
             });
         } catch (err) {
             console.error("Error loading homepage:", err);
@@ -45,6 +81,7 @@ module.exports = {
     }
 };
 
+// Helper functions
 function normalizePrice(value) {
     const num = Number(value);
     return Number.isFinite(num) ? num : 0;

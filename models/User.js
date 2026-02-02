@@ -1,10 +1,5 @@
-const crypto = require("crypto");
 const pool = require("../db");
 const bcrypt = require("bcrypt");
-
-function hashPassword(password) {
-    return crypto.createHash("sha1").update(password).digest("hex");
-}
 
 module.exports = {
     async findByEmail(email) {

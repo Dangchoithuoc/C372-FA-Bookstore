@@ -78,20 +78,6 @@ module.exports = {
             console.error("Error loading homepage:", err);
             res.status(500).send("Failed to load homepage");
         }
-    },
-
-    bookDetails: async (req, res) => {
-        try {
-            const book = await Book.findById(req.params.id);
-            if (!book) {
-                return res.status(404).send("Book not found.");
-            }
-            const detail = normalizeDetail(book);
-            res.render("book-details", { book: detail, user: req.session.user || null });
-        } catch (err) {
-            console.error("Error loading book detail:", err);
-            res.status(500).send("Failed to load book.");
-        }
     }
 };
 
@@ -107,13 +93,10 @@ function normalizeSpotlight(item) {
         id: item.id,
         title: item.title,
         author: item.author,
-        sellerId: item.seller_id,
-        sellerName: item.seller_name || "Independent seller",
         tagline: item.tagline,
         description: item.description || item.tagline || "",
         price: normalizePrice(item.price),
-        badge: item.badge || "New Arrival",
-        coverImage: coverForTitle(item.title)
+        badge: item.badge || "New Arrival"
     };
 }
 
@@ -123,11 +106,8 @@ function normalizeStaff(list) {
         id: b.id,
         title: b.title,
         author: b.author,
-        sellerId: b.seller_id,
-        sellerName: b.seller_name || "Independent seller",
         price: normalizePrice(b.price),
         vibe: b.vibe,
-        badge: b.badge || "Staff pick",
-        coverImage: coverForTitle(b.title)
+        badge: b.badge || "Staff pick"
     }));
 }

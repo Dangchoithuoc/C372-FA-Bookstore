@@ -9,7 +9,8 @@ module.exports = {
             const { items, total } = await Cart.getCart(userId);
             res.render("checkout", {
                 cart: items,
-                total: total.toFixed(2)
+                total: total.toFixed(2),
+                user: req.session.user
             });
         } catch (err) {
             console.error("Checkout load error", err);

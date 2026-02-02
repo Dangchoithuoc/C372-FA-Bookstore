@@ -8,9 +8,18 @@ Student ID: 24030289
 Class: C372-003
 Date created: 10 December 2025
 -->
-<link rel="stylesheet" href="/css/styles.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <%- include("partials/navbar", { user: user }) %>
 
-<div class="checkout-shell">
+  <div class="checkout-shell">
 
     <h2 class="checkout-title">Checkout</h2>
 
@@ -64,4 +73,6 @@ Date created: 10 December 2025
         </div>
 
     </div>
-</div>
+  </div>
+</body>
+</html>

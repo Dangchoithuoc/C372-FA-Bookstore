@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="profile-shell">
+    <div class="profile-card">
+      <div class="pill">Profile</div>
+      <h1>Edit your details</h1>
+      <p class="muted">Update your account info below. Leave password blank to keep it unchanged.</p>
+
+      <% if (error) { %>
+        <div class="error"><%= error %></div>
+      <% } %>
+      <% if (success) { %>
+        <div class="profile-success"><%= success %></div>
+      <% } %>
+
+      <form class="profile-form" method="POST" action="/profile">
+        <div class="profile-row">
+          <div>
+            <label for="name">Name</label><br>
+            <input id="name" name="name" type="text" value="<%= user.username %>" required>
+          </div>
+          <div>
+            <label for="email">Email</label><br>
+            <input id="email" name="email" type="email" value="<%= user.email %>" required>
+          </div>
+        </div>
+        <div class="profile-row">
+          <div>
+            <label for="contact_number">Contact number</label><br>
+            <input id="contact_number" name="contact_number" type="text" value="<%= user.contact_number || '' %>">
+          </div>
+          <div>
+            <label for="address">Address</label><br>
+            <input id="address" name="address" type="text" value="<%= user.address || '' %>">
+          </div>
+        </div>
+        <div>
+          <label for="password">New password</label><br>
+          <input id="password" name="password" type="password" placeholder="Leave blank to keep current password">
+        </div>
+        <button class="auth-cta" type="submit">Save changes</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,9 +1,56 @@
 const pool = require("../db");
 
 module.exports = {
+    async listAll() {
+        const [rows] = await pool.execute(
+            `SELECT b.book_id AS id, b.title, b.author, b.price, b.genre, b.seller_id, u.username AS seller_name
+             FROM books b
+             LEFT JOIN users u ON b.seller_id = u.user_id
+             ORDER BY b.book_id ASC`
+        );
+        return rows;
+    },
+
+    async listBySeller(sellerId) {
+        const [rows] = await pool.execute(
+            `SELECT b.book_id AS id, b.title, b.author, b.price, b.genre, b.seller_id, u.username AS seller_name
+             FROM books b
+             LEFT JOIN users u ON b.seller_id = u.user_id
+             WHERE b.seller_id = ?
+             ORDER BY b.book_id ASC`,
+            [sellerId]
+        );
+        return rows;
+    },
+
+    async create({ title, author, price, genre, sellerId }) {
+        const [result] = await pool.execute(
+            "INSERT INTO books (title, author, price, genre, seller_id) VALUES (?, ?, ?, ?, ?)",
+            [title, author, price, genre || null, sellerId]
+        );
+        return { id: result.insertId, title, author, price, genre, sellerId };
+    },
+
+    async update({ id, title, author, price, genre, sellerId }) {
+        await pool.execute(
+            "UPDATE books SET title = ?, author = ?, price = ?, genre = ? WHERE book_id = ? AND seller_id = ?",
+            [title, author, price, genre || null, id, sellerId]
+        );
+        return { id, title, author, price, genre, sellerId };
+    },
+
+    async remove(id, sellerId) {
+        await pool.execute("DELETE FROM books WHERE book_id = ? AND seller_id = ?", [id, sellerId]);
+        return true;
+    },
+
     async getFeatured() {
         const [rows] = await pool.execute(
-            "SELECT book_id AS id, title, author, price, genre AS tagline FROM books ORDER BY book_id ASC LIMIT 1"
+            `SELECT b.book_id AS id, b.title, b.author, b.price, b.genre AS tagline, b.seller_id, u.username AS seller_name
+             FROM books b
+             LEFT JOIN users u ON b.seller_id = u.user_id
+             ORDER BY b.book_id ASC
+             LIMIT 1`
         );
         const featured = rows[0];
         if (!featured) return null;
@@ -18,7 +65,11 @@ module.exports = {
     async getStaffPicks(limit = 6) {
         const safeLimit = Number.isFinite(Number(limit)) ? Number(limit) : 6;
         const [rows] = await pool.query(
-            `SELECT book_id AS id, title, author, price, genre AS vibe FROM books ORDER BY book_id DESC LIMIT ${safeLimit}`
+            `SELECT b.book_id AS id, b.title, b.author, b.price, b.genre AS vibe, b.seller_id, u.username AS seller_name
+             FROM books b
+             LEFT JOIN users u ON b.seller_id = u.user_id
+             ORDER BY b.book_id DESC
+             LIMIT ${safeLimit}`
         );
         return rows.map(row => ({
             ...row,
@@ -47,7 +98,11 @@ module.exports = {
 
     async findById(id) {
         const [rows] = await pool.execute(
-            "SELECT book_id AS id, title, author, price, genre AS vibe FROM books WHERE book_id = ? LIMIT 1",
+            `SELECT b.book_id AS id, b.title, b.author, b.price, b.genre AS vibe, b.genre, b.seller_id, u.username AS seller_name
+             FROM books b
+             LEFT JOIN users u ON b.seller_id = u.user_id
+             WHERE b.book_id = ?
+             LIMIT 1`,
             [id]
         );
         const book = rows[0];

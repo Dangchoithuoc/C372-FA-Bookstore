@@ -53,6 +53,7 @@ const CartController = require("./controllers/CartController");
 const SellerController = require("./controllers/SellerController"); // NEW
 const AdminController = require("./controllers/AdminController"); // NEW
 const PaypalController = require("./controllers/PaypalController");
+const NetsController = require("./controllers/NetsController");
 const CartModel = require("./models/Cart");
 
 // Middleware to require login
@@ -118,6 +119,11 @@ app.post("/checkout/pay", requireLogin, requireCartItems, CheckoutController.pro
 app.get("/checkout/paypal", requireLogin, requireCartItems, PaypalController.paypalPage);
 app.post("/api/paypal/create-order", requireLogin, requireCartItems, PaypalController.createOrder);
 app.post("/api/paypal/capture-order", requireLogin, PaypalController.captureOrder);
+app.get("/checkout/nets", requireLogin, requireCartItems, NetsController.generateQrCode);
+app.get("/sse/payment-status/:txnRetrievalRef", requireLogin, NetsController.streamPaymentStatus);
+app.get("/api/nets/payment-status/:txnRetrievalRef", requireLogin, NetsController.getStatus);
+app.get("/nets-qr/success", requireLogin, NetsController.showSuccess);
+app.get("/nets-qr/fail", requireLogin, NetsController.showFail);
 
 // NEW: Seller CRUD routes (login + seller role required)
 app.get("/seller/dashboard", requireLogin, requireSeller, SellerController.dashboard);

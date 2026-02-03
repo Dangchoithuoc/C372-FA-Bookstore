@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment failed</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <%- include("partials/navbar", { user }) %>
+
+  <main class="shell" style="padding: 40px 0;">
+    <section class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-4 p-lg-5 text-center">
+            <p class="text-uppercase small text-muted mb-2">NETS QR payment</p>
+            <h1 class="h3 mb-3"><%= message %></h1>
+            <p class="text-muted mb-4">Please try again later or choose a different payment method.</p>
+            <div class="d-flex justify-content-center mb-4">
+              <div class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                style="width: 180px; height: 180px; background: rgba(255, 93, 93, 0.12); border: 1px solid rgba(255, 93, 93, 0.35);">
+                <img src="/images/redCross.png" alt="Transaction failed" style="width: 120px; height: 120px;">
+              </div>
+            </div>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+              <a href="/checkout" class="btn btn-primary">Try again</a>
+              <a href="/shop" class="btn btn-outline-secondary">Back to shop</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <%- include("partials/footer") %>
+</body>
+</html>

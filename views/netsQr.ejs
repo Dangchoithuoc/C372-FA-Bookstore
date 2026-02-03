@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || "NETS QR Payment" %></title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://unpkg.com/event-source-polyfill"></script>
+</head>
+<body>
+  <%- include("partials/navbar", { user }) %>
+
+  <main class="shell" style="padding-top: 40px; padding-bottom: 40px;">
+    <section class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4 p-lg-5">
+            <style>
+              .nets-hero {
+                background: linear-gradient(135deg, rgba(37,99,235,0.05), rgba(59,130,246,0.12));
+                border-radius: 20px;
+                padding: 26px;
+                margin-bottom: 26px;
+                box-shadow: 0 20px 35px rgba(15, 23, 42, 0.08);
+              }
+              .nets-hero h1 {
+                font-size: 2.2rem;
+                margin-bottom: 4px;
+              }
+              .nets-hero .timer-chip {
+                padding: 6px 14px;
+                border-radius: 999px;
+                border: 1px solid rgba(15,23,42,0.15);
+                background: rgba(255,255,255,0.85);
+                font-weight: 600;
+              }
+              .nets-layout {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 22px;
+              }
+              .nets-card {
+                border-radius: 18px;
+                box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+                border: 1px solid rgba(15,23,42,0.08);
+              }
+              .nets-info-img {
+                width: 100%;
+                max-height: 320px;
+                object-fit: contain;
+                display: block;
+              }
+            </style>
+            <div class="nets-hero d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+              <div>
+                <p class="text-uppercase small text-muted mb-1">NETS QR payment</p>
+                <h1 class="h3 mb-0">Scan the QR to complete checkout</h1>
+                <p class="text-muted mb-0">Scan with your bank simulator app to complete payment.</p>
+              </div>
+          <span id="timer" class="nets-hero timer-chip">Time remaining: 5:00</span>
+            </div>
+            <div class="nets-layout">
+              <div class="card border-0 nets-card">
+                <div class="card-body text-center">
+                  <p class="small text-muted text-uppercase mb-3">Scan this code</p>
+                  <img class="img-fluid rounded-3 shadow-sm border" src="<%= qrCodeUrl %>" alt="NETS QR Code">
+                  <div class="mt-3 small text-muted">Keep this window open while completing payment.</div>
+                </div>
+              </div>
+              <div class="card border-0 nets-card">
+                <div class="card-body">
+                  <p class="text-uppercase small text-muted mb-3">How it works</p>
+                  <img class="img-fluid rounded-3 shadow-sm border mb-3 nets-info-img" src="/images/netsQrInfo.png" alt="NETS QR steps">
+                  <p class="mb-0 text-muted">Follow the steps illustrated above. Once you approve the payment in your banking app, we will confirm the transaction automatically.</p>
+                  <div class="d-flex flex-wrap gap-3 mt-4">
+                    <a href="/checkout" class="btn btn-outline-secondary">Back to checkout</a>
+                    <span class="badge bg-primary-subtle text-primary align-self-center">Secure NETS gateway</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let s2sNetsTxnStatus;
+    if (s2sNetsTxnStatus) {
+      s2sNetsTxnStatus.close();
+    }
+    const txnRetrievalRef = "<%= txnRetrievalRef %>";
+    const url = `/sse/payment-status/${txnRetrievalRef}`;
+    const headers = {
+      "api-key": "<%= apiKey %>",
+      "project-id": "<%= projectId %>"
+    };
+    const statusApiUrl = `/api/nets/payment-status/${encodeURIComponent(txnRetrievalRef)}`;
+    let fallbackInterval = null;
+    let hasRedirected = false;
+    const timerElement = document.getElementById("timer");
+    const countdownDuration = 300;
+    let remainingTime = countdownDuration;
+    let timerInterval = null;
+
+    const updateTimerDisplay = () => {
+      if (!timerElement) return;
+      const minutes = Math.floor(Math.max(remainingTime, 0) / 60);
+      const seconds = Math.max(remainingTime, 0) % 60;
+      timerElement.textContent = `Time remaining: ${minutes}:${seconds.toString().padStart(2, "0")}`;
+    };
+
+    const startTimer = () => {
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        remainingTime--;
+        updateTimerDisplay();
+        if (remainingTime < 0) {
+          timerElement.textContent = "Transaction timed out.";
+          finalizeRedirect(`/nets-qr/fail?txn_retrieval_ref=${txnRetrievalRef}`);
+        }
+      }, 1000);
+    };
+
+    const stopTimer = () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    };
+
+    const stopFallbackPolling = () => {
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+        fallbackInterval = null;
+      }
+    };
+
+    const finalizeRedirect = (redirectUrl) => {
+      if (hasRedirected) return;
+      hasRedirected = true;
+      stopFallbackPolling();
+      if (s2sNetsTxnStatus) {
+        s2sNetsTxnStatus.close();
+      }
+      stopTimer();
+      window.location.href = redirectUrl;
+    };
+
+    const handleStatusPayload = ({ raw = {}, success, fail, status }) => {
+      if (hasRedirected) return;
+      const statusDesc = String(raw.txn_status_desc || "").toLowerCase();
+      const paymentDesc = String(raw.payment_status_desc || "").toLowerCase();
+      const responseCode = String(raw.response_code || "");
+      const txnStatus = Number(raw.txn_status);
+
+      if (success || status === "success") {
+        finalizeRedirect(`/nets-qr/success?txn_retrieval_ref=${txnRetrievalRef}`);
+        return;
+      }
+
+      if (fail || status === "fail") {
+        finalizeRedirect(`/nets-qr/fail?txn_retrieval_ref=${txnRetrievalRef}`);
+        return;
+      }
+
+      if (
+        responseCode === "00" &&
+        (txnStatus === 2 ||
+          statusDesc.includes("success") ||
+          statusDesc.includes("approved") ||
+          statusDesc.includes("completed") ||
+          paymentDesc.includes("success") ||
+          paymentDesc.includes("approved") ||
+          paymentDesc.includes("completed"))
+      ) {
+        finalizeRedirect(`/nets-qr/success?txn_retrieval_ref=${txnRetrievalRef}`);
+      }
+    };
+
+    const pollFallbackStatus = async () => {
+      if (hasRedirected) return;
+      try {
+        const response = await fetch(statusApiUrl, { credentials: "include" });
+        if (!response.ok) {
+          throw new Error(`NETS fallback poll failed with status ${response.status}`);
+        }
+        const payload = await response.json();
+        handleStatusPayload({ raw: payload.raw || {}, status: payload.status });
+      } catch (error) {
+        console.error("NETS fallback poll error:", error);
+      }
+    };
+
+    const startFallbackPolling = () => {
+      stopFallbackPolling();
+      fallbackInterval = setInterval(pollFallbackStatus, 3000);
+      pollFallbackStatus();
+    };
+
+    const EventSourceClient = window.EventSourcePolyfill || window.EventSource;
+    if (!EventSourceClient) {
+      console.error("EventSource is not supported in this browser.");
+    } else {
+      const options = {
+        withCredentials: true,
+        heartbeatTimeout: 150000,
+      };
+      if (EventSourceClient === window.EventSourcePolyfill) {
+        options.headers = headers;
+      }
+      s2sNetsTxnStatus = new EventSourceClient(url, options);
+    }
+
+    s2sNetsTxnStatus?.addEventListener("message", (event) => {
+      let data = null;
+      try {
+        data = JSON.parse(event.data);
+      } catch (error) {
+        console.error("Unable to parse NETS status payload.", error);
+        return;
+      }
+      const raw = data.raw || {};
+      handleStatusPayload({
+        raw,
+        success: data.success,
+        fail: data.fail,
+      });
+    });
+
+    startFallbackPolling();
+    startTimer();
+  </script>
+
+  <%- include("partials/footer") %>
+</body>
+</html>

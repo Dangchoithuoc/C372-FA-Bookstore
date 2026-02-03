@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayPal Checkout | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .paypal-button-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .order-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 16px;
+    }
+    .order-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <%- include("partials/navbar", { user }) %>
+
+  <div class="checkout-shell">
+    <h2 class="checkout-title">PayPal Checkout</h2>
+    <div class="checkout-columns">
+
+      <div class="checkout-section">
+        <h3>PayPal Payment</h3>
+        <p class="muted" style="margin-top: 2px;">Shipping to: <strong><%= shippingAddress %></strong></p>
+        <div class="paypal-button-panel">
+          <div id="paypal-buttons-paypal"></div>
+          <div id="paypal-buttons-card"></div>
+        </div>
+        <p id="paypal-error" class="error" style="display: none;"></p>
+        <form action="/checkout" method="GET" style="margin-top: 16px;">
+          <button type="submit">Back to regular checkout</button>
+        </form>
+      </div>
+
+      <div class="checkout-section">
+        <h3>Order summary</h3>
+        <% if (!cart.items.length) { %>
+          <p class="muted">No items in the cart.</p>
+        <% } else { %>
+          <% cart.items.forEach(item => { %>
+            <div class="order-item">
+              <div>
+                <strong><%= item.productName %></strong>
+                <p class="muted" style="margin: 4px 0 0;"><%= item.quantity %> x $<%= item.price.toFixed(2) %></p>
+              </div>
+              <span>$<%= (item.price * item.quantity).toFixed(2) %></span>
+            </div>
+          <% }) %>
+        <% } %>
+        <hr>
+        <div class="order-row">
+          <span>Subtotal</span>
+          <strong>$<%= cart.totals.subtotal.toFixed(2) %></strong>
+        </div>
+        <div class="order-row">
+          <span>Tax</span>
+          <strong>$<%= cart.totals.tax.toFixed(2) %></strong>
+        </div>
+        <div class="order-row" style="font-size: 1.1rem;">
+          <span>Total</span>
+          <strong>$<%= cart.totals.total.toFixed(2) %></strong>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <% if (paypalClientId) { %>
+    <script src="https://www.paypal.com/sdk/js?client-id=<%= paypalClientId %>&currency=SGD&enable-funding=card"></script>
+    <script>
+      const paypalError = document.getElementById("paypal-error");
+
+      const paypalConfig = {
+        createOrder: async () => {
+          paypalError.style.display = "none";
+          const response = await fetch("/api/paypal/create-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}"
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data.error || "Unable to create PayPal order");
+          }
+          return data.id;
+        },
+        onApprove: async (data) => {
+          paypalError.style.display = "none";
+          const response = await fetch("/api/paypal/capture-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: data.orderID })
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || "Unable to capture PayPal order");
+          }
+          window.location.href = "/";
+        },
+        onError: (err) => {
+          console.error(err);
+          paypalError.textContent = "PayPal payment failed. Please try again.";
+          paypalError.style.display = "block";
+        }
+      };
+
+      if (!window.paypal) {
+        paypalError.textContent = "PayPal failed to load. Please refresh.";
+        paypalError.style.display = "block";
+      } else {
+        paypal.Buttons({
+          ...paypalConfig,
+          fundingSource: paypal.FUNDING.PAYPAL,
+          style: {
+            layout: "vertical",
+            color: "gold",
+            shape: "rect",
+            label: "paypal"
+          }
+        }).render("#paypal-buttons-paypal");
+
+        paypal.Buttons({
+          ...paypalConfig,
+          fundingSource: paypal.FUNDING.CARD,
+          style: {
+            layout: "vertical",
+            color: "black",
+            shape: "rect",
+            label: "card"
+          }
+        }).render("#paypal-buttons-card");
+
+        setTimeout(() => {
+          if (!document.querySelector("#paypal-buttons-card iframe")) {
+            const hint = document.createElement("p");
+            hint.className = "muted";
+            hint.textContent = "Card button unavailable for this region.";
+            document.getElementById("paypal-buttons-card").appendChild(hint);
+          }
+        }, 800);
+      }
+    </script>
+  <% } else { %>
+    <script>
+      const paypalError = document.getElementById("paypal-error");
+      paypalError.textContent = "PayPal is not configured. Add PAYPAL_CLIENT_ID and restart.";
+      paypalError.style.display = "block";
+    </script>
+  <% } %>
+</body>
+</html>

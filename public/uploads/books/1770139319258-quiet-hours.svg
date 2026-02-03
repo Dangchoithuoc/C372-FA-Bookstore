@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="880" viewBox="0 0 600 880">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="100%" stop-color="#f4b4c3"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="880" rx="28" fill="url(#bg)"/>
+  <rect x="54" y="58" width="492" height="764" rx="22" fill="rgba(255,255,255,0.12)"/>
+  <circle cx="470" cy="210" r="60" fill="#fff1f2" opacity="0.85"/>
+  <text x="84" y="520" fill="#fef2f2" font-family="Georgia, serif" font-size="56" font-weight="700">QUIET</text>
+  <text x="84" y="590" fill="#fef2f2" font-family="Georgia, serif" font-size="56" font-weight="700">HOURS</text>
+  <text x="84" y="660" fill="#fecdd3" font-family="Georgia, serif" font-size="26">Nadia Bloom</text>
+</svg>

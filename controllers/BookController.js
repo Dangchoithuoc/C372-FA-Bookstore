@@ -35,13 +35,14 @@ module.exports = {
                 tagline: "A bookshop mystery soaked in moonlight and old paper",
                 description: "Follow archivist Elise Calder as she uncovers a century-old disappearance beneath the city's forgotten stacks.",
                 price: 24.0,
-                badge: "New Arrival"
+                badge: "New Arrival",
+                coverImage: "/images/midnight-archive.svg"
             });
 
             const resolvedStaff = normalizeStaff(staffPicks) || normalizeStaff([
-                { title: "Ink & Ember", author: "Ravi Iyer", price: 19.5, vibe: "Atmospheric fantasy", badge: "Staff pick" },
-                { title: "Third Coast Essays", author: "Mae Lin", price: 17.0, vibe: "Sharp non-fiction", badge: "Essay" },
-                { title: "Quiet Hours", author: "Nadia Bloom", price: 15.2, vibe: "Slow-burn romance", badge: "Comfort" }
+                { title: "Ink & Ember", author: "Ravi Iyer", price: 19.5, vibe: "Atmospheric fantasy", badge: "Staff pick", coverImage: "/images/ink-ember.svg" },
+                { title: "Third Coast Essays", author: "Mae Lin", price: 17.0, vibe: "Sharp non-fiction", badge: "Essay", coverImage: "/images/third-coast-essays.svg" },
+                { title: "Quiet Hours", author: "Nadia Bloom", price: 15.2, vibe: "Slow-burn romance", badge: "Comfort", coverImage: "/images/quiet-hours.svg" }
             ]);
 
             const resolvedShelves = shelves && shelves.length > 0 ? shelves : [
@@ -96,7 +97,8 @@ function normalizeSpotlight(item) {
         tagline: item.tagline,
         description: item.description || item.tagline || "",
         price: normalizePrice(item.price),
-        badge: item.badge || "New Arrival"
+        badge: item.badge || "New Arrival",
+        coverImage: item.coverImage || "/images/default-book.svg"
     };
 }
 
@@ -108,6 +110,7 @@ function normalizeStaff(list) {
         author: b.author,
         price: normalizePrice(b.price),
         vibe: b.vibe,
-        badge: b.badge || "Staff pick"
+        badge: b.badge || "Staff pick",
+        coverImage: b.coverImage || "/images/default-book.svg"
     }));
 }

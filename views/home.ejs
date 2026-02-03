@@ -97,6 +97,15 @@
       transition: transform 0.2s;
     }
     
+    .book-card-cover {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      background: #f3f4f6;
+    }
+    
     .book-card:hover {
       transform: translateY(-5px);
     }
@@ -210,6 +219,31 @@
     .add-book-btn:hover {
       background: #0056b3;
     }
+
+    .hero-cover {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .hero-cover-img {
+      width: 200px;
+      max-height: 320px;
+      object-fit: cover;
+      border-radius: 18px;
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    }
+
+    .staff-cover-thumb {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      background: #f2f2f2;
+    }
     
     @media (max-width: 768px) {
       .header-inner {
@@ -312,6 +346,9 @@
         </form>
       </div>
       <div class="cover">
+        <div class="hero-cover">
+          <img class="hero-cover-img" src="<%= spotlight.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= spotlight.title %>">
+        </div>
         <h3><%= spotlight.title %></h3>
         <p class="muted">First edition jacket</p>
       </div>
@@ -416,8 +453,9 @@
       <% if (filteredBooks && filteredBooks.length > 0) { %>
         <div class="books-grid">
           <% filteredBooks.forEach(function(book) { %>
-            <div class="book-card">
-              <span class="book-genre"><%= book.genre || 'General' %></span>
+              <div class="book-card">
+                <img class="book-card-cover" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
+                <span class="book-genre"><%= book.genre || 'General' %></span>
               <h3 class="book-title"><%= book.title %></h3>
               <p class="book-author">by <%= book.author %></p>
               <p class="book-price">$<%= book.price.toFixed(2) %></p>
@@ -479,6 +517,7 @@
       <div class="grid">
         <% staffPicks.forEach(function(book) { %>
           <article class="card">
+            <img class="staff-cover-thumb" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
             <span class="tag"><%= book.badge %></span>
             <h3><%= book.title %></h3>
             <p class="muted">by <%= book.author %></p>

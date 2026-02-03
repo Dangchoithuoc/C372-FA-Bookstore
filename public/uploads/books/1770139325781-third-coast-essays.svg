@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="880" viewBox="0 0 600 880">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0c2b2b"/>
+      <stop offset="100%" stop-color="#2dd4bf"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="880" rx="28" fill="url(#bg)"/>
+  <rect x="52" y="56" width="496" height="768" rx="20" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.14)"/>
+  <path d="M90 300 C200 240 320 240 430 300" stroke="#d1fae5" stroke-width="8" fill="none"/>
+  <path d="M90 360 C200 300 320 300 430 360" stroke="#d1fae5" stroke-width="8" fill="none"/>
+  <text x="86" y="520" fill="#ecfeff" font-family="Georgia, serif" font-size="52" font-weight="700">THIRD COAST</text>
+  <text x="86" y="590" fill="#ecfeff" font-family="Georgia, serif" font-size="46" font-weight="700">ESSAYS</text>
+  <text x="86" y="660" fill="#ccfbf1" font-family="Georgia, serif" font-size="26">Mae Lin</text>
+</svg>

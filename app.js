@@ -1,8 +1,33 @@
 const express = require("express");
 const session = require("express-session");
 const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 
 const app = express();
+
+const bookUploadsDir = path.join(__dirname, "public", "uploads", "books");
+fs.mkdirSync(bookUploadsDir, { recursive: true });
+
+const allowedBookImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+const bookImageStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, bookUploadsDir),
+    filename: (req, file, cb) => {
+        const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "-");
+        cb(null, `${Date.now()}-${safeName}`);
+    }
+});
+const uploadBookImage = multer({
+    storage: bookImageStorage,
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (!allowedBookImageTypes.includes(file.mimetype)) {
+            req.fileValidationError = "Only JPEG, PNG, GIF, or WEBP images are allowed.";
+            return cb(null, false);
+        }
+        cb(null, true);
+    }
+});
 
 // View Engine Setup
 app.set("view engine", "ejs");
@@ -27,6 +52,7 @@ const UserController = require("./controllers/UserController");
 const CartController = require("./controllers/CartController");
 const SellerController = require("./controllers/SellerController"); // NEW
 const AdminController = require("./controllers/AdminController"); // NEW
+const PaypalController = require("./controllers/PaypalController");
 const CartModel = require("./models/Cart");
 
 // Middleware to require login
@@ -89,14 +115,17 @@ app.post("/cart/clear", requireLogin, CartController.clearCart);
 // Checkout routes (login + cart required)
 app.get("/checkout", requireLogin, requireCartItems, CheckoutController.checkoutPage);
 app.post("/checkout/pay", requireLogin, requireCartItems, CheckoutController.processPayment);
+app.get("/checkout/paypal", requireLogin, requireCartItems, PaypalController.paypalPage);
+app.post("/api/paypal/create-order", requireLogin, requireCartItems, PaypalController.createOrder);
+app.post("/api/paypal/capture-order", requireLogin, PaypalController.captureOrder);
 
 // NEW: Seller CRUD routes (login + seller role required)
 app.get("/seller/dashboard", requireLogin, requireSeller, SellerController.dashboard);
 app.get("/seller/books", requireLogin, requireSeller, SellerController.listBooks);
 app.get("/seller/books/new", requireLogin, requireSeller, SellerController.newBookPage);
-app.post("/seller/books", requireLogin, requireSeller, SellerController.createBook);
+app.post("/seller/books", requireLogin, requireSeller, uploadBookImage.single("image"), SellerController.createBook);
 app.get("/seller/books/:id/edit", requireLogin, requireSeller, SellerController.editBookPage);
-app.post("/seller/books/:id/update", requireLogin, requireSeller, SellerController.updateBook);
+app.post("/seller/books/:id/update", requireLogin, requireSeller, uploadBookImage.single("image"), SellerController.updateBook);
 app.post("/seller/books/:id/delete", requireLogin, requireSeller, SellerController.deleteBook);
 
 

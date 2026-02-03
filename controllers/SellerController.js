@@ -1,5 +1,6 @@
-const Book = require("../models/Book");
 const pool = require("../db");
+
+const getCoverImagePath = (file) => (file ? `/uploads/books/${file.filename}` : null);
 
 module.exports = {
     // Seller dashboard
@@ -69,19 +70,29 @@ module.exports = {
         try {
             const { title, author, genre, price } = req.body;
             const sellerId = req.session.user.id;
+            const coverImage = getCoverImagePath(req.file);
+
+            if (req.fileValidationError) {
+                return res.render("seller/book-form", {
+                    user: req.session.user,
+                    book: { ...req.body, coverImage },
+                    action: "Create",
+                    error: req.fileValidationError
+                });
+            }
             
             if (!title || !author || !price) {
                 return res.render("seller/book-form", {
                     user: req.session.user,
-                    book: req.body, // Pass the submitted data back
+                    book: { ...req.body, coverImage }, // Pass the submitted data back
                     action: "Create", // Include action
                     error: "Title, author, and price are required"
                 });
             }
             
             const [result] = await pool.execute(
-                "INSERT INTO books (title, author, genre, price, seller_id) VALUES (?, ?, ?, ?, ?)",
-                [title, author, genre || null, parseFloat(price), sellerId]
+                "INSERT INTO books (title, author, genre, price, seller_id, coverImage) VALUES (?, ?, ?, ?, ?, ?)",
+                [title, author, genre || null, parseFloat(price), sellerId, coverImage]
             );
             
             res.redirect("/seller/books");
@@ -89,7 +100,7 @@ module.exports = {
             console.error("Create book error:", err);
             res.render("seller/book-form", {
                 user: req.session.user,
-                book: req.body, // Pass the submitted data back
+                book: { ...req.body, coverImage: getCoverImagePath(req.file) }, // Pass the submitted data back
                 action: "Create", // Include action
                 error: "Error creating book"
             });
@@ -125,44 +136,63 @@ module.exports = {
 
     // Update book
     updateBook: async (req, res) => {
+        let currentBook = null;
         try {
             const { id } = req.params;
             const { title, author, genre, price } = req.body;
             const sellerId = req.session.user.id;
-            
-            if (!title || !author || !price) {
-                // Get the book to preserve other data
-                const [books] = await pool.execute(
-                    "SELECT * FROM books WHERE book_id = ? AND seller_id = ?",
-                    [id, sellerId]
-                );
-                
+            const coverImageFromFile = getCoverImagePath(req.file);
+
+            const [books] = await pool.execute(
+                "SELECT * FROM books WHERE book_id = ? AND seller_id = ?",
+                [id, sellerId]
+            );
+
+            if (books.length === 0) {
+                return res.redirect("/seller/books");
+            }
+
+            currentBook = books[0];
+            const finalCoverImage = coverImageFromFile || currentBook.coverImage || null;
+
+            if (req.fileValidationError) {
                 return res.render("seller/book-form", {
                     user: req.session.user,
-                    book: books.length > 0 ? { ...books[0], ...req.body } : req.body,
+                    book: { ...currentBook, ...req.body, coverImage: finalCoverImage },
+                    action: "Update",
+                    error: req.fileValidationError
+                });
+            }
+
+            if (!title || !author || !price) {
+                return res.render("seller/book-form", {
+                    user: req.session.user,
+                    book: { ...currentBook, ...req.body, coverImage: finalCoverImage },
                     action: "Update",
                     error: "Title, author, and price are required"
                 });
             }
-            
+
             await pool.execute(
-                "UPDATE books SET title = ?, author = ?, genre = ?, price = ? WHERE book_id = ? AND seller_id = ?",
-                [title, author, genre || null, parseFloat(price), id, sellerId]
+                "UPDATE books SET title = ?, author = ?, genre = ?, price = ?, coverImage = ? WHERE book_id = ? AND seller_id = ?",
+                [title, author, genre || null, parseFloat(price), finalCoverImage, id, sellerId]
             );
-            
+
             res.redirect("/seller/books");
         } catch (err) {
             console.error("Update book error:", err);
             // On error, try to get the original book data
             try {
+                const sellerId = req.session.user.id;
+                const { id } = req.params;
                 const [books] = await pool.execute(
                     "SELECT * FROM books WHERE book_id = ? AND seller_id = ?",
                     [id, sellerId]
                 );
-                
+
                 res.render("seller/book-form", {
                     user: req.session.user,
-                    book: books.length > 0 ? { ...books[0], ...req.body } : req.body,
+                    book: currentBook || (books.length > 0 ? { ...books[0], ...req.body } : req.body),
                     action: "Update",
                     error: "Error updating book"
                 });

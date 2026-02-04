@@ -1,5 +1,6 @@
 const Cart = require("../models/Cart");
 const paypalService = require("../services/paypal");
+const Order = require("../models/Order");
 
 const TAX_RATE = 0; // keep tax zero until we have rates from requirements
 
@@ -74,9 +75,12 @@ module.exports = {
 
             const captureResult = await paypalService.captureOrder(orderId);
 
-            await Cart.clearCart(req.session.user.id);
+            const orderDbId = await Order.checkout(req.session.user.id, "PayPal");
+            if (!orderDbId) {
+                return res.status(500).json({ error: "Order could not be created" });
+            }
 
-            res.json({ success: true, capture: captureResult });
+            res.json({ success: true, capture: captureResult, invoiceUrl: `/invoice/${orderDbId}` });
         } catch (err) {
             console.error("PayPal capture error", err);
             res.status(500).json({ error: err.message || "Unable to capture PayPal order" });

@@ -5,6 +5,7 @@
       <a href="/">Home</a>
       <% if (user && user.role === "buyer") { %>
         <a href="/cart">Cart</a>
+        <a href="/orders">Orders</a>
       <% } %>
       <% if (user) { %>
         <% if (user.role === "admin") { %>

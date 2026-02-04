@@ -1,6 +1,7 @@
 const axios = require("axios");
 const path = require("path");
 const Cart = require("../models/Cart");
+const Order = require("../models/Order");
 
 const NETS_QR_REQUEST_URL =
   "https://sandbox.nets.openapipaas.com/api/v1/common/payments/nets-qr/request";
@@ -124,10 +125,12 @@ async function finalizeOrderFromSession(req) {
     throw new Error("Your cart is empty.");
   }
 
-  const orderNumber = `NETS-${Date.now().toString().slice(-6)}`;
-  await Cart.clearCart(userId);
-  req.session.netsOrderCompleted = { orderNumber };
-  return { orderNumber };
+  const orderId = await Order.checkout(userId, "NETS");
+  if (!orderId) {
+    throw new Error("Order could not be created.");
+  }
+  req.session.netsOrderCompleted = { orderId };
+  return { orderId };
 }
 
 class NetsController {
@@ -297,15 +300,11 @@ class NetsController {
       if (!req.session.netsOrderCompleted) {
         await finalizeOrderFromSession(req);
       }
-      const orderNumber = req.session.netsOrderCompleted?.orderNumber;
-      const message = orderNumber
-        ? `Payment received. Order #${orderNumber} placed successfully!`
-        : "Payment received.";
-
-      res.render("netsTxnSuccessStatus", {
-        user: req.session.user,
-        message,
-      });
+      const orderId = req.session.netsOrderCompleted?.orderId;
+      if (orderId) {
+        return res.redirect(`/invoice/${orderId}`);
+      }
+      res.redirect("/orders");
     } catch (error) {
       console.error("Error finalizing NETS order:", error.message);
       res.redirect("/checkout");

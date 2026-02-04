@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice #<%= order.order_id %> | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="invoice-shell">
+    <section class="invoice-card">
+      <div class="invoice-top">
+        <div>
+          <div class="pill">Invoice</div>
+          <h1>Invoice #<%= order.order_id %></h1>
+          <p class="muted">Issued on <%= new Date(order.order_date).toLocaleString() %></p>
+        </div>
+        <div class="invoice-total">
+          <span>Total paid</span>
+          <strong>$<%= total.toFixed(2) %></strong>
+        </div>
+      </div>
+
+      <div class="invoice-grid">
+        <div class="invoice-panel">
+          <h3>Bill to</h3>
+          <div><strong><%= order.username %></strong></div>
+          <div class="muted"><%= order.email %></div>
+          <% if (order.contact_number) { %>
+            <div class="muted"><%= order.contact_number %></div>
+          <% } %>
+          <% if (order.address) { %>
+            <div class="muted"><%= order.address %></div>
+          <% } %>
+        </div>
+        <div class="invoice-panel">
+          <h3>Order summary</h3>
+          <div class="muted"><%= items.length %> item(s)</div>
+          <div class="muted">Payment status: <%= order.payment_status || 'Paid' %></div>
+          <div class="muted">Payment method: <%= order.payment_method || 'Unknown' %></div>
+        </div>
+      </div>
+
+      <div class="invoice-items">
+        <% items.forEach(item => { %>
+          <div class="invoice-item">
+            <img src="<%= item.coverImage || '/images/placeholder.svg' %>" alt="<%= item.title %> cover">
+            <div>
+              <div class="invoice-item-title"><%= item.title %></div>
+              <div class="muted"><%= item.author %> · <%= item.genre || 'General' %></div>
+            </div>
+            <div class="invoice-item-price">$<%= item.price.toFixed(2) %></div>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

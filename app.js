@@ -54,6 +54,7 @@ const SellerController = require("./controllers/SellerController"); // NEW
 const AdminController = require("./controllers/AdminController"); // NEW
 const PaypalController = require("./controllers/PaypalController");
 const NetsController = require("./controllers/NetsController");
+const OrderController = require("./controllers/OrderController");
 const CartModel = require("./models/Cart");
 
 // Middleware to require login
@@ -67,6 +68,14 @@ function requireLogin(req, res, next) {
 // Middleware to require seller role
 function requireSeller(req, res, next) {
     if (!req.session.user || req.session.user.role !== 'seller') {
+        return res.redirect("/");
+    }
+    next();
+}
+
+// Middleware to require buyer role
+function requireBuyer(req, res, next) {
+    if (!req.session.user || req.session.user.role !== 'buyer') {
         return res.redirect("/");
     }
     next();
@@ -124,6 +133,10 @@ app.get("/sse/payment-status/:txnRetrievalRef", requireLogin, NetsController.str
 app.get("/api/nets/payment-status/:txnRetrievalRef", requireLogin, NetsController.getStatus);
 app.get("/nets-qr/success", requireLogin, NetsController.showSuccess);
 app.get("/nets-qr/fail", requireLogin, NetsController.showFail);
+
+// Buyer order history
+app.get("/orders", requireLogin, requireBuyer, OrderController.purchaseHistory);
+app.get("/invoice/:id", requireLogin, requireBuyer, OrderController.invoicePage);
 
 // NEW: Seller CRUD routes (login + seller role required)
 app.get("/seller/dashboard", requireLogin, requireSeller, SellerController.dashboard);

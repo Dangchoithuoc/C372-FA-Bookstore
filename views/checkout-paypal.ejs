@@ -111,7 +111,7 @@
           if (!response.ok || !result.success) {
             throw new Error(result.error || "Unable to capture PayPal order");
           }
-          window.location.href = "/";
+          window.location.href = result.invoiceUrl || "/orders";
         },
         onError: (err) => {
           console.error(err);

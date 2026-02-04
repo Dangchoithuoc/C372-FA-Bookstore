@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purchase History | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="profile-shell">
+    <section class="profile-card">
+      <div class="pill">Orders</div>
+      <h1>Purchase history</h1>
+      <p class="muted">Review your past orders and the books you purchased.</p>
+
+      <% if (!orders || orders.length === 0) { %>
+        <div class="muted">No orders yet. Once you check out, they will appear here.</div>
+      <% } else { %>
+        <div class="order-list">
+          <% orders.forEach(order => { %>
+            <article class="order-card">
+              <div class="order-meta">
+                <div>Order #<%= order.id %></div>
+                <div><%= new Date(order.order_date).toLocaleString() %></div>
+                <div>Total: $<%= order.total_price.toFixed(2) %></div>
+                <% if (order.payment_method) { %>
+                  <div>Paid via <%= order.payment_method %></div>
+                <% } %>
+              </div>
+              <div class="order-items">
+                <% order.items.forEach(item => { %>
+                  <div class="order-item">
+                    <img src="<%= item.coverImage || '/images/placeholder.svg' %>" alt="<%= item.title %> cover">
+                    <div>
+                      <div class="order-item-title"><%= item.title %></div>
+                      <div class="muted"><%= item.author %> · <%= item.genre || 'General' %></div>
+                    </div>
+                    <div class="order-item-price">$<%= item.price.toFixed(2) %></div>
+                  </div>
+                <% }) %>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      <% } %>
+    </section>
+  </main>
+</body>
+</html>

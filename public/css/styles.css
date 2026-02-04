@@ -111,6 +111,30 @@ footer { padding: 20px 0 40px; color: var(--muted); text-align: center; font-siz
 .profile-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 .profile-success { padding: 10px 12px; border-radius: 10px; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size: 0.95rem; }
 
+/* Purchase history */
+.order-list { display: grid; gap: 16px; }
+.order-card { border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 16px; background: #f8fafc; padding: 16px; display: grid; gap: 12px; }
+.order-meta { display: flex; flex-wrap: wrap; gap: 12px 18px; font-weight: 600; color: #0f172a; }
+.order-items { display: grid; gap: 10px; }
+.order-item { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; background: #ffffff; border-radius: 12px; padding: 10px 12px; border: 1px solid rgba(15, 23, 42, 0.08); }
+.order-item img { width: 64px; height: 86px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(15, 23, 42, 0.08); }
+.order-item-title { font-weight: 700; }
+.order-item-price { font-weight: 700; color: #1e40af; }
+
+/* Invoice */
+.invoice-shell { width: min(980px, calc(100% - 48px)); margin: 0 auto; padding: 12px 0 60px; }
+.invoice-card { background: #ffffff; border: 1px solid rgba(15, 23, 42, 0.1); border-radius: 18px; box-shadow: var(--shadow); padding: 28px; display: grid; gap: 18px; }
+.invoice-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.invoice-total { background: #e0e7ff; border-radius: 14px; padding: 12px 16px; display: grid; gap: 6px; text-align: right; }
+.invoice-total strong { font-size: 1.4rem; color: #1e40af; }
+.invoice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.invoice-panel { background: #f8fafc; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 14px; padding: 14px; }
+.invoice-items { display: grid; gap: 10px; }
+.invoice-item { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; background: #ffffff; border-radius: 12px; padding: 12px; border: 1px solid rgba(15, 23, 42, 0.08); }
+.invoice-item img { width: 64px; height: 86px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(15, 23, 42, 0.08); }
+.invoice-item-title { font-weight: 700; }
+.invoice-item-price { font-weight: 700; color: #1e40af; }
+
 /* Admin users list */
 .admin-table { display: grid; gap: 8px; }
 .admin-row { display: grid; grid-template-columns: 70px 1.2fr 1.6fr 120px 120px; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(15, 23, 42, 0.1); background: #ffffff; }

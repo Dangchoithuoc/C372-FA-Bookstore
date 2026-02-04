@@ -1,4 +1,5 @@
 const Cart = require("../models/Cart");
+const Order = require("../models/Order");
 
 // Basic checkout simulation (uses DB-backed cart)
 module.exports = {
@@ -22,8 +23,11 @@ module.exports = {
         try {
             const userId = req.session.user.id;
             // Future: connect to real payment API
-            await Cart.clearCart(userId);
-            res.send("Payment processed successfully! (Simulated)");
+            const orderId = await Order.checkout(userId, "Manual");
+            if (!orderId) {
+                return res.status(500).send("Order could not be created");
+            }
+            res.redirect(`/invoice/${orderId}`);
         } catch (err) {
             console.error("Payment error", err);
             res.status(500).send("Payment failed");

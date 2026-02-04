@@ -291,8 +291,7 @@
       </div>
       
       <nav>
-        <a href="#staff-picks">Staff Picks</a>
-        <a href="#shelves">Shelves</a>
+        <a href="#staff-picks">Top Sellers</a>
         
         <% if (user && user.role === 'seller') { %>
           <!-- Seller Navigation -->
@@ -305,7 +304,12 @@
           <a href="/logout">Logout (<%= user.name %>)</a>
         <% } else if (user && user.role === 'buyer') { %>
           <!-- Buyer Navigation -->
-          <a href="/cart">Cart</a>
+          <a class="cart-link" href="/cart">
+            Cart
+            <% if (typeof cartCount === "number" && cartCount > 0) { %>
+              <span class="cart-badge"><%= cartCount %></span>
+            <% } %>
+          </a>
           <a href="/orders">Orders</a>
           <a href="/logout">Logout (<%= user.name %>)</a>
         <% } else { %>
@@ -512,8 +516,8 @@
     <!-- Staff Picks Section -->
     <section id="staff-picks">
       <div class="row">
-        <h2>Staff Picks</h2>
-        <span class="muted">Hand-picked by booksellers on shift this week.</span>
+        <h2>Top Sellers</h2>
+        <span class="muted">Best-loved titles flying off the shelves.</span>
       </div>
       <div class="grid">
         <% staffPicks.forEach(function(book) { %>
@@ -549,22 +553,6 @@
       </div>
     </section>
 
-    <!-- Shelves Section -->
-    <section id="shelves">
-      <div class="row">
-        <h2>Browse by Shelf</h2>
-        <span class="muted">Shortlist of sections in-store today.</span>
-      </div>
-      <div class="shelves">
-        <% shelves.forEach(function(shelf) { %>
-          <article class="shelf" style="--accent: <%= shelf.accent || '#f3f4f6' %>;">
-            <strong><%= shelf.label %></strong>
-            <small><%= shelf.blurb %></small>
-            <a class="tag" href="/?genre=<%= shelf.label %>">Browse</a>
-          </article>
-        <% }); %>
-      </div>
-    </section>
   </main>
 
   <footer>

@@ -11,20 +11,17 @@ module.exports = {
             console.log("Filter params:", { search, genre, priceRange, sortBy });
             console.log("User info:", user ? { id: user.id, role: user.role } : "No user");
             
-            const [spotlight, staffPicks, shelves, filteredBooks] = await Promise.all([
+            const [spotlight, staffPicks, filteredBooks] = await Promise.all([
                 Book.getFeatured(),
-                Book.getStaffPicks(6),
-                Book.getShelves(),
-                (search || genre || priceRange || sortBy) ? 
-                    Book.getFilteredBooks({ 
-                        search, 
-                        genre, 
-                        priceRange, 
-                        sortBy,
-                        currentUserId: user ? user.id : null,
-                        userRole: user ? user.role : 'guest'
-                    }) : 
-                    Promise.resolve(null)
+                Book.getStaffPicks(3),
+                Book.getFilteredBooks({ 
+                    search, 
+                    genre, 
+                    priceRange, 
+                    sortBy,
+                    currentUserId: user ? user.id : null,
+                    userRole: user ? user.role : 'guest'
+                })
             ]);
 
             console.log("Filtered books count:", filteredBooks ? filteredBooks.length : 0);
@@ -45,13 +42,6 @@ module.exports = {
                 { title: "Quiet Hours", author: "Nadia Bloom", price: 15.2, vibe: "Slow-burn romance", badge: "Comfort", coverImage: "/images/quiet-hours.svg" }
             ]);
 
-            const resolvedShelves = shelves && shelves.length > 0 ? shelves : [
-                { label: "Fiction", blurb: "Character-forward novels and transporting stories.", accent: "#fff4e6" },
-                { label: "Non-fiction", blurb: "Curious essays, culture writing, and modern history.", accent: "#e6f6ff" },
-                { label: "Young Adult", blurb: "Coming-of-age adventures with heart.", accent: "#f4e9ff" },
-                { label: "Comics & Art", blurb: "Illustrated worlds, risograph gems, and graphic novels.", accent: "#ecffe6" }
-            ];
-
             // Get seller's books if user is a seller
             let sellerBooks = [];
             if (user && user.role === 'seller') {
@@ -66,7 +56,6 @@ module.exports = {
             res.render("home", {
                 spotlight: resolvedSpotlight,
                 staffPicks: resolvedStaff,
-                shelves: resolvedShelves,
                 filteredBooks: filteredBooks,
                 searchQuery: search || '',
                 genre: genre || '',

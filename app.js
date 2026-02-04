@@ -57,6 +57,21 @@ const NetsController = require("./controllers/NetsController");
 const OrderController = require("./controllers/OrderController");
 const CartModel = require("./models/Cart");
 
+// Cart count for nav badges
+app.use(async (req, res, next) => {
+    res.locals.cartCount = 0;
+    if (!req.session.user || req.session.user.role !== "buyer") {
+        return next();
+    }
+    try {
+        const { items } = await CartModel.getCart(req.session.user.id);
+        res.locals.cartCount = items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
+    } catch (err) {
+        console.error("Cart count error", err);
+    }
+    next();
+});
+
 // Middleware to require login
 function requireLogin(req, res, next) {
     if (!req.session.user) {

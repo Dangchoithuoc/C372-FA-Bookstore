@@ -4,7 +4,12 @@
     <nav>
       <a href="/">Home</a>
       <% if (user && user.role === "buyer") { %>
-        <a href="/cart">Cart</a>
+        <a class="cart-link" href="/cart">
+          Cart
+          <% if (typeof cartCount === "number" && cartCount > 0) { %>
+            <span class="cart-badge"><%= cartCount %></span>
+          <% } %>
+        </a>
         <a href="/orders">Orders</a>
       <% } %>
       <% if (user) { %>

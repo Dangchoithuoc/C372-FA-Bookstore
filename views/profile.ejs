@@ -45,11 +45,26 @@
         </div>
         <div>
           <label for="password">New password</label><br>
-          <input id="password" name="password" type="password" placeholder="Leave blank to keep current password">
+          <div class="password-field">
+            <input id="password" name="password" type="password" class="password-input" placeholder="Leave blank to keep current password">
+            <label class="password-toggle">
+              <input type="checkbox" class="password-toggle-input" data-target="password">
+              Show password
+            </label>
+          </div>
         </div>
         <button class="auth-cta" type="submit">Save changes</button>
       </form>
     </div>
   </main>
+  <script>
+    document.querySelectorAll(".password-toggle-input").forEach(toggle => {
+      toggle.addEventListener("change", () => {
+        const input = document.getElementById(toggle.dataset.target);
+        if (!input) return;
+        input.type = toggle.checked ? "text" : "password";
+      });
+    });
+  </script>
 </body>
 </html>

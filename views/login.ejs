@@ -27,12 +27,27 @@
       </div>
       <div>
         <label for="password">Password</label>
-        <input id="password" name="password" type="password" placeholder="********" required>
+        <div class="password-field">
+          <input id="password" name="password" type="password" class="password-input" placeholder="********" required>
+          <label class="password-toggle">
+            <input type="checkbox" class="password-toggle-input" data-target="password">
+            Show password
+          </label>
+        </div>
       </div>
       <button class="auth-cta" type="submit">Login</button>
     </form>
 
     <p class="auth-muted">Don't have an account? <a href="/register">Register here</a></p>
   </div>
+  <script>
+    document.querySelectorAll(".password-toggle-input").forEach(toggle => {
+      toggle.addEventListener("change", () => {
+        const input = document.getElementById(toggle.dataset.target);
+        if (!input) return;
+        input.type = toggle.checked ? "text" : "password";
+      });
+    });
+  </script>
 </body>
 </html>

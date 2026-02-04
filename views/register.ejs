@@ -107,9 +107,15 @@
       </div>
       <div>
         <label for="password">Password</label><br>
-        <input id="password" name="password" type="password" placeholder="********" 
-               minlength="6" 
-               required>
+        <div class="password-field">
+          <input id="password" name="password" type="password" class="password-input" placeholder="********" 
+                 minlength="6" 
+                 required>
+          <label class="password-toggle">
+            <input type="checkbox" class="password-toggle-input" data-target="password">
+            Show password
+          </label>
+        </div>
         <small class="password-feedback" id="passwordFeedback"></small>
       </div>
       
@@ -202,6 +208,14 @@
 
     // No form validation - let HTML5 and backend handle it
     // This prevents conflicts with your existing backend validation
+
+    document.querySelectorAll(".password-toggle-input").forEach(toggle => {
+      toggle.addEventListener("change", () => {
+        const input = document.getElementById(toggle.dataset.target);
+        if (!input) return;
+        input.type = toggle.checked ? "text" : "password";
+      });
+    });
   </script>
 </body>
 </html>

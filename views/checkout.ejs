@@ -11,74 +11,274 @@ Date created: 10 December 2025
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Checkout | The Bookmark</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .delivery-row { display:flex; gap:10px; margin-bottom: 14px; }
+    .delivery-btn{
+      border:0;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:800;
+      background:#e5e7eb; /* grey */
+      color:#0f172a;
+    }
+    .delivery-btn.active{
+      background:#1d4ed8; /* darker blue */
+      color:#fff;
+    }
+    .hidden{ display:none; }
+
+    .field-error{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:10px;
+      background:#fee2e2;
+      border:1px solid #fecdd3;
+      color:#b91c1c;
+      font-size:0.95rem;
+    }
+
+    .pay-grid{ display:grid; gap:10px; margin-top:12px; }
+    .pay-btn{
+      width:100%;
+      padding:12px 14px;
+      border-radius:12px;
+      border:none;
+      background:#2563eb;
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .pay-btn[disabled]{ opacity:0.55; cursor:not-allowed; }
+    .pay-btn.secondary{ background:#0b3aa6; }
+    .pay-btn.light{ background:#3b82f6; }
+    .note{ color: #52616f; font-size:0.9rem; margin-top:8px; }
+    .req{ color:#b91c1c; font-weight:700; }
+  </style>
 </head>
 <body>
   <%- include("partials/navbar", { user: user }) %>
 
   <div class="checkout-shell">
-
     <h2 class="checkout-title">Checkout</h2>
 
-    <div class="checkout-columns">
+    <!-- ONE FORM FOR BOTH SIDES -->
+    <form id="checkoutForm" method="POST">
+      <input type="hidden" name="delivery_type" id="delivery_type" value="">
+      <input type="hidden" name="payment_method" id="payment_method" value="">
 
-        <!-- Delivery + Contact Info -->
+      <div class="checkout-columns">
+
+        <!-- LEFT -->
         <div class="checkout-section">
-            <h3>Delivery Options</h3>
-            <button>Ship</button>
-            <button style="margin-left: 8px;">Pick up</button>
+          <h3>Delivery Options <span class="req">*</span></h3>
 
-            <h3 style="margin-top: 20px;">Contact Information</h3>
+          <div class="delivery-row">
+            <button type="button" class="delivery-btn" id="btnShip">Ship</button>
+            <button type="button" class="delivery-btn" id="btnPickup">Pick up</button>
+          </div>
 
-            <form method="POST" action="/checkout/pay">
-                <input type="text" name="first_name" placeholder="First name" required>
-                <input type="text" name="last_name" placeholder="Last name" required>
-                <input type="email" name="email" placeholder="Email" required>
-                <input type="text" name="contact" placeholder="Contact number" required>
+          <!-- SHIP -->
+          <div id="shipFields" class="hidden">
+            <h4 style="margin:10px 0 8px;">Shipping Address <span class="req">*</span></h4>
+            <input type="text" name="ship_address1" id="ship_address1" placeholder="Address line 1 (required)">
+            <input type="text" name="ship_address2" id="ship_address2" placeholder="Address line 2 (optional)">
+            <input type="text" name="ship_city" id="ship_city" placeholder="City (required)">
+            <input type="text" name="ship_postal" id="ship_postal" placeholder="Postal Code (required)">
+          </div>
 
-                <button type="submit">Proceed to Payment</button>
-            </form>
+          <!-- PICKUP -->
+          <div id="pickupFields" class="hidden">
+            <h4 style="margin:10px 0 8px;">Pickup Details <span class="req">*</span></h4>
+
+            <select name="pickup_location" id="pickup_location"
+              style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); background:#f8fafc; margin-bottom:12px;">
+              <option value="">Select pickup location</option>
+              <option value="Woodlands MRT">Woodlands MRT</option>
+              <option value="Sengkang MRT">Sengkang MRT</option>
+              <option value="Tampines MRT">Tampines MRT</option>
+              <option value="Jurong East MRT">Jurong East MRT</option>
+              <option value="City Hall MRT">City Hall MRT</option>
+            </select>
+
+            <select name="pickup_timeslot" id="pickup_timeslot"
+              style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); background:#f8fafc;">
+              <option value="">Select pickup time slot</option>
+              <option value="2026-02-04 12:00:00">Today 12pm - 2pm</option>
+              <option value="2026-02-04 14:00:00">Today 2pm - 4pm</option>
+              <option value="2026-02-04 16:00:00">Today 4pm - 6pm</option>
+            </select>
+          </div>
+
+          <h3 style="margin-top: 18px;">Contact Information <span class="req">*</span></h3>
+          <input type="text" name="first_name" id="first_name" placeholder="First name" required>
+          <input type="text" name="last_name" id="last_name" placeholder="Last name" required>
+          <input type="email" name="email" id="email" placeholder="Email" required>
+          <input type="text" name="contact" id="contact" placeholder="Contact number" required>
+
+          <div id="formError" class="field-error hidden"></div>
+          <div class="note">Fill in required fields first. Payment buttons will unlock after.</div>
         </div>
 
-        <!-- Order Summary + Payment Method -->
+        <!-- RIGHT -->
         <div class="checkout-section">
-            <h3>Order Summary</h3>
+          <h3>Order Summary</h3>
 
-            <table style="width:100%; border-collapse: collapse;">
-                <tr style="border-bottom: 1px solid var(--border);">
-                    <th style="text-align:left; padding-bottom: 8px;">Book</th>
-                    <th>Qty</th>
-                    <th style="text-align:right;">Subtotal</th>
-                </tr>
+          <table style="width:100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid var(--border);">
+              <th style="text-align:left; padding-bottom: 8px;">Book</th>
+              <th>Qty</th>
+              <th style="text-align:right;">Subtotal</th>
+            </tr>
 
-                <% cart.forEach(item => { %>
-                <tr>
-                    <td><%= item.title %></td>
-                    <td style="text-align:center;"><%= item.qty %></td>
-                    <td style="text-align:right;">$<%= (item.price * item.qty).toFixed(2) %></td>
-                </tr>
-                <% }) %>
-            </table>
+            <% cart.forEach(item => { %>
+              <tr>
+                <td><%= item.title %></td>
+                <td style="text-align:center;"><%= item.qty %></td>
+                <td style="text-align:right;">$<%= (item.price * item.qty).toFixed(2) %></td>
+              </tr>
+            <% }) %>
+          </table>
 
-            <p class="checkout-total">Total: $<%= total %></p>
+          <p class="checkout-total">Total: $<%= total %></p>
 
-            <h3 style="margin-top: 20px;">Payment Method</h3>
-            <button>Credit / Debit Card</button><br><br>
-            <button>PayNow</button><br><br>
-            <button>GrabPay</button><br><br>
-            <button>PayLah!</button><br><br>
-            <form action="/checkout/paypal" method="GET">
-                <button type="submit">Pay with PayPal</button>
-            </form>
-            <form action="/checkout/nets" method="GET" style="margin-top: 10px;">
-                <button type="submit">Pay with NETS QR</button>
-            </form>
+          <h3 style="margin-top: 16px;">Payment Method</h3>
+
+          <div class="pay-grid">
+            
+            <button type="button" class="pay-btn light" id="btnPayNow" disabled>PayNow (Coming Soon)</button>
+            <button type="button" class="pay-btn light" id="btnCard" disabled>Credit / Debit Card (Coming Soon)</button>
+
+            <button type="button" class="pay-btn secondary" id="btnPayLah" disabled>Pay with PayLah!</button>
+
+            <button type="button" class="pay-btn" id="btnPayPal" disabled>Pay with PayPal</button>
+            <button type="button" class="pay-btn" id="btnNETS" disabled>Pay with NETS QR</button>
+          </div>
+
         </div>
 
-    </div>
+      </div>
+    </form>
   </div>
+
+  <script>
+    const form = document.getElementById("checkoutForm");
+    const errBox = document.getElementById("formError");
+
+    const btnShip = document.getElementById("btnShip");
+    const btnPickup = document.getElementById("btnPickup");
+
+    const shipFields = document.getElementById("shipFields");
+    const pickupFields = document.getElementById("pickupFields");
+
+    const deliveryTypeInput = document.getElementById("delivery_type");
+    const paymentMethodInput = document.getElementById("payment_method");
+
+    const payLahBtn = document.getElementById("btnPayLah");
+    const payPalBtn = document.getElementById("btnPayPal");
+    const netsBtn = document.getElementById("btnNETS");
+
+    const payNowBtn = document.getElementById("btnPayNow");
+    const cardBtn = document.getElementById("btnCard");
+
+    function setDelivery(type) {
+      deliveryTypeInput.value = type;
+
+      btnShip.classList.toggle("active", type === "SHIP");
+      btnPickup.classList.toggle("active", type === "PICKUP");
+
+      shipFields.classList.toggle("hidden", type !== "SHIP");
+      pickupFields.classList.toggle("hidden", type !== "PICKUP");
+
+      validateAndTogglePayments();
+    }
+
+    btnShip.addEventListener("click", () => setDelivery("SHIP"));
+    btnPickup.addEventListener("click", () => setDelivery("PICKUP"));
+
+    function showError(msg) {
+      errBox.textContent = msg;
+      errBox.classList.remove("hidden");
+    }
+
+    function clearError() {
+      errBox.textContent = "";
+      errBox.classList.add("hidden");
+    }
+
+    function getVal(id) {
+      const el = document.getElementById(id);
+      return (el && el.value || "").trim();
+    }
+
+    function isValid() {
+      clearError();
+
+      if (!getVal("first_name") || !getVal("last_name") || !getVal("email") || !getVal("contact")) {
+        showError("Please fill in contact information (First name, Last name, Email, Contact number).");
+        return false;
+      }
+
+      const dt = deliveryTypeInput.value;
+      if (!dt) {
+        showError("Please choose a delivery option (Ship or Pick up).");
+        return false;
+      }
+
+      if (dt === "SHIP") {
+        if (!getVal("ship_address1") || !getVal("ship_city") || !getVal("ship_postal")) {
+          showError("Please fill Shipping Address Line 1, City, and Postal Code.");
+          return false;
+        }
+      }
+
+      if (dt === "PICKUP") {
+        if (!getVal("pickup_location") || !getVal("pickup_timeslot")) {
+          showError("Please select pickup location and time slot.");
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    function validateAndTogglePayments() {
+      // enable/disable without spamming error messages
+      const dt = deliveryTypeInput.value;
+
+      const contactOk = getVal("first_name") && getVal("last_name") && getVal("email") && getVal("contact");
+      const shipOk = dt === "SHIP" && getVal("ship_address1") && getVal("ship_city") && getVal("ship_postal");
+      const pickupOk = dt === "PICKUP" && getVal("pickup_location") && getVal("pickup_timeslot");
+
+      const ok = contactOk && dt && (shipOk || pickupOk);
+
+      payLahBtn.disabled = !ok;
+      payPalBtn.disabled = !ok;
+      netsBtn.disabled = !ok;
+
+      payNowBtn.disabled = true;
+      cardBtn.disabled = true;
+    }
+
+    form.addEventListener("input", validateAndTogglePayments);
+    form.addEventListener("change", validateAndTogglePayments);
+
+    function submitPayment(method, actionUrl) {
+      if (!isValid()) return;
+
+      paymentMethodInput.value = method;
+      form.action = actionUrl;
+      form.method = "POST";
+      form.submit();
+    }
+
+    payLahBtn.addEventListener("click", () => submitPayment("PayLah", "/checkout/paylah"));
+    payPalBtn.addEventListener("click", () => submitPayment("PayPal", "/checkout/paypal"));
+    netsBtn.addEventListener("click", () => submitPayment("NETS_QR", "/checkout/nets"));
+  </script>
 </body>
 </html>

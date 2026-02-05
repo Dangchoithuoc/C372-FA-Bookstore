@@ -54,6 +54,26 @@ module.exports = {
         return book ? { ...book, price: Number(book.price) || 0 } : null;
     },
 
+    async findDetails(id) {
+        const [rows] = await pool.execute(
+            `SELECT b.book_id AS id,
+                    b.title,
+                    b.author,
+                    b.genre,
+                    b.price,
+                    b.coverImage,
+                    u.user_id AS sellerId,
+                    u.username AS sellerName
+             FROM books b
+             LEFT JOIN users u ON u.user_id = b.seller_id
+             WHERE b.book_id = ?
+             LIMIT 1`,
+            [id]
+        );
+        const book = rows[0];
+        return book ? { ...book, price: Number(book.price) || 0 } : null;
+    },
+
    // Add this method to models/Book.js
     async getFilteredBooks({ search, genre, priceRange, sortBy, currentUserId, userRole }) {
         let query = 'SELECT book_id, title, author, genre, price, seller_id, coverImage FROM books WHERE 1=1';

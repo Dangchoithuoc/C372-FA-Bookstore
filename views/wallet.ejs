@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wallet | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="buyer-ui">
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="profile-shell">
+    <section class="profile-card">
+      <div class="pill">Wallet</div>
+      <h1>My eWallet</h1>
+      <p class="muted">Top up with NETS or PayPal. Balance updates after successful payment.</p>
+      <% if (String(error || "") === "insufficient") { %>
+        <div class="error">Insufficient balance. Please top up your wallet.</div>
+      <% } %>
+
+      <div class="wallet-grid">
+        <div class="wallet-card">
+          <small class="muted">Current Balance</small>
+          <div class="wallet-balance">$<%= Number(balance || 0).toFixed(2) %></div>
+          <div class="wallet-divider"></div>
+          <div class="wallet-amount">
+            <label for="amount">Top up amount (SGD)</label>
+            <input id="amount" name="amount" type="number" min="1" step="0.01" placeholder="10.00" required>
+          </div>
+          <div class="wallet-actions">
+            <form method="POST" action="/wallet/nets">
+              <input type="hidden" name="amount" id="amount_nets">
+              <button class="cta wallet-cta" type="submit">Top up with NETS</button>
+            </form>
+            <div id="paypal-button-container"></div>
+            <div id="paypal-error" class="error" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="wallet-card">
+          <h3>Recent transactions</h3>
+          <% if (!transactions || transactions.length === 0) { %>
+            <div class="muted">No transactions yet.</div>
+          <% } else { %>
+            <div class="wallet-tx">
+              <% transactions.forEach(tx => { %>
+                <div class="wallet-tx-item">
+                  <div>
+                    <div class="order-item-title"><%= tx.transaction_type %></div>
+                    <div class="muted"><%= new Date(tx.transaction_time).toLocaleString() %></div>
+                  </div>
+                  <div class="order-item-price">$<%= Number(tx.amount || 0).toFixed(2) %></div>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+    </section>
+
+    <% if (typeof qrCodeUrl !== "undefined" && qrCodeUrl) { %>
+      <section class="profile-card" style="margin-top: 16px;">
+        <div class="nets-hero">
+          <div>
+            <p class="text-uppercase small text-muted mb-1">NETS QR top up</p>
+            <h2 class="h3 mb-0">Scan to top up $<%= amount %></h2>
+            <p class="text-muted mb-0">Keep this window open while completing payment.</p>
+          </div>
+          <span id="timer" class="nets-hero timer-chip">Time remaining: 5:00</span>
+        </div>
+        <div class="nets-layout">
+          <div class="nets-card">
+            <div class="card-body text-center">
+              <p class="small text-muted text-uppercase mb-3">Scan this code</p>
+              <img class="img-fluid rounded-3 shadow-sm border" src="<%= qrCodeUrl %>" alt="NETS QR Code">
+              <div class="mt-3 small text-muted">Top up amount: $<%= amount %></div>
+            </div>
+          </div>
+          <div class="nets-card">
+            <div class="card-body">
+              <p class="text-uppercase small text-muted mb-3">How it works</p>
+              <img class="img-fluid rounded-3 shadow-sm border mb-3 nets-info-img" src="/images/netsQrInfo.png" alt="NETS QR steps">
+              <p class="mb-0 text-muted">Approve the payment in your banking app and we'll update your wallet.</p>
+              <div class="d-flex flex-wrap gap-3 mt-4">
+                <a href="/wallet" class="btn btn-outline-secondary">Back to wallet</a>
+                <span class="badge bg-primary-subtle text-primary align-self-center">Secure NETS gateway</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    <% } %>
+  </main>
+  <% if (paypalClientId) { %>
+    <script src="https://www.paypal.com/sdk/js?client-id=<%= paypalClientId %>&currency=SGD"></script>
+    <script>
+      const netsAmountInput = document.getElementById("amount_nets");
+      const amountInput = document.getElementById("amount");
+      document.querySelector('form[action="/wallet/nets"]')?.addEventListener("submit", () => {
+        netsAmountInput.value = amountInput.value;
+      });
+      const paypalError = document.getElementById("paypal-error");
+      paypal.Buttons({
+        createOrder: async () => {
+          const amount = Number(amountInput.value || 0).toFixed(2);
+          if (!amount || Number(amount) <= 0) {
+            paypalError.style.display = "block";
+            paypalError.textContent = "Please enter a valid top up amount.";
+            throw new Error("Invalid amount");
+          }
+          const response = await fetch("/api/wallet/paypal/create-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount })
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "Unable to create PayPal order");
+          }
+          paypalError.style.display = "none";
+          return data.id || data.orderID;
+        },
+        onApprove: async (data) => {
+          const response = await fetch("/api/wallet/paypal/capture-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: data.orderID })
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || "Unable to capture PayPal order");
+          }
+          window.location.href = result.redirectUrl || "/wallet";
+        },
+        onError: (err) => {
+          paypalError.style.display = "block";
+          paypalError.textContent = err.message || "Payment failed.";
+        }
+      }).render("#paypal-button-container");
+    </script>
+  <% } %>
+
+  <% if (typeof qrCodeUrl !== "undefined" && qrCodeUrl) { %>
+  <script>
+    let s2sNetsTxnStatus;
+    if (s2sNetsTxnStatus) {
+      s2sNetsTxnStatus.close();
+    }
+    const txnRetrievalRef = "<%= txnRetrievalRef %>";
+    const url = `/sse/payment-status/${txnRetrievalRef}`;
+    const headers = {
+      "api-key": "<%= apiKey %>",
+      "project-id": "<%= projectId %>"
+    };
+    const statusApiUrl = `/api/nets/payment-status/${encodeURIComponent(txnRetrievalRef)}`;
+    let fallbackInterval = null;
+    let hasRedirected = false;
+    const timerElement = document.getElementById("timer");
+    const countdownDuration = 300;
+    let remainingTime = countdownDuration;
+    let timerInterval = null;
+
+    const updateTimerDisplay = () => {
+      if (!timerElement) return;
+      const minutes = Math.floor(Math.max(remainingTime, 0) / 60);
+      const seconds = Math.max(remainingTime, 0) % 60;
+      timerElement.textContent = `Time remaining: ${minutes}:${seconds.toString().padStart(2, "0")}`;
+    };
+
+    const startTimer = () => {
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        remainingTime--;
+        updateTimerDisplay();
+        if (remainingTime < 0) {
+          timerElement.textContent = "Transaction timed out.";
+          finalizeRedirect(`/wallet/nets/fail?txn_retrieval_ref=${txnRetrievalRef}`);
+        }
+      }, 1000);
+    };
+
+    const stopTimer = () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    };
+
+    const stopFallbackPolling = () => {
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+        fallbackInterval = null;
+      }
+    };
+
+    const finalizeRedirect = (redirectUrl) => {
+      if (hasRedirected) return;
+      hasRedirected = true;
+      stopFallbackPolling();
+      if (s2sNetsTxnStatus) {
+        s2sNetsTxnStatus.close();
+      }
+      stopTimer();
+      window.location.href = redirectUrl;
+    };
+
+    const handleStatusPayload = ({ raw = {}, success, fail, status }) => {
+      if (hasRedirected) return;
+      const statusDesc = String(raw.txn_status_desc || "").toLowerCase();
+      const paymentDesc = String(raw.payment_status_desc || "").toLowerCase();
+      const responseCode = String(raw.response_code || "");
+      const txnStatus = Number(raw.txn_status);
+
+      if (success || status === "success") {
+        finalizeRedirect(`/wallet/nets/success?txn_retrieval_ref=${txnRetrievalRef}`);
+        return;
+      }
+
+      if (fail || status === "fail") {
+        finalizeRedirect(`/wallet/nets/fail?txn_retrieval_ref=${txnRetrievalRef}`);
+        return;
+      }
+
+      if (
+        responseCode === "00" &&
+        (txnStatus === 2 ||
+          statusDesc.includes("success") ||
+          statusDesc.includes("approved") ||
+          statusDesc.includes("completed") ||
+          paymentDesc.includes("success") ||
+          paymentDesc.includes("approved") ||
+          paymentDesc.includes("completed"))
+      ) {
+        finalizeRedirect(`/wallet/nets/success?txn_retrieval_ref=${txnRetrievalRef}`);
+      }
+    };
+
+    const pollFallbackStatus = async () => {
+      if (hasRedirected) return;
+      try {
+        const response = await fetch(statusApiUrl, { credentials: "include" });
+        if (!response.ok) {
+          throw new Error(`NETS fallback poll failed with status ${response.status}`);
+        }
+        const payload = await response.json();
+        handleStatusPayload({ raw: payload.raw || {}, status: payload.status });
+      } catch (error) {
+        console.error("NETS fallback poll error:", error);
+      }
+    };
+
+    const startFallbackPolling = () => {
+      stopFallbackPolling();
+      fallbackInterval = setInterval(pollFallbackStatus, 3000);
+      pollFallbackStatus();
+    };
+
+    const EventSourceClient = window.EventSourcePolyfill || window.EventSource;
+    if (!EventSourceClient) {
+      console.error("EventSource is not supported in this browser.");
+    } else {
+      const options = {
+        withCredentials: true,
+        heartbeatTimeout: 150000,
+      };
+      if (EventSourceClient === window.EventSourcePolyfill) {
+        options.headers = headers;
+      }
+      s2sNetsTxnStatus = new EventSourceClient(url, options);
+    }
+
+    s2sNetsTxnStatus?.addEventListener("message", (event) => {
+      let data = null;
+      try {
+        data = JSON.parse(event.data);
+      } catch (error) {
+        console.error("Unable to parse NETS status payload.", error);
+        return;
+      }
+      const raw = data.raw || {};
+      handleStatusPayload({
+        raw,
+        success: data.success,
+        fail: data.fail,
+      });
+    });
+
+    startFallbackPolling();
+    startTimer();
+  </script>
+  <% } %>
+</body>
+</html>

@@ -13,7 +13,7 @@ module.exports = {
     async getCart(userId) {
         const cartId = await ensureCart(userId);
         const [items] = await pool.execute(
-            `SELECT ci.cart_item_id, b.book_id AS id, b.title, b.price, ci.quantity AS qty
+            `SELECT ci.cart_item_id, b.book_id AS id, b.title, b.price, b.coverImage, ci.quantity AS qty
              FROM cart_items ci
              JOIN books b ON ci.book_id = b.book_id
              WHERE ci.cart_id = ?`,

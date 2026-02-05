@@ -25,12 +25,13 @@
           <span class="muted">Total: $<%= total %></span>
         </div>
         <div class="grid cart-grid">
-          <strong>Title</strong>
+          <strong>Book</strong>
           <strong class="center">Price</strong>
           <strong class="center">Qty</strong>
           <strong class="center">Remove</strong>
           <% cart.forEach(function(item) { %>
-            <div>
+            <div class="cart-item-title">
+              <img class="cart-thumb" src="<%= item.coverImage || '/images/placeholder.svg' %>" alt="<%= item.title %> cover">
               <div><%= item.title %></div>
             </div>
             <div class="center">$<%= Number(item.price || 0).toFixed(2) %></div>
@@ -44,7 +45,7 @@
             <div class="center">
               <form action="/cart/remove" method="POST">
                 <input type="hidden" name="id" value="<%= item.id %>">
-                <button type="submit" class="cta" style="padding:8px 12px; background: #ef4444; box-shadow:none;">Remove</button>
+                <button type="submit" class="cta cart-remove-btn" style="padding:8px 12px;">Remove</button>
               </form>
             </div>
           <% }); %>

@@ -1,6 +1,6 @@
 const Order = require("../models/Order");
 
-const DELIVERY_STATUSES = ["Pending", "Processing", "Shipped", "Delivered"];
+const DELIVERY_STATUSES = ["Pending", "Processing", "Shipping", "Delivered"];
 
 module.exports = {
     purchaseHistory: async (req, res) => {

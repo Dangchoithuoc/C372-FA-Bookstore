@@ -55,7 +55,9 @@ const AdminController = require("./controllers/AdminController"); // NEW
 const PaypalController = require("./controllers/PaypalController");
 const NetsController = require("./controllers/NetsController");
 const OrderController = require("./controllers/OrderController");
+const WalletController = require("./controllers/WalletController");
 const CartModel = require("./models/Cart");
+const WishlistController = require("./controllers/WishlistController");
 
 // Cart count for nav badges
 app.use(async (req, res, next) => {
@@ -122,6 +124,7 @@ async function requireCartItems(req, res, next) {
 
 // Homepage (shows different UI based on role)
 app.get("/", BookController.homePage);
+app.get("/books/:id", BookController.bookDetails);
 
 // Auth routes
 app.get("/login", UserController.loginPage);
@@ -132,12 +135,25 @@ app.get("/logout", UserController.logout);
 app.get("/profile", requireLogin, UserController.profilePage);
 app.post("/profile", requireLogin, UserController.updateProfile);
 
+// Wallet (buyer only)
+app.get("/wallet", requireLogin, requireBuyer, WalletController.walletPage);
+app.post("/api/wallet/paypal/create-order", requireLogin, requireBuyer, WalletController.paypalCreateOrder);
+app.post("/api/wallet/paypal/capture-order", requireLogin, requireBuyer, WalletController.paypalCaptureOrder);
+app.post("/wallet/nets", requireLogin, requireBuyer, WalletController.netsQr);
+app.get("/wallet/nets/success", requireLogin, requireBuyer, WalletController.netsSuccess);
+app.get("/wallet/nets/fail", requireLogin, requireBuyer, WalletController.netsFail);
+
 // Cart routes (login required)
 app.get("/cart", requireLogin, CartController.viewCart);
 app.post("/cart/add", requireLogin, CartController.addItem);
 app.post("/cart/update", requireLogin, CartController.updateItem);
 app.post("/cart/remove", requireLogin, CartController.removeItem);
 app.post("/cart/clear", requireLogin, CartController.clearCart);
+
+// Wishlist routes (buyer only)
+app.get("/wishlist", requireLogin, requireBuyer, WishlistController.viewWishlist);
+app.post("/wishlist/add", requireLogin, requireBuyer, WishlistController.addItem);
+app.post("/wishlist/remove", requireLogin, requireBuyer, WishlistController.removeItem);
 
 // Checkout routes (login + cart required)
 app.get("/checkout", requireLogin, requireCartItems, CheckoutController.checkoutPage);
@@ -149,6 +165,8 @@ app.post("/checkout/save-details", requireLogin, requireCartItems, CheckoutContr
 app.post("/checkout/paylah", requireLogin, requireCartItems, CheckoutController.payLah);
 // Skip payment (testing)
 app.post("/checkout/skip", requireLogin, requireCartItems, CheckoutController.skipPayment);
+// eWallet (buyer only)
+app.post("/checkout/wallet", requireLogin, requireBuyer, requireCartItems, CheckoutController.walletPay);
 
 // PayPal flow 
 app.get("/checkout/paypal", requireLogin, requireCartItems, PaypalController.paypalPage);

@@ -69,13 +69,13 @@ module.exports = {
     chartsPage: async (req, res) => {
         try {
             const [dailyRows] = await pool.execute(
-                `SELECT DATE(order_date) AS day,
+                `SELECT DATE_FORMAT(order_date, '%Y-%m-%d %H:%i') AS minute,
                         COUNT(*) AS orders,
                         COALESCE(SUM(total_price), 0) AS revenue
                  FROM orders
-                 GROUP BY DATE(order_date)
-                 ORDER BY DATE(order_date) ASC
-                 LIMIT 30`
+                 WHERE order_date >= (NOW() - INTERVAL 2 HOUR)
+                 GROUP BY minute
+                 ORDER BY minute ASC`
             );
 
             const [topBuyerRows] = await pool.execute(
@@ -91,12 +91,11 @@ module.exports = {
             const [topSellerRows] = await pool.execute(
                 `SELECT u.username, COALESCE(SUM(oi.price_at_purchase), 0) AS total_sales
                  FROM users u
-                 JOIN books b ON b.seller_id = u.user_id
-                 JOIN order_items oi ON oi.book_id = b.book_id
+                 LEFT JOIN books b ON b.seller_id = u.user_id
+                 LEFT JOIN order_items oi ON oi.book_id = b.book_id
                  WHERE u.role = 'seller'
                  GROUP BY u.user_id, u.username
-                 ORDER BY total_sales DESC
-                 LIMIT 5`
+                 ORDER BY total_sales DESC`
             );
 
             res.render("admin/charts", {

@@ -20,12 +20,7 @@
         </div>
         <h1><%= book.title %></h1>
         <p class="muted">
-          by <strong><%= book.author %></strong> · Seller:
-          <% if (book.sellerId) { %>
-            <a class="seller-link" href="/sellers/<%= book.sellerId %>"><%= book.sellerName %></a>
-          <% } else { %>
-            <%= book.sellerName %>
-          <% } %>
+          by <strong><%= book.author %></strong> - Seller: <%= book.sellerName %>
         </p>
         <p class="price">$<%= book.price.toFixed(2) %></p>
         <% if (book.tagline) { %>
@@ -40,6 +35,12 @@
             <button class="cta" type="submit">Add to cart</button>
             <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
           </form>
+          <form method="POST" action="/wishlist/add" style="margin-top:10px;">
+            <input type="hidden" name="bookId" value="<%= book.id %>">
+            <button class="wishlist-btn" type="submit">Save to Wishlist</button>
+          </form>
+        <% } else if (!user) { %>
+          <p class="muted">Log in to add this book to your cart or wishlist.</p>
         <% } %>
       </div>
     </div>

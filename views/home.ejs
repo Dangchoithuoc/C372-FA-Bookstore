@@ -105,10 +105,10 @@
     .book-card-cover {
       width: 100%;
       height: 160px;
-      object-fit: cover;
+      object-fit: contain;
       border-radius: 8px;
       margin-bottom: 14px;
-      background: #f3f4f6;
+      background: #fffaf2;
     }
     
     .book-card:hover {
@@ -235,19 +235,20 @@
     .hero-cover-img {
       width: 200px;
       max-height: 320px;
-      object-fit: cover;
+      object-fit: contain;
       border-radius: 18px;
       border: 1px solid rgba(0,0,0,0.08);
       box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+      background: #fffaf2;
     }
 
     .staff-cover-thumb {
       width: 100%;
       height: 160px;
-      object-fit: cover;
+      object-fit: contain;
       border-radius: 12px;
       margin-bottom: 12px;
-      background: #f2f2f2;
+      background: #fffaf2;
     }
     
     @media (max-width: 768px) {
@@ -382,23 +383,24 @@
           <div class="books-grid">
             <% filteredBooks.forEach(function(book) { %>
                 <div class="book-card">
-                  <img class="book-card-cover" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
+                  <a class="book-card-link" href="/books/<%= book.book_id %>">
+                    <img class="book-card-cover" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
+                  </a>
                   <span class="book-genre"><%= book.genre || 'General' %></span>
-                <h3 class="book-title"><%= book.title %></h3>
+                <h3 class="book-title">
+                  <a class="book-card-link" href="/books/<%= book.book_id %>"><%= book.title %></a>
+                </h3>
                 <p class="book-author">by <%= book.author %></p>
                 <p class="book-price">$<%= book.price.toFixed(2) %></p>
                 
                 <% if (user && user.role === 'seller') { %>
                   <!-- Seller sees Edit/Delete buttons -->
-                  <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <a href="/seller/books/<%= book.book_id %>/edit" 
-                       style="flex: 1; padding: 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center;">
+                  <div class="seller-actions" style="margin-top: 14px;">
+                    <a class="admin-btn admin-btn-primary" href="/seller/books/<%= book.book_id %>/edit">
                       Edit
                     </a>
-                    <form method="POST" action="/seller/books/<%= book.book_id %>/delete" style="flex: 1;">
-                      <button type="submit" 
-                              style="width: 100%; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;"
-                              onclick="return confirm('Delete this book?')">
+                    <form method="POST" action="/seller/books/<%= book.book_id %>/delete">
+                      <button type="submit" class="admin-btn admin-btn-warning" onclick="return confirm('Delete this book?')">
                         Delete
                       </button>
                     </form>
@@ -410,6 +412,10 @@
                     <input type="hidden" name="title" value="<%= book.title %>">
                     <input type="hidden" name="price" value="<%= book.price %>">
                     <button class="add-to-cart-btn" type="submit">Add to Cart</button>
+                  </form>
+                  <form method="POST" action="/wishlist/add" class="wishlist-form">
+                    <input type="hidden" name="bookId" value="<%= book.book_id %>">
+                    <button class="wishlist-btn" type="submit">Save to Wishlist</button>
                   </form>
                 <% } else if (!user) { %>
                   <!-- Guest sees Add to Cart (redirects to login) -->
@@ -445,9 +451,13 @@
         <div class="grid">
           <% staffPicks.forEach(function(book) { %>
             <article class="card">
-              <img class="staff-cover-thumb" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
+              <a class="book-card-link" href="/books/<%= book.id || '' %>">
+                <img class="staff-cover-thumb" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
+              </a>
               <span class="tag"><%= book.badge %></span>
-              <h3><%= book.title %></h3>
+              <h3>
+                <a class="book-card-link" href="/books/<%= book.id || '' %>"><%= book.title %></a>
+              </h3>
               <p class="muted">by <%= book.author %></p>
               <p class="muted"><%= book.vibe %></p>
               <div class="row">
@@ -473,6 +483,39 @@
               </div>
             </article>
           <% }); %>
+        </div>
+      </section>
+
+      <section class="faq-section">
+        <div class="row">
+          <h2>Frequently Asked Questions</h2>
+          <span class="muted">Quick answers for buyers and sellers.</span>
+        </div>
+        <div class="faq-grid">
+          <details class="faq-item">
+            <summary>How do I place an order?</summary>
+            <p>Browse books, add them to your cart, and complete checkout. You can pay with NETS, PayPal, or eWallet.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Where can I track my delivery status?</summary>
+            <p>Go to <strong>Orders</strong> to see the latest delivery status for each item.</p>
+          </details>
+          <details class="faq-item">
+            <summary>How do I top up my eWallet?</summary>
+            <p>Open the Wallet page and choose NETS or PayPal top up.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Can sellers edit delivery status?</summary>
+            <p>Yes. Sellers can update delivery status for items they sold.</p>
+          </details>
+          <details class="faq-item">
+            <summary>How do I save books for later?</summary>
+            <p>Use the Wishlist button on any book card to save it.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Who can access the admin dashboard?</summary>
+            <p>Only admin accounts can view the admin dashboard and charts.</p>
+          </details>
         </div>
       </section>
 

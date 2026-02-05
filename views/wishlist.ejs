@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wishlist - The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="buyer-ui">
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="shell" style="padding: 20px 0 60px;">
+    <div class="buyer-cart-header">
+      Wishlist
+      <span class="buyer-pill"><%= items.length %> saved</span>
+    </div>
+
+    <% if (!items || !items.length) { %>
+      <div class="buyer-card" style="padding: 18px;">
+        <p class="muted" style="margin: 0;">Your wishlist is empty. Start saving books you love.</p>
+      </div>
+    <% } else { %>
+      <div class="wishlist-grid">
+        <% items.forEach(function(item){ %>
+          <div class="wishlist-card">
+            <img class="wishlist-cover" src="<%= item.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= item.title %>">
+            <div class="wishlist-info">
+              <h3><%= item.title %></h3>
+              <p class="muted">by <%= item.author %></p>
+              <div class="wishlist-meta">
+                <span class="tag"><%= item.genre || 'General' %></span>
+                <span class="wishlist-price">$<%= Number(item.price).toFixed(2) %></span>
+              </div>
+            </div>
+            <div class="wishlist-actions">
+              <form method="POST" action="/cart/add">
+                <input type="hidden" name="bookId" value="<%= item.book_id %>">
+                <input type="hidden" name="title" value="<%= item.title %>">
+                <input type="hidden" name="price" value="<%= item.price %>">
+                <button type="submit" class="cta">Add to Cart</button>
+              </form>
+              <form method="POST" action="/wishlist/remove">
+                <input type="hidden" name="bookId" value="<%= item.book_id %>">
+                <button type="submit" class="wishlist-remove-btn">Remove</button>
+              </form>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>

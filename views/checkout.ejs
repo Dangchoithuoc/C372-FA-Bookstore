@@ -149,12 +149,9 @@ Date created: 10 December 2025
           <h3 style="margin-top: 16px;">Payment Method</h3>
 
           <div class="pay-grid">
+            <button type="button" class="pay-btn" id="btnWallet" disabled>Pay with eWallet</button>
             <button type="button" class="pay-btn" id="btnSkipPay" disabled>Skip Payment (Test)</button>
-            <button type="button" class="pay-btn light" id="btnPayNow" disabled>PayNow (Coming Soon)</button>
-            <button type="button" class="pay-btn light" id="btnCard" disabled>Credit / Debit Card (Coming Soon)</button>
-
-            <button type="button" class="pay-btn secondary" id="btnPayLah" disabled>Pay with PayLah!</button>
-
+            <button type="button" class="pay-btn" id="btnStripe" disabled>Pay with Stripe (Coming Soon)</button>
             <button type="button" class="pay-btn" id="btnPayPal" disabled>Pay with PayPal</button>
             <button type="button" class="pay-btn" id="btnNETS" disabled>Pay with NETS QR</button>
           </div>
@@ -177,13 +174,11 @@ Date created: 10 December 2025
 
   const deliveryTypeInput = document.getElementById("delivery_type");
 
-  const payLahBtn = document.getElementById("btnPayLah");
   const payPalBtn = document.getElementById("btnPayPal");
   const netsBtn = document.getElementById("btnNETS");
   const skipPayBtn = document.getElementById("btnSkipPay");
-
-  const payNowBtn = document.getElementById("btnPayNow");
-  const cardBtn = document.getElementById("btnCard");
+  const stripeBtn = document.getElementById("btnStripe");
+  const walletBtn = document.getElementById("btnWallet");
 
   function showError(msg) {
     errBox.textContent = msg;
@@ -256,13 +251,12 @@ Date created: 10 December 2025
 
     const ok = !!(contactOk && dt && (shipOk || pickupOk));
 
-    payLahBtn.disabled = !ok;
     payPalBtn.disabled = !ok;
     netsBtn.disabled = !ok;
     skipPayBtn.disabled = !ok;
+    walletBtn.disabled = !ok;
+    stripeBtn.disabled = true;
 
-    payNowBtn.disabled = true;
-    cardBtn.disabled = true;
   }
 
   form.addEventListener("input", validateAndTogglePayments);
@@ -296,22 +290,22 @@ Date created: 10 December 2025
 }
 
 
-  // PayLah: your own POST endpoint
-  payLahBtn.addEventListener("click", async () => {
-    const ok = await saveDetailsOrShowError();
-    if (!ok) return;
-
-    form.action = "/checkout/paylah";
-    form.method = "POST";
-    form.submit();
-  });
-
   // Skip payment (test)
   skipPayBtn.addEventListener("click", async () => {
     const ok = await saveDetailsOrShowError();
     if (!ok) return;
 
     form.action = "/checkout/skip";
+    form.method = "POST";
+    form.submit();
+  });
+
+  // eWallet
+  walletBtn.addEventListener("click", async () => {
+    const ok = await saveDetailsOrShowError();
+    if (!ok) return;
+
+    form.action = "/checkout/wallet";
     form.method = "POST";
     form.submit();
   });

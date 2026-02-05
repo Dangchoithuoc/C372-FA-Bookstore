@@ -1,5 +1,6 @@
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
+const Wallet = require("../models/Wallet");
 
 function isEmail(s = "") {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s).trim());
@@ -115,5 +116,29 @@ module.exports = {
   // Placeholder (you can implement later)
   payLah: async (req, res) => {
     res.status(501).send("PayLah not implemented yet");
+  },
+
+  walletPay: async (req, res) => {
+    try {
+      const userId = req.session.user.id;
+      const cart = await Cart.getCart(userId);
+      if (!cart.items.length) {
+        return res.redirect("/cart");
+      }
+
+      const total = Number(cart.total || 0);
+      await Wallet.debit(userId, total, "purchase_wallet");
+      const orderId = await Order.checkout(userId, "eWallet");
+      if (!orderId) {
+        return res.status(500).send("Order could not be created");
+      }
+      res.redirect(`/invoice/${orderId}`);
+    } catch (err) {
+      if (String(err.message || "").includes("Insufficient")) {
+        return res.redirect("/wallet?error=insufficient");
+      }
+      console.error("Wallet pay error", err);
+      res.status(500).send("Payment failed");
+    }
   }
 };

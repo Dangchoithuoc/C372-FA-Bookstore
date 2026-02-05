@@ -85,6 +85,38 @@ module.exports = {
             console.error("Error loading homepage:", err);
             res.status(500).send("Failed to load homepage");
         }
+    },
+
+    bookDetails: async (req, res) => {
+        try {
+            const bookId = Number(req.params.id);
+            if (!bookId) return res.redirect("/");
+            const book = await Book.findDetails(bookId);
+            if (!book) return res.status(404).send("Book not found");
+
+            const normalized = {
+                id: book.id,
+                title: book.title,
+                author: book.author,
+                genre: book.genre,
+                price: Number(book.price) || 0,
+                coverImage: book.coverImage || "/images/default-book.svg",
+                sellerId: book.sellerId,
+                sellerName: book.sellerName || "Independent seller",
+                tagline: book.genre ? `${book.genre} pick` : "Featured pick",
+                description: book.genre
+                    ? `Discover a ${book.genre.toLowerCase()} title curated from The Bookmark collection.`
+                    : "A curated title from The Bookmark collection."
+            };
+
+            res.render("book-details", {
+                user: req.session.user || null,
+                book: normalized
+            });
+        } catch (err) {
+            console.error("Book details error:", err);
+            res.status(500).send("Could not load book details");
+        }
     }
 };
 

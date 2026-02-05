@@ -32,17 +32,15 @@
       </div>
 
       <div class="admin-card">
-        <div class="admin-toolbar">
-          <div class="admin-actions" id="adminChartButtons">
-            <button class="admin-btn admin-btn-primary" type="button" data-chart="orders">Orders</button>
-            <button class="admin-btn" type="button" data-chart="revenue">Revenue</button>
-            <button class="admin-btn" type="button" data-chart="buyers">Top Buyers</button>
-            <button class="admin-btn" type="button" data-chart="sellers">Top Sellers</button>
-          </div>
-          <div class="admin-muted" id="adminChartTitle">Orders (last 30 days)</div>
-        </div>
-        <canvas id="adminChart" height="130"></canvas>
-        <div id="adminChartError" class="admin-muted" style="display:none; margin-top:10px;"></div>
+        <h3>Revenue (last 120 minutes)</h3>
+        <canvas id="adminRevenueChart" height="120"></canvas>
+        <div id="adminRevenueError" class="admin-muted" style="display:none; margin-top:10px;"></div>
+      </div>
+
+      <div class="admin-card">
+        <h3>Top Sellers (total sales)</h3>
+        <canvas id="adminSellersChart" height="120"></canvas>
+        <div id="adminSellersError" class="admin-muted" style="display:none; margin-top:10px;"></div>
       </div>
     </main>
   </div>
@@ -60,8 +58,8 @@
     const topSellers = <%- JSON.stringify(chartTopSellers || []) %>;
 
     const labelsDaily = dailyData.map(d => {
-      const date = new Date(d.day);
-      return isNaN(date) ? String(d.day) : date.toLocaleDateString();
+      const date = new Date(d.minute);
+      return isNaN(date) ? String(d.minute) : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     });
     const ordersSeries = dailyData.map(d => Number(d.orders || 0));
     const revenueSeries = dailyData.map(d => Number(d.revenue || 0));
@@ -72,114 +70,66 @@
     const sellerLabels = topSellers.map(s => s.username);
     const sellerValues = topSellers.map(s => Number(s.total_sales || 0));
 
-    const ctx = document.getElementById("adminChart");
-    let chart = null;
-    if (window.Chart) {
-      chart = new Chart(ctx, {
+    function createLineChart(id, label, labels, data, color) {
+      const canvas = document.getElementById(id);
+      if (!canvas || !window.Chart) return null;
+      return new Chart(canvas, {
         type: "line",
         data: {
-          labels: labelsDaily,
-        datasets: [{
-          label: "Orders",
-          data: ordersSeries,
-          borderColor: "#2563eb",
-          backgroundColor: "rgba(37, 99, 235, 0.15)",
-          tension: 0.3,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
+          labels,
+          datasets: [{
+            label,
+            data,
+            borderColor: color,
+            backgroundColor: color.replace("1)", "0.18)").replace("rgb", "rgba"),
+            tension: 0.3,
+            fill: true
+          }]
         },
-        scales: {
-          x: { grid: { display: false } },
-          y: { beginAtZero: true }
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
         }
-      }
-    });
-    }
-
-    function setChart(type) {
-      if (!chart) return;
-      const title = document.getElementById("adminChartTitle");
-      const err = document.getElementById("adminChartError");
-      err.style.display = "none";
-
-      if (type === "revenue") {
-        chart.config.type = "line";
-        chart.data.labels = labelsDaily;
-        chart.data.datasets = [{
-          label: "Revenue",
-          data: revenueSeries,
-          borderColor: "#0ea5e9",
-          backgroundColor: "rgba(14, 165, 233, 0.15)",
-          tension: 0.3,
-          fill: true
-        }];
-        title.textContent = "Revenue (last 30 days)";
-        if (!revenueSeries.length) {
-          err.style.display = "block";
-          err.textContent = "No revenue data available yet.";
-        }
-      } else if (type === "buyers") {
-        chart.config.type = "bar";
-        chart.data.labels = buyerLabels;
-        chart.data.datasets = [{
-          label: "Top Buyers",
-          data: buyerValues,
-          backgroundColor: "rgba(37, 99, 235, 0.45)",
-          borderColor: "#2563eb"
-        }];
-        title.textContent = "Top Buyers (total spend)";
-        if (!buyerValues.length) {
-          err.style.display = "block";
-          err.textContent = "No buyer data available yet.";
-        }
-      } else if (type === "sellers") {
-        chart.config.type = "bar";
-        chart.data.labels = sellerLabels;
-        chart.data.datasets = [{
-          label: "Top Sellers",
-          data: sellerValues,
-          backgroundColor: "rgba(14, 165, 233, 0.45)",
-          borderColor: "#0ea5e9"
-        }];
-        title.textContent = "Top Sellers (total sales)";
-        if (!sellerValues.length) {
-          err.style.display = "block";
-          err.textContent = "No seller data available yet.";
-        }
-      } else {
-        chart.config.type = "line";
-        chart.data.labels = labelsDaily;
-        chart.data.datasets = [{
-          label: "Orders",
-          data: ordersSeries,
-          borderColor: "#2563eb",
-          backgroundColor: "rgba(37, 99, 235, 0.15)",
-          tension: 0.3,
-          fill: true
-        }];
-        title.textContent = "Orders (last 30 days)";
-        if (!ordersSeries.length) {
-          err.style.display = "block";
-          err.textContent = "No order data available yet.";
-        }
-      }
-      chart.update();
-    }
-
-    const buttons = document.querySelectorAll("#adminChartButtons [data-chart]");
-    buttons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        buttons.forEach(b => b.classList.remove("admin-btn-primary"));
-        btn.classList.add("admin-btn-primary");
-        setChart(btn.dataset.chart);
       });
-    });
-    setChart("orders");
+    }
+
+    function createBarChart(id, label, labels, data, color) {
+      const canvas = document.getElementById(id);
+      if (!canvas || !window.Chart) return null;
+      return new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label,
+            data,
+            backgroundColor: color.replace("1)", "0.45)").replace("rgb", "rgba"),
+            borderColor: color
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    const revenueError = document.getElementById("adminRevenueError");
+    const sellersError = document.getElementById("adminSellersError");
+
+    createLineChart("adminRevenueChart", "Revenue", labelsDaily, revenueSeries, "rgb(124, 63, 43)");
+    if (!revenueSeries.length && revenueError) {
+      revenueError.style.display = "block";
+      revenueError.textContent = "No revenue data available yet.";
+    }
+
+    createBarChart("adminSellersChart", "Top Sellers", sellerLabels, sellerValues, "rgb(124, 63, 43)");
+    if (!sellerValues.length && sellersError) {
+      sellersError.style.display = "block";
+      sellersError.textContent = "No seller data available yet.";
+    }
   </script>
 </body>
 </html>

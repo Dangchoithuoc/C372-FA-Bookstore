@@ -50,12 +50,8 @@
     <nav>
       <a href="/">Home</a>
       <% if (user && user.role === "buyer") { %>
-        <a class="cart-link" href="/cart">
-          Cart
-          <% if (typeof cartCount === "number" && cartCount > 0) { %>
-            <span class="cart-badge"><%= cartCount %></span>
-          <% } %>
-        </a>
+        <a href="/wishlist">Wishlist</a>
+        <a href="/wallet">Wallet</a>
       <% } %>
       <% if (user) { %>
         <a href="/orders">Orders</a>
@@ -78,3 +74,12 @@
     </nav>
   </div>
 </header>
+
+<% if (user && user.role === "buyer") { %>
+  <a class="floating-cart" href="/cart" aria-label="Open cart">
+    <span class="floating-cart-icon">🛒</span>
+    <% if (typeof cartCount === "number" && cartCount > 0) { %>
+      <span class="floating-cart-badge"><%= cartCount %></span>
+    <% } %>
+  </a>
+<% } %>

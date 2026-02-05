@@ -111,26 +111,6 @@ module.exports = {
     }
   },
 
-  // Skip payment (testing)
-  skipPayment: async (req, res) => {
-    try {
-      const userId = req.session.user.id;
-      const cart = await Cart.getCart(userId);
-      const applyMembership = req.session.checkoutDetails?.apply_membership !== false;
-      const totals = await Membership.computeTotals(userId, cart.total, applyMembership);
-      const orderId = await Order.checkout(userId, "Test", null, null, {
-        discountPercent: totals.discountPercent,
-        discountAmount: totals.discountAmount,
-        total: totals.total
-      });
-      if (!orderId) return res.status(500).send("Order could not be created");
-      res.redirect(`/invoice/${orderId}`);
-    } catch (err) {
-      console.error("Skip payment error", err);
-      res.status(500).send("Payment failed");
-    }
-  },
-
   // Placeholder (you can implement later)
   payLah: async (req, res) => {
     res.status(501).send("PayLah not implemented yet");

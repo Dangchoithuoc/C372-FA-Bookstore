@@ -3,6 +3,7 @@ const Refund = require("../models/Refund");
 const Wallet = require("../models/Wallet");
 const paypalService = require("../services/paypal");
 const netsService = require("../services/nets");
+const stripeService = require("../services/stripe");
 
 module.exports = {
     dashboard: async (req, res) => {
@@ -229,6 +230,11 @@ module.exports = {
             }
             if (paymentMethod === "ewallet") {
                 await Wallet.credit(refund.buyer_id, refund.amount, "refund_wallet");
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                return res.redirect("/admin/refunds");
+            }
+            if (paymentMethod === "stripe") {
+                await stripeService.refundPaymentIntent(refund.provider_txn_id, refund.amount);
                 await Refund.setStatus(refundId, "Approved", req.session.user.id);
                 return res.redirect("/admin/refunds");
             }

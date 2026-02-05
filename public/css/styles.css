@@ -1172,6 +1172,8 @@ footer { padding: 20px 0 40px; color: var(--muted); text-align: center; font-siz
 .wallet-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: var(--shadow-soft); }
 .wallet-balance { font-size: 2rem; font-weight: 700; color: var(--accent-strong); }
 .wallet-actions { display: grid; gap: 12px; }
+.wallet-actions-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.wallet-actions-row form { margin: 0; }
 .wallet-actions form { margin: 0; }
 .wallet-actions .cta { margin-top: 10px; }
 .wallet-divider { height: 1px; background: var(--border); margin: 12px 0; }

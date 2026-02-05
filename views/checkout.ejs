@@ -592,9 +592,8 @@ Date created: 10 December 2025
 
             <button type="button" class="pay-btn" id="btnWallet" disabled>Pay with eWallet &#x1F4B3;</button>
 
-            <button type="button" class="pay-btn" id="btnSkipPay" disabled>Skip Payment (Test) &#x1F9EA;</button>
 
-            <button type="button" class="pay-btn" id="btnStripe" disabled>Pay with Stripe (Coming Soon) &#x26A1;</button>
+            <button type="button" class="pay-btn" id="btnStripe" disabled>Pay with Stripe &#x26A1;</button>
 
             <button type="button" class="pay-btn" id="btnPayPal" disabled>Pay with PayPal &#x1F17F;&#xFE0F;</button>
 
@@ -682,7 +681,6 @@ Date created: 10 December 2025
 
   const netsBtn = document.getElementById("btnNETS");
 
-  const skipPayBtn = document.getElementById("btnSkipPay");
 
   const stripeBtn = document.getElementById("btnStripe");
 
@@ -980,11 +978,10 @@ Date created: 10 December 2025
 
     netsBtn.disabled = !ok;
 
-    skipPayBtn.disabled = !ok;
-
+  
     walletBtn.disabled = !ok;
 
-    stripeBtn.disabled = true;
+    stripeBtn.disabled = !ok;
 
 
 
@@ -1110,34 +1107,6 @@ Date created: 10 December 2025
 
 
 
-
-
-
-
-
-
-
-
-  // Skip payment (test)
-
-  skipPayBtn.addEventListener("click", async () => {
-
-    const ok = await saveDetailsOrShowError();
-
-    if (!ok) return;
-
-
-
-    form.action = "/checkout/skip";
-
-    form.method = "POST";
-
-    form.submit();
-
-  });
-
-
-
   // eWallet
 
   walletBtn.addEventListener("click", async () => {
@@ -1206,6 +1175,14 @@ Date created: 10 December 2025
 
     window.location.href = "/checkout/nets";
 
+  });
+
+  // Stripe
+  stripeBtn.addEventListener("click", async () => {
+    const ok = await saveDetailsOrShowError();
+    if (!ok) return;
+
+    window.location.href = "/checkout/stripe";
   });
 
 </script>

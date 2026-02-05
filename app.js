@@ -100,6 +100,7 @@ const NetsController = require("./controllers/NetsController");
 const OrderController = require("./controllers/OrderController");
 const WalletController = require("./controllers/WalletController");
 const MembershipController = require("./controllers/MembershipController");
+const StripeController = require("./controllers/StripeController");
 const CartModel = require("./models/Cart");
 const WishlistController = require("./controllers/WishlistController");
 
@@ -186,6 +187,8 @@ app.post("/api/wallet/paypal/capture-order", requireLogin, requireBuyer, WalletC
 app.post("/wallet/nets", requireLogin, requireBuyer, WalletController.netsQr);
 app.get("/wallet/nets/success", requireLogin, requireBuyer, WalletController.netsSuccess);
 app.get("/wallet/nets/fail", requireLogin, requireBuyer, WalletController.netsFail);
+app.post("/wallet/stripe", requireLogin, requireBuyer, StripeController.walletSession);
+app.get("/wallet/stripe/success", requireLogin, requireBuyer, StripeController.walletSuccess);
 
 // Cart routes (login required)
 app.get("/cart", requireLogin, CartController.viewCart);
@@ -201,14 +204,14 @@ app.post("/wishlist/remove", requireLogin, requireBuyer, WishlistController.remo
 
 // Checkout routes (login + cart required)
 app.get("/checkout", requireLogin, requireCartItems, CheckoutController.checkoutPage);
+app.get("/checkout/stripe", requireLogin, requireCartItems, StripeController.checkoutSession);
+app.get("/checkout/stripe/success", requireLogin, requireCartItems, StripeController.checkoutSuccess);
 
 // save checkout details before payment
 app.post("/checkout/save-details", requireLogin, requireCartItems, CheckoutController.saveCheckoutDetails);
 
 // PayLah (simulate later)
 app.post("/checkout/paylah", requireLogin, requireCartItems, CheckoutController.payLah);
-// Skip payment (testing)
-app.post("/checkout/skip", requireLogin, requireCartItems, CheckoutController.skipPayment);
 // eWallet (buyer only)
 app.post("/checkout/wallet", requireLogin, requireBuyer, requireCartItems, CheckoutController.walletPay);
 

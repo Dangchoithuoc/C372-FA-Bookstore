@@ -98,19 +98,7 @@
     </style>
 </head>
 <body>
-    <header>
-        <div class="shell" style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="brand">
-                <a href="/" style="text-decoration:none; color:inherit;">The Bookmark</a>
-            </div>
-            <nav>
-                <a href="/">Home</a>
-                <a href="/seller/dashboard">Dashboard</a>
-                <a href="/seller/books">My Books</a>
-                <a href="/logout">Logout (<%= user.name %>)</a>
-            </nav>
-        </div>
-    </header>
+    <%- include("../partials/navbar", { user: user }) %>
 
     <main class="container">
         <h1><%= action %> Book</h1>

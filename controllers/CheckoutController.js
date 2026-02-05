@@ -99,6 +99,19 @@ module.exports = {
     }
   },
 
+  // Skip payment (testing)
+  skipPayment: async (req, res) => {
+    try {
+      const userId = req.session.user.id;
+      const orderId = await Order.checkout(userId, "Test");
+      if (!orderId) return res.status(500).send("Order could not be created");
+      res.redirect(`/invoice/${orderId}`);
+    } catch (err) {
+      console.error("Skip payment error", err);
+      res.status(500).send("Payment failed");
+    }
+  },
+
   // Placeholder (you can implement later)
   payLah: async (req, res) => {
     res.status(501).send("PayLah not implemented yet");

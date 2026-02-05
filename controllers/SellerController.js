@@ -24,11 +24,40 @@ module.exports = {
                  WHERE b.seller_id = ?`,
                 [sellerId]
             );
+
+            const [dailyRows] = await pool.execute(
+                `SELECT DATE(o.order_date) AS day,
+                        COUNT(DISTINCT o.order_id) AS orders,
+                        COALESCE(SUM(oi.price_at_purchase), 0) AS revenue
+                 FROM orders o
+                 JOIN order_items oi ON o.order_id = oi.order_id
+                 JOIN books b ON oi.book_id = b.book_id
+                 WHERE b.seller_id = ?
+                 GROUP BY DATE(o.order_date)
+                 ORDER BY DATE(o.order_date) ASC
+                 LIMIT 30`,
+                [sellerId]
+            );
+
+            const [topBooksRows] = await pool.execute(
+                `SELECT b.title,
+                        COUNT(*) AS sold_count,
+                        COALESCE(SUM(oi.price_at_purchase), 0) AS revenue
+                 FROM order_items oi
+                 JOIN books b ON oi.book_id = b.book_id
+                 WHERE b.seller_id = ?
+                 GROUP BY b.book_id, b.title
+                 ORDER BY sold_count DESC
+                 LIMIT 5`,
+                [sellerId]
+            );
             
             res.render("seller/dashboard", {
                 user: req.session.user,
                 books: books || [],
-                stats: sales[0] || { total_orders: 0, total_revenue: 0, total_book_sales: 0 }
+                stats: sales[0] || { total_orders: 0, total_revenue: 0, total_book_sales: 0 },
+                chartDaily: dailyRows || [],
+                chartTopBooks: topBooksRows || []
             });
         } catch (err) {
             console.error("Seller dashboard error:", err);

@@ -36,8 +36,8 @@ module.exports = {
 
       // 4) Move cart_items -> order_items
       await conn.execute(
-        `INSERT INTO order_items (order_id, book_id, price_at_purchase)
-         SELECT ?, ci.book_id, b.price
+        `INSERT INTO order_items (order_id, book_id, price_at_purchase, delivery_status)
+         SELECT ?, ci.book_id, b.price, 'Pending'
          FROM cart_items ci
          JOIN books b ON ci.book_id = b.book_id
          WHERE ci.cart_id = ?`,
@@ -93,6 +93,7 @@ module.exports = {
           oi.order_item_id,
           oi.book_id,
           oi.price_at_purchase,
+          oi.delivery_status,
           b.title,
           b.author,
           b.genre,
@@ -106,6 +107,76 @@ module.exports = {
       [userId]
     );
     return rows;
+  },
+
+  async getSellerOrders(sellerId) {
+    const [rows] = await pool.execute(
+      `SELECT 
+          o.order_id,
+          o.order_date,
+          p.payment_method,
+          p.payment_status,
+          oi.order_item_id,
+          oi.book_id,
+          oi.price_at_purchase,
+          oi.delivery_status,
+          b.title,
+          b.author,
+          b.genre,
+          b.coverImage,
+          u.user_id AS buyer_id,
+          u.username AS buyer_name,
+          u.email AS buyer_email
+       FROM orders o
+       JOIN users u ON u.user_id = o.buyer_id
+       LEFT JOIN payment p ON p.order_id = o.order_id
+       JOIN order_items oi ON oi.order_id = o.order_id
+       JOIN books b ON b.book_id = oi.book_id
+       WHERE b.seller_id = ?
+       ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`,
+      [sellerId]
+    );
+    return rows;
+  },
+
+  async getAllOrders() {
+    const [rows] = await pool.execute(
+      `SELECT 
+          o.order_id,
+          o.total_price,
+          o.order_date,
+          p.payment_method,
+          p.payment_status,
+          oi.order_item_id,
+          oi.book_id,
+          oi.price_at_purchase,
+          oi.delivery_status,
+          b.title,
+          b.author,
+          b.genre,
+          b.coverImage,
+          u.user_id AS buyer_id,
+          u.username AS buyer_name,
+          u.email AS buyer_email
+       FROM orders o
+       JOIN users u ON u.user_id = o.buyer_id
+       LEFT JOIN payment p ON p.order_id = o.order_id
+       JOIN order_items oi ON oi.order_id = o.order_id
+       JOIN books b ON b.book_id = oi.book_id
+       ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`
+    );
+    return rows;
+  },
+
+  async updateItemDeliveryStatus(orderItemId, sellerId, status) {
+    const [result] = await pool.execute(
+      `UPDATE order_items oi
+       JOIN books b ON b.book_id = oi.book_id
+       SET oi.delivery_status = ?
+       WHERE oi.order_item_id = ? AND b.seller_id = ?`,
+      [status, orderItemId, sellerId]
+    );
+    return result.affectedRows > 0;
   },
 
   async getInvoice(orderId, userId) {

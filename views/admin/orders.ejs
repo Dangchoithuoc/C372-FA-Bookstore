@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Orders | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="admin-ui">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-logo">Control Room</div>
+      <nav class="admin-nav">
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/books">Books</a>
+        <a class="active" href="/admin/orders">Orders</a>
+        <a href="/admin/charts">Charts</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar admin-page-header">
+        <div>
+          <h1 class="admin-page-title">Orders Overview</h1>
+          <p class="admin-page-sub">All customer orders across the store.</p>
+        </div>
+        <div class="admin-actions">
+          <a class="admin-btn" href="/logout">Log out</a>
+          <a class="admin-btn" href="/admin/dashboard">Back to Dashboard</a>
+        </div>
+      </div>
+
+      <% if (!orders || orders.length === 0) { %>
+        <div class="admin-empty">No orders have been placed yet.</div>
+      <% } else { %>
+        <% orders.forEach(order => { %>
+          <div class="admin-card">
+            <div class="admin-list">
+              <div>Order #<%= order.id %> · <%= new Date(order.order_date).toLocaleString() %></div>
+              <div>Buyer: <%= order.buyer_name || "Unknown" %> (<%= order.buyer_email || "No email" %>)</div>
+              <div>Total: $<%= order.total_price.toFixed(2) %></div>
+            </div>
+            <table class="admin-table admin-table-compact" style="margin-top: 12px;">
+              <thead>
+                <tr>
+                  <th>Book</th>
+                  <th>Author</th>
+                  <th>Genre</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% order.items.forEach(item => { %>
+                  <tr>
+                    <td><%= item.title %></td>
+                    <td><%= item.author %></td>
+                    <td><%= item.genre || "-" %></td>
+                    <td>$<%= item.price.toFixed(2) %></td>
+                    <td><span class="admin-pill"><%= item.delivery_status || "Pending" %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% }) %>
+      <% } %>
+    </main>
+  </div>
+</body>
+</html>

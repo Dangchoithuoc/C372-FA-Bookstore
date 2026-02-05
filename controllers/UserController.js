@@ -7,6 +7,64 @@ module.exports = {
         res.render("login", { error: null });
     },
 
+    profilePage: async (req, res) => {
+        try {
+            const sessionUser = req.session.user;
+            const user = await User.findById(sessionUser.id);
+            if (!user) {
+                return res.redirect("/logout");
+            }
+            res.render("profile", {
+                user: { ...user, role: sessionUser.role },
+                error: null,
+                success: null
+            });
+        } catch (err) {
+            console.error("Profile load error:", err);
+            res.status(500).send("Could not load profile");
+        }
+    },
+
+    updateProfile: async (req, res) => {
+        try {
+            const sessionUser = req.session.user;
+            const { name, email, contact_number, address, password } = req.body || {};
+
+            if (!name || !email) {
+                return res.render("profile", {
+                    user: { ...sessionUser, username: name || sessionUser.name, email: email || sessionUser.email, contact_number, address },
+                    error: "Name and email are required.",
+                    success: null
+                });
+            }
+
+            const emailTaken = await User.emailInUse(email, sessionUser.id);
+            if (emailTaken) {
+                return res.render("profile", {
+                    user: { ...sessionUser, username: name, email, contact_number, address },
+                    error: "Email is already in use.",
+                    success: null
+                });
+            }
+
+            await User.updateProfile(sessionUser.id, { name, email, contact_number, address, password });
+
+            // refresh session data
+            req.session.user.name = name;
+            req.session.user.email = email.toLowerCase();
+
+            const updated = await User.findById(sessionUser.id);
+            res.render("profile", {
+                user: { ...updated, role: sessionUser.role },
+                error: null,
+                success: "Profile updated successfully."
+            });
+        } catch (err) {
+            console.error("Profile update error:", err);
+            res.status(500).send("Could not update profile");
+        }
+    },
+
     registerPage: (req, res) => {
         res.render("register", { 
             error: null,
@@ -128,6 +186,10 @@ module.exports = {
             
             if (!user) {
                 return res.render("login", { error: "Invalid email or password." });
+            }
+
+            if (user.disabled) {
+                return res.render("login", { error: "Your account has been disabled. Please contact admin." });
             }
             
             // Handle both plain and hashed passwords during transition

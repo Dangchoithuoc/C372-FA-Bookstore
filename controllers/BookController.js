@@ -6,10 +6,12 @@ module.exports = {
         try {
             const { search, genre, priceRange, sortBy } = req.query;
             const user = req.session.user;
+
+            if (user && user.role === "admin") {
+                return res.redirect("/admin/dashboard");
+            }
             
-            // Debug logging
-            console.log("Filter params:", { search, genre, priceRange, sortBy });
-            console.log("User info:", user ? { id: user.id, role: user.role } : "No user");
+            
             
             const [spotlight, staffPicks, filteredBooks] = await Promise.all([
                 Book.getFeatured(),
@@ -24,7 +26,6 @@ module.exports = {
                 })
             ]);
 
-            console.log("Filtered books count:", filteredBooks ? filteredBooks.length : 0);
             
             const resolvedSpotlight = normalizeSpotlight(spotlight) || normalizeSpotlight({
                 title: "The Midnight Archive",
@@ -50,7 +51,22 @@ module.exports = {
                     [user.id]
                 );
                 sellerBooks = books;
-                console.log("Seller books found:", sellerBooks.length);
+            }
+
+            // Admin stats for admin homepage
+            let adminStats = null;
+            if (user && user.role === 'admin') {
+                const [userStats, bookStats, orderStats] = await Promise.all([
+                    pool.execute("SELECT COUNT(*) as count FROM users"),
+                    pool.execute("SELECT COUNT(*) as count FROM books"),
+                    pool.execute("SELECT COUNT(*) as count, COALESCE(SUM(total_price), 0) as revenue FROM orders")
+                ]);
+                adminStats = {
+                    totalUsers: userStats[0][0].count || 0,
+                    totalBooks: bookStats[0][0].count || 0,
+                    totalOrders: orderStats[0][0].count || 0,
+                    totalRevenue: orderStats[0][0].revenue || 0
+                };
             }
 
             res.render("home", {
@@ -62,7 +78,8 @@ module.exports = {
                 priceRange: priceRange || '',
                 sortBy: sortBy || 'title_asc',
                 user: user || null,
-                sellerBooks: sellerBooks
+                sellerBooks: sellerBooks,
+                stats: adminStats
             });
         } catch (err) {
             console.error("Error loading homepage:", err);

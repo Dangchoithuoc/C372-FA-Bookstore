@@ -3,267 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | The Bookmark</title>
+    <title>Admin Command Center | The Bookmark</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <style>
-        .admin-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .admin-header {
-            background: #343a40;
-            color: white;
-            padding: 30px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 8px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #333;
-            margin: 10px 0;
-        }
-        
-        .stat-label {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
-        .admin-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        
-        .action-card {
-            background: white;
-            border-radius: 8px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        
-        .action-card h3 {
-            margin-top: 0;
-            color: #333;
-        }
-        
-        .action-list {
-            text-align: left;
-            margin-top: 15px;
-        }
-        
-        .action-list a {
-            display: block;
-            padding: 10px 15px;
-            margin: 5px 0;
-            background: #f8f9fa;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #007bff;
-            transition: background 0.2s;
-        }
-        
-        .action-list a:hover {
-            background: #e9ecef;
-        }
-        
-        .nav-links {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        
-        .nav-links a {
-            color: #007bff;
-            text-decoration: none;
-            margin-right: 20px;
-        }
-        
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-        
-        .danger-zone {
-            border: 2px solid #dc3545;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 30px;
-            background: #fff5f5;
-        }
-        
-        .danger-zone h3 {
-            color: #dc3545;
-            margin-top: 0;
-        }
-        
-        .danger-zone a {
-            color: #dc3545 !important;
-        }
-        
-        .danger-zone a:hover {
-            background: #ffe6e6 !important;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
-            cursor: pointer;
-            border: none;
-            font-size: 1rem;
-        }
-        
-        .btn-primary {
-            background: #007bff;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #0056b3;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-    </style>
 </head>
-<body>
-    <header>
-        <div class="shell" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
-            <div class="brand">
-                <a href="/" style="text-decoration:none; color:inherit; font-size: 1.5rem; font-weight: bold;">The Bookmark</a>
-            </div>
-            <nav>
-                <a href="/" style="margin-right: 15px;">Home</a>
-                <a href="/admin/dashboard" style="margin-right: 15px;">Dashboard</a>
-                <a href="/logout">Logout (<%= user.name %>)</a>
+<body class="admin-ui">
+    <div class="admin-shell">
+        <aside class="admin-sidebar">
+            <div class="admin-logo">Control Room</div>
+            <nav class="admin-nav">
+                <a class="active" href="/admin/dashboard">Dashboard</a>
+                <a href="/admin/users">Users</a>
+                <a href="/admin/books">Books</a>
+                <a href="/admin/orders">Orders</a>
+                <a href="/admin/charts">Charts</a>
             </nav>
-        </div>
-    </header>
+        </aside>
 
-    <main class="admin-container">
-        <div class="admin-header">
-            <h1 style="margin: 0 0 10px 0;">Admin Dashboard</h1>
-            <p style="margin: 0; opacity: 0.9;">Welcome, <strong><%= user.name %></strong>. Manage the entire bookstore system.</p>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value"><%= stats.totalUsers %></div>
-                <div class="stat-label">Total Users</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value"><%= stats.totalBooks %></div>
-                <div class="stat-label">Total Books</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value"><%= stats.totalOrders %></div>
-                <div class="stat-label">Total Orders</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">$<%= parseFloat(stats.totalRevenue).toFixed(2) %></div>
-                <div class="stat-label">Total Revenue</div>
-            </div>
-        </div>
-
-        <div class="admin-actions">
-            <div class="action-card">
-                <h3>👥 User Management</h3>
-                <p>Manage all users in the system</p>
-                <div class="action-list">
-                    <a href="/admin/users">View All Users</a>
-                    <a href="/admin/users/search">Search Users</a>
-                    <a href="/admin/users/roles">Manage User Roles</a>
+        <main class="admin-main">
+            <div class="admin-topbar">
+                <div>
+                    <h1>Command Center</h1>
+                    <p class="admin-sub">System overview and operational controls.</p>
+                </div>
+                <div class="admin-actions">
+                    <a class="admin-btn" href="/logout">Log out</a>
                 </div>
             </div>
-            
-            <div class="action-card">
-                <h3>📚 Book Management</h3>
-                <p>Manage all books from all sellers</p>
-                <div class="action-list">
-                    <a href="/admin/books">View All Books</a>
-                    <a href="/admin/books/search">Search Books</a>
-                    <a href="/admin/books/reported">Review Reported Books</a>
+
+            <section class="admin-grid">
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3>Top Buyers</h3>
+                        <span class="admin-muted">Total spend</span>
+                    </div>
+                    <div class="admin-rank">
+                        <% if (!topBuyers || topBuyers.length === 0) { %>
+                          <div class="admin-muted">No buyer data yet.</div>
+                        <% } else { %>
+                          <% topBuyers.forEach((b, idx) => { %>
+                            <div class="admin-rank-row">
+                                <span class="admin-rank-num">#<%= idx + 1 %></span>
+                                <span class="admin-rank-name"><%= b.username %></span>
+                                <span class="admin-rank-value">$<%= Number(b.total_spend || 0).toFixed(2) %></span>
+                            </div>
+                          <% }) %>
+                        <% } %>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="action-card">
-                <h3>📦 Order Management</h3>
-                <p>View and manage all orders</p>
-                <div class="action-list">
-                    <a href="/admin/orders">View All Orders</a>
-                    <a href="/admin/orders/refunds">Process Refunds</a>
-                    <a href="/admin/reports/sales">Sales Reports</a>
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3>Top Sellers</h3>
+                        <span class="admin-muted">Total sales</span>
+                    </div>
+                    <div class="admin-rank">
+                        <% if (!topSellers || topSellers.length === 0) { %>
+                          <div class="admin-muted">No seller data yet.</div>
+                        <% } else { %>
+                          <% topSellers.forEach((s, idx) => { %>
+                            <div class="admin-rank-row">
+                                <span class="admin-rank-num">#<%= idx + 1 %></span>
+                                <span class="admin-rank-name"><%= s.username %></span>
+                                <span class="admin-rank-value">$<%= Number(s.total_sales || 0).toFixed(2) %></span>
+                            </div>
+                          <% }) %>
+                        <% } %>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <div class="danger-zone">
-            <h3>⚠️ Danger Zone</h3>
-            <p>Administrative actions with system-wide impact</p>
-            <div class="action-list">
-                <a href="/admin/users/delete" style="color: #dc3545;">Delete User Account</a>
-                <a href="/admin/books/delete" style="color: #dc3545;">Remove Book from System</a>
-                <a href="/admin/system/maintenance" style="color: #dc3545;">System Maintenance</a>
-            </div>
-        </div>
-
-        <div class="nav-links">
-            <a href="/" class="btn btn-secondary">← Back to Homepage</a>
-            <a href="/admin/dashboard" class="btn btn-primary" style="margin-left: 10px;">Refresh Dashboard</a>
-        </div>
-    </main>
-
-    <script>
-        // Add confirmation for danger zone links
-        document.querySelectorAll('.danger-zone a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (!confirm('⚠️ WARNING: This is a dangerous action. Are you sure you want to proceed?')) {
-                    e.preventDefault();
-                }
-            });
-        });
-        
-        // Auto-refresh stats every 30 seconds
-        setInterval(() => {
-            location.reload();
-        }, 30000);
-    </script>
+            <section class="admin-card admin-callout">
+                <div class="admin-callout-body">
+                    <div>
+                        <h3>Sales Performance Reports</h3>
+                        <p class="admin-muted">Generate a CSV report of daily orders and revenue.</p>
+                    </div>
+                    <div class="admin-actions">
+                        <a class="admin-btn admin-btn-primary" href="/admin/reports/sales">Download Report</a>
+                        <a class="admin-btn" href="/admin/charts">View Charts</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
 </body>
 </html>

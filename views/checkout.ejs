@@ -60,7 +60,7 @@ Date created: 10 December 2025
     .req{ color:#b91c1c; font-weight:700; }
   </style>
 </head>
-<body>
+<body class="buyer-ui">
   <%- include("partials/navbar", { user: user }) %>
 
   <div class="checkout-shell">
@@ -149,7 +149,7 @@ Date created: 10 December 2025
           <h3 style="margin-top: 16px;">Payment Method</h3>
 
           <div class="pay-grid">
-            
+            <button type="button" class="pay-btn" id="btnSkipPay" disabled>Skip Payment (Test)</button>
             <button type="button" class="pay-btn light" id="btnPayNow" disabled>PayNow (Coming Soon)</button>
             <button type="button" class="pay-btn light" id="btnCard" disabled>Credit / Debit Card (Coming Soon)</button>
 
@@ -180,6 +180,7 @@ Date created: 10 December 2025
   const payLahBtn = document.getElementById("btnPayLah");
   const payPalBtn = document.getElementById("btnPayPal");
   const netsBtn = document.getElementById("btnNETS");
+  const skipPayBtn = document.getElementById("btnSkipPay");
 
   const payNowBtn = document.getElementById("btnPayNow");
   const cardBtn = document.getElementById("btnCard");
@@ -258,6 +259,7 @@ Date created: 10 December 2025
     payLahBtn.disabled = !ok;
     payPalBtn.disabled = !ok;
     netsBtn.disabled = !ok;
+    skipPayBtn.disabled = !ok;
 
     payNowBtn.disabled = true;
     cardBtn.disabled = true;
@@ -300,6 +302,16 @@ Date created: 10 December 2025
     if (!ok) return;
 
     form.action = "/checkout/paylah";
+    form.method = "POST";
+    form.submit();
+  });
+
+  // Skip payment (test)
+  skipPayBtn.addEventListener("click", async () => {
+    const ok = await saveDetailsOrShowError();
+    if (!ok) return;
+
+    form.action = "/checkout/skip";
     form.method = "POST";
     form.submit();
   });

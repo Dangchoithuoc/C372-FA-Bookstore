@@ -6,7 +6,7 @@
   <title>Your Cart | The Bookmark</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
+<body class="buyer-ui">
   <%- include("partials/navbar", { user: user }) %>
 
   <main class="shell" style="padding: 20px 0 60px;">
@@ -19,12 +19,12 @@
     <% if (!cart || cart.length === 0) { %>
       <p class="muted">Your cart is empty. <a href="/">Browse books</a>.</p>
     <% } else { %>
-      <div class="card" style="padding:20px;">
+      <div class="card cart-card">
         <div class="row" style="margin-bottom:12px;">
           <strong>Items</strong>
           <span class="muted">Total: $<%= total %></span>
         </div>
-        <div class="grid" style="grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; align-items: center;">
+        <div class="grid cart-grid">
           <strong>Title</strong>
           <strong class="center">Price</strong>
           <strong class="center">Qty</strong>

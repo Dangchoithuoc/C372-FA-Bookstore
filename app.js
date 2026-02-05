@@ -129,6 +129,8 @@ app.post("/login", UserController.login);
 app.get("/register", UserController.registerPage);
 app.post("/register", UserController.register);
 app.get("/logout", UserController.logout);
+app.get("/profile", requireLogin, UserController.profilePage);
+app.post("/profile", requireLogin, UserController.updateProfile);
 
 // Cart routes (login required)
 app.get("/cart", requireLogin, CartController.viewCart);
@@ -145,6 +147,8 @@ app.post("/checkout/save-details", requireLogin, requireCartItems, CheckoutContr
 
 // PayLah (simulate later)
 app.post("/checkout/paylah", requireLogin, requireCartItems, CheckoutController.payLah);
+// Skip payment (testing)
+app.post("/checkout/skip", requireLogin, requireCartItems, CheckoutController.skipPayment);
 
 // PayPal flow 
 app.get("/checkout/paypal", requireLogin, requireCartItems, PaypalController.paypalPage);
@@ -159,9 +163,10 @@ app.get("/nets-qr/success", requireLogin, NetsController.showSuccess);
 app.get("/nets-qr/fail", requireLogin, NetsController.showFail);
 
 
-// Buyer order history
-app.get("/orders", requireLogin, requireBuyer, OrderController.purchaseHistory);
+// Orders (role-aware)
+app.get("/orders", requireLogin, OrderController.purchaseHistory);
 app.get("/invoice/:id", requireLogin, requireBuyer, OrderController.invoicePage);
+app.post("/orders/items/:id/delivery", requireLogin, requireSeller, OrderController.updateDeliveryStatus);
 
 // NEW: Seller CRUD routes (login + seller role required)
 app.get("/seller/dashboard", requireLogin, requireSeller, SellerController.dashboard);
@@ -177,7 +182,11 @@ app.post("/seller/books/:id/delete", requireLogin, requireSeller, SellerControll
 app.get("/admin/dashboard", requireLogin, requireAdmin, AdminController.dashboard);
 app.get("/admin/users", requireLogin, requireAdmin, AdminController.listUsers);
 app.get("/admin/books", requireLogin, requireAdmin, AdminController.listAllBooks);
+app.get("/admin/charts", requireLogin, requireAdmin, AdminController.chartsPage);
+app.get("/admin/reports/sales", requireLogin, requireAdmin, AdminController.salesReport);
+app.get("/admin/orders", requireLogin, requireAdmin, OrderController.purchaseHistory);
 app.post("/admin/users/:id/delete", requireLogin, requireAdmin, AdminController.deleteUser);
+app.post("/admin/users/:id/disable", requireLogin, requireAdmin, AdminController.toggleUserDisabled);
 app.post("/admin/books/:id/delete", requireLogin, requireAdmin, AdminController.deleteBook);
 
 // Server listening at bottom

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Users | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="admin-ui">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-logo">Control Room</div>
+      <nav class="admin-nav">
+        <a href="/admin/dashboard">Dashboard</a>
+        <a class="active" href="/admin/users">Users</a>
+        <a href="/admin/books">Books</a>
+        <a href="/admin/orders">Orders</a>
+        <a href="/admin/charts">Charts</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar admin-page-header">
+        <div>
+          <h1 class="admin-page-title">User Operations</h1>
+          <p class="admin-page-sub">Audit accounts, roles, and activity.</p>
+        </div>
+        <div class="admin-actions">
+          <a class="admin-btn" href="/logout">Log out</a>
+          <a class="admin-btn" href="/admin/dashboard">Back to Dashboard</a>
+        </div>
+      </div>
+
+      <div class="admin-toolbar">
+        <div class="admin-search">
+          <input type="text" placeholder="Search users (UI only)">
+          <span class="admin-muted">Search not wired</span>
+        </div>
+        <div>
+          <% if (success) { %>
+            <span class="admin-pill"><%= success %></span>
+          <% } %>
+          <% if (error) { %>
+            <span class="admin-pill admin-danger"><%= error %></span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="admin-section">
+      <% if (!users || users.length === 0) { %>
+        <div class="admin-empty">No users found.</div>
+      <% } else { %>
+      <table class="admin-table admin-table-compact">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(function(u) { %>
+            <tr>
+              <td>#<%= u.user_id %></td>
+              <td><%= u.username %></td>
+              <td><%= u.email %></td>
+              <td><span class="admin-pill"><%= u.role %></span></td>
+              <td>
+                <div class="admin-actions">
+                  <form method="POST" action="/admin/users/<%= u.user_id %>/disable">
+                    <input type="hidden" name="action" value="<%= u.disabled ? 'enable' : 'disable' %>">
+                    <button class="admin-btn admin-btn-warning" type="submit">
+                      <%= u.disabled ? 'Enable' : 'Disable' %>
+                    </button>
+                  </form>
+                  <form method="POST" action="/admin/users/<%= u.user_id %>/delete" onsubmit="return confirm('Delete this user?');">
+                    <button class="admin-btn admin-danger" type="submit">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

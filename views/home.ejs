@@ -17,25 +17,26 @@
     
     .search-container {
       flex: 1;
-      max-width: 400px;
+      max-width: 520px;
     }
     
     .filters {
-      background: #f9f9f9;
-      padding: 30px 0;
-      margin: 40px 0;
-      border-radius: 8px;
+      background: transparent;
+      padding: 0;
+      margin: 22px 0;
+      border-radius: 0;
     }
     
     .filter-form {
-      margin-top: 20px;
+      margin-top: 0;
     }
     
     .filter-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 20px;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 0;
     }
     
     .filter-group {
@@ -46,30 +47,34 @@
     
     .filter-group label {
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #333;
     }
     
     .filter-group input,
     .filter-group select {
-      padding: 10px;
+      padding: 8px 12px;
       border: 1px solid #ddd;
       border-radius: 4px;
-      font-size: 1rem;
+      font-size: 0.92rem;
+      line-height: 1.3;
+      height: 38px;
     }
     
     .filter-actions {
       display: flex;
       gap: 10px;
-      margin-top: 10px;
+      margin-top: 0;
+      justify-content: flex-start;
     }
     
     .filter-actions button {
-      padding: 10px 20px;
+      padding: 8px 14px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 0.9rem;
     }
     
     .filter-actions button[type="submit"] {
@@ -174,7 +179,7 @@
     
     .clear-filters {
       text-align: center;
-      margin-top: 20px;
+      margin-top: 14px;
     }
     
     .clear-filters a {
@@ -271,289 +276,208 @@
     }
   </style>
 </head>
-<body>
-  <header>
-    <div class="shell header-inner">
-      <div class="brand">
-        <a href="/" style="text-decoration:none; color:inherit;">The Bookmark</a>
+<body class="<%= (user && user.role === 'admin') ? 'admin-ui' : 'buyer-ui' %>">
+  <% if (!(user && user.role === 'admin')) { %>
+    <%- include("partials/navbar", { user: user, showSearch: true, searchQuery: searchQuery, genre: genre, priceRange: priceRange, sortBy: sortBy }) %>
+  <% } %>
+
+  <% if (user && user.role === 'admin') { %>
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <div>
+          <h1>Admin Home</h1>
+          <p class="admin-sub">Quick access to system operations.</p>
+        </div>
+        <div class="admin-actions">
+          <a class="admin-btn admin-btn-primary" href="/admin/dashboard">Open Command Center</a>
+          <a class="admin-btn" href="/admin/users">Users</a>
+          <a class="admin-btn" href="/admin/books">Books</a>
+          <a class="admin-btn" href="/admin/orders">Orders</a>
+        </div>
       </div>
-      
-      <!-- Search Bar -->
-      <div class="search-container">
-        <form method="GET" action="/" style="display:flex; gap:8px;">
-          <input type="text" name="search" placeholder="Search books..." 
-                 value="<%= searchQuery || '' %>"
-                 style="flex:1; padding:10px 15px; border:1px solid #ddd; border-radius:4px; font-size:1rem;">
-          <button type="submit" style="padding:10px 20px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer;">
-            Search
-          </button>
-        </form>
-      </div>
-      
-      <nav>
-        <a href="#staff-picks">Top Sellers</a>
-        
-        <% if (user && user.role === 'seller') { %>
-          <!-- Seller Navigation -->
-          <a href="/seller/books/new" class="add-book-btn">+ Add Book</a>
-          <a href="/seller/dashboard">Dashboard</a>
-          <a href="/logout">Logout (<%= user.name %>)</a>
-        <% } else if (user && user.role === 'admin') { %>
-          <!-- Admin Navigation -->
-          <a href="/admin/dashboard">Admin Dashboard</a>
-          <a href="/logout">Logout (<%= user.name %>)</a>
-        <% } else if (user && user.role === 'buyer') { %>
-          <!-- Buyer Navigation -->
-          <a class="cart-link" href="/cart">
-            Cart
-            <% if (typeof cartCount === "number" && cartCount > 0) { %>
-              <span class="cart-badge"><%= cartCount %></span>
+
+      <section class="admin-grid">
+        <div class="admin-card">
+          <h3>System Pulse</h3>
+          <div class="admin-list">
+            <div>Total users: <%= stats && stats.totalUsers ? stats.totalUsers : '—' %></div>
+            <div>Total orders: <%= stats && stats.totalOrders ? stats.totalOrders : '—' %></div>
+            <div>Total revenue: <%= stats && stats.totalRevenue ? ('$' + Number(stats.totalRevenue).toFixed(2)) : '—' %></div>
+          </div>
+        </div>
+        <div class="admin-card">
+          <h3>Risk Queue</h3>
+          <div class="admin-list">
+            <div>Refunds: 0 pending</div>
+            <div>Payment failures: 0</div>
+            <div>Flagged users: 0</div>
+          </div>
+        </div>
+        <div class="admin-card">
+          <h3>Catalog Health</h3>
+          <div class="admin-list">
+            <div>New books today: —</div>
+            <div>Reported listings: 0</div>
+            <div>Price anomalies: 0</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  <% } else { %>
+    <main class="shell">
+      <!-- Hero Section -->
+      <section class="hero">
+        <div>
+          <div class="eyebrow">
+            Featured Spotlight
+            <span><%= spotlight.badge %></span>
+          </div>
+          <h1><%= spotlight.title %></h1>
+          <p class="muted">by <strong><%= spotlight.author %></strong></p>
+          <p class="price">$<%= spotlight.price.toFixed(2) %></p>
+          <p><%= spotlight.tagline %></p>
+          <p class="muted"><%= spotlight.description %></p>
+          <form method="POST" action="/cart/add" style="display:flex; gap:10px; align-items:center;">
+            <input type="hidden" name="bookId" value="<%= spotlight.id || '' %>">
+            <input type="hidden" name="title" value="<%= spotlight.title %>">
+            <input type="hidden" name="price" value="<%= spotlight.price %>">
+            <% if (user && user.role === 'buyer') { %>
+              <button class="cta" type="submit">Add to cart</button>
+              <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
+            <% } else if (!user || user.role !== 'seller') { %>
+              <button class="cta" type="submit">Add to cart</button>
+              <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
             <% } %>
-          </a>
-          <a href="/orders">Orders</a>
-          <a href="/logout">Logout (<%= user.name %>)</a>
-        <% } else { %>
-          <!-- Guest Navigation -->
-          <a href="/cart">Cart</a>
-          <a href="/login">Login</a>
-          <a href="/register" style="background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none;">
-            Register
-          </a>
-        <% } %>
-      </nav>
-    </div>
-  </header>
-
-  <main class="shell">
-    <!-- Hero Section -->
-    <section class="hero">
-      <div>
-        <div class="eyebrow">
-          Featured Spotlight
-          <span><%= spotlight.badge %></span>
+          </form>
         </div>
-        <h1><%= spotlight.title %></h1>
-        <p class="muted">by <strong><%= spotlight.author %></strong></p>
-        <p class="price">$<%= spotlight.price.toFixed(2) %></p>
-        <p><%= spotlight.tagline %></p>
-        <p class="muted"><%= spotlight.description %></p>
-        <form method="POST" action="/cart/add" style="display:flex; gap:10px; align-items:center;">
-          <input type="hidden" name="bookId" value="<%= spotlight.id || '' %>">
-          <input type="hidden" name="title" value="<%= spotlight.title %>">
-          <input type="hidden" name="price" value="<%= spotlight.price %>">
-          <% if (user && user.role === 'buyer') { %>
-            <button class="cta" type="submit">Add to cart</button>
-            <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
-          <% } else if (!user || user.role !== 'seller') { %>
-            <button class="cta" type="submit">Add to cart</button>
-            <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
-          <% } %>
-        </form>
-      </div>
-      <div class="cover">
-        <div class="hero-cover">
-          <img class="hero-cover-img" src="<%= spotlight.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= spotlight.title %>">
+        <div class="cover">
+          <div class="hero-cover">
+            <img class="hero-cover-img" src="<%= spotlight.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= spotlight.title %>">
+          </div>
+          <h3><%= spotlight.title %></h3>
+          <p class="muted">First edition jacket</p>
         </div>
-        <h3><%= spotlight.title %></h3>
-        <p class="muted">First edition jacket</p>
-      </div>
-    </section>
+      </section>
 
-    <!-- Browse & Filter Section -->
-    <section class="filters">
-      <h3>Browse Books</h3>
-      <form method="GET" action="/" class="filter-form">
-        <div class="filter-grid">
-          <!-- Search -->
-          <div class="filter-group">
-            <label>Search</label>
-            <input type="text" name="search" placeholder="Title, author, or genre..." 
-                   value="<%= searchQuery || '' %>">
-          </div>
-          
-          <!-- Genre Filter -->
-          <div class="filter-group">
-            <label>Genre</label>
-            <select name="genre">
-              <option value="">All Genres</option>
-              <option value="Mystery" <%= genre === 'Mystery' ? 'selected' : '' %>>Mystery</option>
-              <option value="Fantasy" <%= genre === 'Fantasy' ? 'selected' : '' %>>Fantasy</option>
-              <option value="Non-fiction" <%= genre === 'Non-fiction' ? 'selected' : '' %>>Non-fiction</option>
-              <option value="Romance" <%= genre === 'Romance' ? 'selected' : '' %>>Romance</option>
-              <option value="Comics" <%= genre === 'Comics' ? 'selected' : '' %>>Comics</option>
-            </select>
-          </div>
-          
-          <!-- Price Range -->
-          <div class="filter-group">
-            <label>Price Range</label>
-            <select name="priceRange">
-              <option value="">Any Price</option>
-              <option value="0-15" <%= priceRange === '0-15' ? 'selected' : '' %>>Under $15</option>
-              <option value="15-20" <%= priceRange === '15-20' ? 'selected' : '' %>>$15 - $20</option>
-              <option value="20+" <%= priceRange === '20+' ? 'selected' : '' %>>Over $20</option>
-            </select>
-          </div>
-          
-          <!-- Sort By -->
-          <div class="filter-group">
-            <label>Sort By</label>
-            <select name="sortBy">
-              <option value="title_asc" <%= sortBy === 'title_asc' ? 'selected' : '' %>>Title A-Z</option>
-              <option value="title_desc" <%= sortBy === 'title_desc' ? 'selected' : '' %>>Title Z-A</option>
-              <option value="price_asc" <%= sortBy === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
-              <option value="price_desc" <%= sortBy === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
-            </select>
+      <!-- Browse & Filter Section removed; using navbar search instead -->
+
+      <!-- All Books Display -->
+      <section id="all-books">
+        <div class="results-header">
+          <h2>
+            <% if (user && user.role === 'seller') { %>
+              Your Books
+            <% } else { %>
+              All Books
+            <% } %>
+          </h2>
+          <div class="results-count">
+            <% if (filteredBooks && filteredBooks.length > 0) { %>
+              Showing <%= filteredBooks.length %> <%= filteredBooks.length === 1 ? 'book' : 'books' %>
+            <% } %>
           </div>
         </div>
         
-        <div class="filter-actions">
-          <button type="submit">Apply Filters</button>
-          <button type="button" onclick="location.href='/'">Clear All</button>
-        </div>
-      </form>
-      
-      <!-- Active Filters Display -->
-      <% if (searchQuery || genre || priceRange) { %>
-      <div class="active-filters">
-        <% if (searchQuery) { %>
-        <div class="active-filter-tag">
-          Search: "<%= searchQuery %>"
-          <span class="remove-filter" onclick="removeFilter('search')">×</span>
-        </div>
-        <% } %>
-        <% if (genre) { %>
-        <div class="active-filter-tag">
-          Genre: <%= genre %>
-          <span class="remove-filter" onclick="removeFilter('genre')">×</span>
-        </div>
-        <% } %>
-        <% if (priceRange) { %>
-        <div class="active-filter-tag">
-          Price: <%= priceRange === '0-15' ? 'Under $15' : priceRange === '15-20' ? '$15-$20' : 'Over $20' %>
-          <span class="remove-filter" onclick="removeFilter('priceRange')">×</span>
-        </div>
-        <% } %>
-      </div>
-      <% } %>
-    </section>
-
-    <!-- All Books Display -->
-    <section id="all-books">
-      <div class="results-header">
-        <h2>
-          <% if (user && user.role === 'seller') { %>
-            Your Books
-          <% } else { %>
-            All Books
-          <% } %>
-        </h2>
-        <div class="results-count">
-          <% if (filteredBooks && filteredBooks.length > 0) { %>
-            Showing <%= filteredBooks.length %> <%= filteredBooks.length === 1 ? 'book' : 'books' %>
-          <% } %>
-        </div>
-      </div>
-      
-      <% if (filteredBooks && filteredBooks.length > 0) { %>
-        <div class="books-grid">
-          <% filteredBooks.forEach(function(book) { %>
-              <div class="book-card">
-                <img class="book-card-cover" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
-                <span class="book-genre"><%= book.genre || 'General' %></span>
-              <h3 class="book-title"><%= book.title %></h3>
-              <p class="book-author">by <%= book.author %></p>
-              <p class="book-price">$<%= book.price.toFixed(2) %></p>
-              
-              <% if (user && user.role === 'seller') { %>
-                <!-- Seller sees Edit/Delete buttons -->
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                  <a href="/seller/books/<%= book.book_id %>/edit" 
-                     style="flex: 1; padding: 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center;">
-                    Edit
-                  </a>
-                  <form method="POST" action="/seller/books/<%= book.book_id %>/delete" style="flex: 1;">
-                    <button type="submit" 
-                            style="width: 100%; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;"
-                            onclick="return confirm('Delete this book?')">
-                      Delete
-                    </button>
+        <% if (filteredBooks && filteredBooks.length > 0) { %>
+          <div class="books-grid">
+            <% filteredBooks.forEach(function(book) { %>
+                <div class="book-card">
+                  <img class="book-card-cover" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
+                  <span class="book-genre"><%= book.genre || 'General' %></span>
+                <h3 class="book-title"><%= book.title %></h3>
+                <p class="book-author">by <%= book.author %></p>
+                <p class="book-price">$<%= book.price.toFixed(2) %></p>
+                
+                <% if (user && user.role === 'seller') { %>
+                  <!-- Seller sees Edit/Delete buttons -->
+                  <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <a href="/seller/books/<%= book.book_id %>/edit" 
+                       style="flex: 1; padding: 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; text-align: center;">
+                      Edit
+                    </a>
+                    <form method="POST" action="/seller/books/<%= book.book_id %>/delete" style="flex: 1;">
+                      <button type="submit" 
+                              style="width: 100%; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;"
+                              onclick="return confirm('Delete this book?')">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                <% } else if (user && user.role === 'buyer') { %>
+                  <!-- Buyer sees Add to Cart button -->
+                  <form method="POST" action="/cart/add">
+                    <input type="hidden" name="bookId" value="<%= book.book_id %>">
+                    <input type="hidden" name="title" value="<%= book.title %>">
+                    <input type="hidden" name="price" value="<%= book.price %>">
+                    <button class="add-to-cart-btn" type="submit">Add to Cart</button>
                   </form>
-                </div>
-              <% } else if (user && user.role === 'buyer') { %>
-                <!-- Buyer sees Add to Cart button -->
-                <form method="POST" action="/cart/add">
-                  <input type="hidden" name="bookId" value="<%= book.book_id %>">
-                  <input type="hidden" name="title" value="<%= book.title %>">
-                  <input type="hidden" name="price" value="<%= book.price %>">
-                  <button class="add-to-cart-btn" type="submit">Add to Cart</button>
-                </form>
-              <% } else if (!user) { %>
-                <!-- Guest sees Add to Cart (redirects to login) -->
-                <form method="POST" action="/cart/add">
-                  <input type="hidden" name="bookId" value="<%= book.book_id %>">
-                  <input type="hidden" name="title" value="<%= book.title %>">
-                  <input type="hidden" name="price" value="<%= book.price %>">
-                  <button class="add-to-cart-btn" type="submit">Add to Cart</button>
-                </form>
-              <% } %>
-            </div>
+                <% } else if (!user) { %>
+                  <!-- Guest sees Add to Cart (redirects to login) -->
+                  <form method="POST" action="/cart/add">
+                    <input type="hidden" name="bookId" value="<%= book.book_id %>">
+                    <input type="hidden" name="title" value="<%= book.title %>">
+                    <input type="hidden" name="price" value="<%= book.price %>">
+                    <button class="add-to-cart-btn" type="submit">Add to Cart</button>
+                  </form>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="no-results">
+            <h3>No books found</h3>
+            <p>Try adjusting your search or filters</p>
+            <% if (searchQuery || genre || priceRange) { %>
+              <div class="clear-filters">
+                <a href="/">Clear all filters</a>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </section>
+
+      <!-- Staff Picks Section -->
+      <section id="staff-picks">
+        <div class="row">
+          <h2>Top Sellers</h2>
+          <span class="muted">Best-loved titles flying off the shelves.</span>
+        </div>
+        <div class="grid">
+          <% staffPicks.forEach(function(book) { %>
+            <article class="card">
+              <img class="staff-cover-thumb" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
+              <span class="tag"><%= book.badge %></span>
+              <h3><%= book.title %></h3>
+              <p class="muted">by <%= book.author %></p>
+              <p class="muted"><%= book.vibe %></p>
+              <div class="row">
+                <span><strong>$<%= book.price.toFixed(2) %></strong></span>
+                
+                <% if (user && user.role === 'buyer') { %>
+                  <!-- Buyer sees Add button -->
+                  <form method="POST" action="/cart/add" style="margin:0; display:flex; gap:6px;">
+                    <input type="hidden" name="bookId" value="<%= book.id || '' %>">
+                    <input type="hidden" name="title" value="<%= book.title %>">
+                    <input type="hidden" name="price" value="<%= book.price %>">
+                    <button class="cta" type="submit">Add</button>
+                  </form>
+                <% } else if (!user || user.role !== 'seller') { %>
+                  <!-- Guest sees Add button (redirects to login) -->
+                  <form method="POST" action="/cart/add" style="margin:0; display:flex; gap:6px;">
+                    <input type="hidden" name="bookId" value="<%= book.id || '' %>">
+                    <input type="hidden" name="title" value="<%= book.title %>">
+                    <input type="hidden" name="price" value="<%= book.price %>">
+                    <button class="cta" type="submit">Add</button>
+                  </form>
+                <% } %>
+              </div>
+            </article>
           <% }); %>
         </div>
-      <% } else { %>
-        <div class="no-results">
-          <h3>No books found</h3>
-          <p>Try adjusting your search or filters</p>
-          <% if (searchQuery || genre || priceRange) { %>
-            <div class="clear-filters">
-              <a href="/">Clear all filters</a>
-            </div>
-          <% } %>
-        </div>
-      <% } %>
-    </section>
+      </section>
 
-    <!-- Staff Picks Section -->
-    <section id="staff-picks">
-      <div class="row">
-        <h2>Top Sellers</h2>
-        <span class="muted">Best-loved titles flying off the shelves.</span>
-      </div>
-      <div class="grid">
-        <% staffPicks.forEach(function(book) { %>
-          <article class="card">
-            <img class="staff-cover-thumb" src="<%= book.coverImage || '/images/default-book.svg' %>" alt="Cover of <%= book.title %>">
-            <span class="tag"><%= book.badge %></span>
-            <h3><%= book.title %></h3>
-            <p class="muted">by <%= book.author %></p>
-            <p class="muted"><%= book.vibe %></p>
-            <div class="row">
-              <span><strong>$<%= book.price.toFixed(2) %></strong></span>
-              
-              <% if (user && user.role === 'buyer') { %>
-                <!-- Buyer sees Add button -->
-                <form method="POST" action="/cart/add" style="margin:0; display:flex; gap:6px;">
-                  <input type="hidden" name="bookId" value="<%= book.id || '' %>">
-                  <input type="hidden" name="title" value="<%= book.title %>">
-                  <input type="hidden" name="price" value="<%= book.price %>">
-                  <button class="cta" type="submit">Add</button>
-                </form>
-              <% } else if (!user || user.role !== 'seller') { %>
-                <!-- Guest sees Add button (redirects to login) -->
-                <form method="POST" action="/cart/add" style="margin:0; display:flex; gap:6px;">
-                  <input type="hidden" name="bookId" value="<%= book.id || '' %>">
-                  <input type="hidden" name="title" value="<%= book.title %>">
-                  <input type="hidden" name="price" value="<%= book.price %>">
-                  <button class="cta" type="submit">Add</button>
-                </form>
-              <% } %>
-            </div>
-          </article>
-        <% }); %>
-      </div>
-    </section>
-
-  </main>
+    </main>
+  <% } %>
 
   <footer>
     <div class="shell">

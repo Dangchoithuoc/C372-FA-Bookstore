@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Purchase History | The Bookmark</title>
+  <title><%= pageTitle || "Purchase History" %> | The Bookmark</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
+<body class="buyer-ui">
   <%- include("partials/navbar", { user: user }) %>
 
   <main class="profile-shell">
     <section class="profile-card">
       <div class="pill">Orders</div>
-      <h1>Purchase history</h1>
-      <p class="muted">Review your past orders and the books you purchased.</p>
+      <h1><%= pageTitle || "Purchase history" %></h1>
+      <p class="muted"><%= pageSubtitle || "Review your past orders and the books you purchased." %></p>
 
       <% if (!orders || orders.length === 0) { %>
-        <div class="muted">No orders yet. Once you check out, they will appear here.</div>
+        <div class="muted"><%= emptyMessage || "No orders yet. Once you check out, they will appear here." %></div>
       <% } else { %>
         <div class="order-list">
           <% orders.forEach(order => { %>
@@ -25,6 +25,15 @@
                 <div>Order #<%= order.id %></div>
                 <div><%= new Date(order.order_date).toLocaleString() %></div>
                 <div>Total: $<%= order.total_price.toFixed(2) %></div>
+                <% if (order.buyer_name || order.buyer_email) { %>
+                  <div>
+                    Buyer:
+                    <%= order.buyer_name || "Unknown" %>
+                    <% if (order.buyer_email) { %>
+                      (<%= order.buyer_email %>)
+                    <% } %>
+                  </div>
+                <% } %>
                 <% if (order.payment_method) { %>
                   <div>Paid via <%= order.payment_method %></div>
                 <% } %>
@@ -36,6 +45,22 @@
                     <div>
                       <div class="order-item-title"><%= item.title %></div>
                       <div class="muted"><%= item.author %> · <%= item.genre || 'General' %></div>
+                      <% if (user && user.role === "seller") { %>
+                        <form method="POST" action="/orders/items/<%= item.order_item_id %>/delivery" class="delivery-status">
+                          <div class="muted delivery-status-label">Delivery status</div>
+                          <div class="delivery-status-options">
+                            <% (deliveryStatuses || []).forEach(status => { %>
+                              <label class="delivery-status-option">
+                                <input type="radio" name="status" value="<%= status %>" <%= status === item.delivery_status ? "checked" : "" %>>
+                                <span><%= status %></span>
+                              </label>
+                            <% }) %>
+                          </div>
+                          <button type="submit" class="delivery-status-submit">Update</button>
+                        </form>
+                      <% } else { %>
+                        <div class="muted" style="margin-top:6px;">Delivery status: <%= item.delivery_status || "Pending" %></div>
+                      <% } %>
                     </div>
                     <div class="order-item-price">$<%= item.price.toFixed(2) %></div>
                   </div>

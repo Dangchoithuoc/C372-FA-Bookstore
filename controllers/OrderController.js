@@ -47,7 +47,11 @@ module.exports = {
                     delivery_status: row.delivery_status || "Pending",
                     review_rating: row.review_rating || null,
                     review_comment: row.review_comment || null,
-                    review_created_at: row.review_created_at || null
+                    review_created_at: row.review_created_at || null,
+                    refund_id: row.refund_id || null,
+                    refund_status: row.refund_status || null,
+                    refund_method: row.refund_method || null,
+                    refund_amount: row.refund_amount || null
                 });
                 if (role === "seller") {
                     const current = index.get(row.order_id);
@@ -127,7 +131,11 @@ module.exports = {
             }
 
             const Review = require("../models/Review");
-            const created = await Review.createForOrderItem(user.id, orderItemId, rating, comment);
+            const title = (req.body.title || "").trim();
+            const pros = (req.body.pros || "").trim();
+            const cons = (req.body.cons || "").trim();
+            const photoUrl = req.file ? `/uploads/reviews/${req.file.filename}` : null;
+            const created = await Review.createForOrderItem(user.id, orderItemId, rating, comment, title, pros, cons, photoUrl);
             if (!created) {
                 return res.status(400).send("Unable to add review. Delivery must be completed and review must be unique.");
             }
@@ -136,6 +144,93 @@ module.exports = {
         } catch (err) {
             console.error("Add review error:", err);
             res.status(500).send("Failed to add review");
+        }
+    },
+
+    reviewPage: async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!user || user.role !== "buyer") {
+                return res.status(403).send("Access denied.");
+            }
+            const orderItemId = Number(req.params.id);
+            if (!Number.isFinite(orderItemId)) {
+                return res.redirect("/orders");
+            }
+
+            const item = await Order.getOrderItemForBuyer(orderItemId, user.id);
+            if (!item) return res.status(404).send("Order item not found.");
+            if (item.delivery_status !== "Delivered") {
+                return res.status(400).send("You can only review delivered items.");
+            }
+            if (item.review_id) {
+                return res.redirect("/orders");
+            }
+
+            res.render("review", {
+                user,
+                item
+            });
+        } catch (err) {
+            console.error("Review page error:", err);
+            res.status(500).send("Could not load review page");
+        }
+    },
+
+    requestRefund: async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!user || user.role !== "buyer") {
+                return res.status(403).send("Access denied.");
+            }
+            const orderItemId = Number(req.params.id);
+            const method = (req.body.method || "").trim().toLowerCase();
+            const reason = (req.body.reason || "").trim();
+            const note = (req.body.note || "").trim();
+            const proofUrl = req.file ? `/uploads/refunds/${req.file.filename}` : null;
+            if (!Number.isFinite(orderItemId)) {
+                return res.redirect("/orders");
+            }
+
+            const Refund = require("../models/Refund");
+            const result = await Refund.request(user.id, orderItemId, method, reason, note, proofUrl);
+            if (!result.ok) {
+                return res.status(400).send("Refund request could not be created.");
+            }
+            return res.redirect("/orders");
+        } catch (err) {
+            console.error("Refund request error:", err);
+            res.status(500).send("Failed to request refund");
+        }
+    },
+
+    refundPage: async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!user || user.role !== "buyer") {
+                return res.status(403).send("Access denied.");
+            }
+            const orderItemId = Number(req.params.id);
+            if (!Number.isFinite(orderItemId)) {
+                return res.redirect("/orders");
+            }
+
+            const item = await Order.getOrderItemForBuyer(orderItemId, user.id);
+            if (!item) return res.status(404).send("Order item not found.");
+            if (item.delivery_status !== "Delivered") {
+                return res.status(400).send("Refunds are only allowed after delivery.");
+            }
+            if (item.refund_id) {
+                return res.redirect("/orders");
+            }
+
+            res.render("refund", {
+                user,
+                item
+            });
+        } catch (err) {
+            console.error("Refund page error:", err);
+            res.status(500).send("Could not load refund page");
         }
     },
 

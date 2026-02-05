@@ -1,7 +1,7 @@
 const pool = require("../db");
 
 module.exports = {
-  async checkout(userId, paymentMethod = "Manual", delivery = null) {
+  async checkout(userId, paymentMethod = "Manual", delivery = null, paymentMeta = null, discount = null) {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
@@ -16,7 +16,16 @@ module.exports = {
       }
 
       const cartId = cartRows[0].cart_id;
-      const totalAmount = Number(cartRows[0].total_amount || 0);
+      const subtotalAmount = Number(cartRows[0].total_amount || 0);
+      const discountPercent = discount && Number.isFinite(Number(discount.discountPercent))
+        ? Number(discount.discountPercent)
+        : 0;
+      const discountAmount = discount && Number.isFinite(Number(discount.discountAmount))
+        ? Number(discount.discountAmount)
+        : 0;
+      const totalAmount = discount && Number.isFinite(Number(discount.total))
+        ? Number(discount.total)
+        : Math.max(0, subtotalAmount - discountAmount);
 
       // 2) Check cart has items + stock
       const [cartItems] = await conn.execute(
@@ -38,8 +47,8 @@ module.exports = {
 
       // 3) Create order
       const [orderResult] = await conn.execute(
-        "INSERT INTO orders (buyer_id, total_price) VALUES (?, ?)",
-        [userId, totalAmount]
+        "INSERT INTO orders (buyer_id, total_price, discount_percent, discount_amount) VALUES (?, ?, ?, ?)",
+        [userId, totalAmount, discountPercent, discountAmount]
       );
       const orderId = orderResult.insertId;
 
@@ -85,9 +94,11 @@ module.exports = {
       await conn.execute("UPDATE cart SET total_amount = 0 WHERE cart_id = ?", [cartId]);
 
       // 7) Payment record
+      const providerTxnId = paymentMeta && paymentMeta.providerTxnId ? paymentMeta.providerTxnId : null;
+      const providerTxnRef = paymentMeta && paymentMeta.providerTxnRef ? paymentMeta.providerTxnRef : null;
       await conn.execute(
-        "INSERT INTO payment (order_id, payment_method, payment_status) VALUES (?, ?, ?)",
-        [orderId, paymentMethod, "Paid"]
+        "INSERT INTO payment (order_id, payment_method, payment_status, provider_txn_id, provider_txn_ref) VALUES (?, ?, ?, ?, ?)",
+        [orderId, paymentMethod, "Paid", providerTxnId, providerTxnRef]
       );
 
       await conn.commit();
@@ -118,12 +129,17 @@ module.exports = {
           b.coverImage,
           r.rating AS review_rating,
           r.comment AS review_comment,
-          r.created_at AS review_created_at
+          r.created_at AS review_created_at,
+          rf.refund_id AS refund_id,
+          rf.status AS refund_status,
+          rf.method AS refund_method,
+          rf.amount AS refund_amount
        FROM orders o
        LEFT JOIN payment p ON p.order_id = o.order_id
        JOIN order_items oi ON oi.order_id = o.order_id
        JOIN books b ON b.book_id = oi.book_id
        LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
+       LEFT JOIN refunds rf ON rf.order_item_id = oi.order_item_id
        WHERE o.buyer_id = ?
        ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`,
       [userId]
@@ -151,13 +167,18 @@ module.exports = {
           u.email AS buyer_email,
           r.rating AS review_rating,
           r.comment AS review_comment,
-          r.created_at AS review_created_at
+          r.created_at AS review_created_at,
+          rf.refund_id AS refund_id,
+          rf.status AS refund_status,
+          rf.method AS refund_method,
+          rf.amount AS refund_amount
        FROM orders o
        JOIN users u ON u.user_id = o.buyer_id
        LEFT JOIN payment p ON p.order_id = o.order_id
        JOIN order_items oi ON oi.order_id = o.order_id
        JOIN books b ON b.book_id = oi.book_id
        LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
+       LEFT JOIN refunds rf ON rf.order_item_id = oi.order_item_id
        WHERE b.seller_id = ?
        ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`,
       [sellerId]
@@ -186,13 +207,18 @@ module.exports = {
           u.email AS buyer_email,
           r.rating AS review_rating,
           r.comment AS review_comment,
-          r.created_at AS review_created_at
+          r.created_at AS review_created_at,
+          rf.refund_id AS refund_id,
+          rf.status AS refund_status,
+          rf.method AS refund_method,
+          rf.amount AS refund_amount
        FROM orders o
        JOIN users u ON u.user_id = o.buyer_id
        LEFT JOIN payment p ON p.order_id = o.order_id
        JOIN order_items oi ON oi.order_id = o.order_id
        JOIN books b ON b.book_id = oi.book_id
        LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
+       LEFT JOIN refunds rf ON rf.order_item_id = oi.order_item_id
        ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`
     );
     return rows;
@@ -248,5 +274,36 @@ module.exports = {
     );
 
     return { order: orderRows[0], items };
+  }
+  ,
+  async getOrderItemForBuyer(orderItemId, userId) {
+    const [rows] = await pool.execute(
+      `SELECT 
+          oi.order_item_id,
+          oi.price_at_purchase,
+          oi.delivery_status,
+          b.book_id,
+          b.title,
+          b.author,
+          b.genre,
+          b.coverImage,
+          o.order_date,
+          o.total_price,
+          p.payment_method,
+          p.payment_status,
+          r.review_id,
+          rf.refund_id,
+          rf.status AS refund_status
+       FROM order_items oi
+       JOIN orders o ON o.order_id = oi.order_id
+       LEFT JOIN payment p ON p.order_id = o.order_id
+       JOIN books b ON b.book_id = oi.book_id
+       LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
+       LEFT JOIN refunds rf ON rf.order_item_id = oi.order_item_id
+       WHERE oi.order_item_id = ? AND o.buyer_id = ?
+       LIMIT 1`,
+      [orderItemId, userId]
+    );
+    return rows[0] || null;
   }
 };

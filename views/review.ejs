@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leave a Review | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="buyer-ui">
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="detail-shell">
+    <div class="detail-grid">
+      <div class="detail-cover">
+        <img src="<%= item.coverImage || '/images/placeholder.svg' %>" alt="<%= item.title %> cover">
+      </div>
+      <div class="detail-info">
+        <h1>Leave a review</h1>
+        <p class="muted"><strong><%= item.title %></strong> by <%= item.author %></p>
+        <div class="order-info">
+          <div><strong>Order date:</strong> <%= new Date(item.order_date).toLocaleString() %></div>
+          <div><strong>Payment:</strong> <%= item.payment_method || 'Unknown' %> (<%= item.payment_status || 'Paid' %>)</div>
+          <div><strong>Delivery status:</strong> <%= item.delivery_status %></div>
+          <div><strong>Item total:</strong> $<%= Number(item.price_at_purchase || 0).toFixed(2) %></div>
+        </div>
+        <form class="review-form" method="POST" action="/orders/items/<%= item.order_item_id %>/review" enctype="multipart/form-data">
+          <label>Rating</label>
+          <div class="star-rating">
+            <input type="radio" id="star5" name="rating" value="5" required><label for="star5">★</label>
+            <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
+            <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
+            <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
+            <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+          </div>
+
+          <label>Review title</label>
+          <input type="text" name="title" placeholder="Summarize your experience">
+
+          <label>Pros</label>
+          <input type="text" name="pros" placeholder="What did you like?">
+
+          <label>Cons</label>
+          <input type="text" name="cons" placeholder="What could be improved?">
+
+          <label>Comment (optional)</label>
+          <input type="text" name="comment" placeholder="Short comment">
+
+          <label>Photo (optional)</label>
+          <input type="file" name="photo" accept="image/*">
+
+          <div class="row" style="margin-top:10px;">
+            <button type="submit" class="cta">Submit ⭐</button>
+            <a href="/orders" class="cta" style="background: #f7f1e7; color:#2b1b12; border:1px solid #e5d6c5;">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

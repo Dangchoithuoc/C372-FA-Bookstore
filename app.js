@@ -8,8 +8,13 @@ const app = express();
 
 const bookUploadsDir = path.join(__dirname, "public", "uploads", "books");
 fs.mkdirSync(bookUploadsDir, { recursive: true });
+const reviewUploadsDir = path.join(__dirname, "public", "uploads", "reviews");
+fs.mkdirSync(reviewUploadsDir, { recursive: true });
+const refundUploadsDir = path.join(__dirname, "public", "uploads", "refunds");
+fs.mkdirSync(refundUploadsDir, { recursive: true });
 
 const allowedBookImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+const allowedUploadTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const bookImageStorage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, bookUploadsDir),
     filename: (req, file, cb) => {
@@ -22,6 +27,44 @@ const uploadBookImage = multer({
     limits: { fileSize: 2 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (!allowedBookImageTypes.includes(file.mimetype)) {
+            req.fileValidationError = "Only JPEG, PNG, GIF, or WEBP images are allowed.";
+            return cb(null, false);
+        }
+        cb(null, true);
+    }
+});
+
+const reviewImageStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, reviewUploadsDir),
+    filename: (req, file, cb) => {
+        const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "-");
+        cb(null, `${Date.now()}-${safeName}`);
+    }
+});
+const uploadReviewImage = multer({
+    storage: reviewImageStorage,
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (!allowedUploadTypes.includes(file.mimetype)) {
+            req.fileValidationError = "Only JPEG, PNG, GIF, or WEBP images are allowed.";
+            return cb(null, false);
+        }
+        cb(null, true);
+    }
+});
+
+const refundProofStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, refundUploadsDir),
+    filename: (req, file, cb) => {
+        const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "-");
+        cb(null, `${Date.now()}-${safeName}`);
+    }
+});
+const uploadRefundProof = multer({
+    storage: refundProofStorage,
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (!allowedUploadTypes.includes(file.mimetype)) {
             req.fileValidationError = "Only JPEG, PNG, GIF, or WEBP images are allowed.";
             return cb(null, false);
         }
@@ -56,6 +99,7 @@ const PaypalController = require("./controllers/PaypalController");
 const NetsController = require("./controllers/NetsController");
 const OrderController = require("./controllers/OrderController");
 const WalletController = require("./controllers/WalletController");
+const MembershipController = require("./controllers/MembershipController");
 const CartModel = require("./models/Cart");
 const WishlistController = require("./controllers/WishlistController");
 
@@ -185,7 +229,13 @@ app.get("/nets-qr/fail", requireLogin, NetsController.showFail);
 app.get("/orders", requireLogin, OrderController.purchaseHistory);
 app.get("/invoice/:id", requireLogin, requireBuyer, OrderController.invoicePage);
 app.post("/orders/items/:id/delivery", requireLogin, requireSeller, OrderController.updateDeliveryStatus);
-app.post("/orders/items/:id/review", requireLogin, requireBuyer, OrderController.addReview);
+app.get("/orders/items/:id/review", requireLogin, requireBuyer, OrderController.reviewPage);
+app.post("/orders/items/:id/review", requireLogin, requireBuyer, uploadReviewImage.single("photo"), OrderController.addReview);
+app.get("/orders/items/:id/refund", requireLogin, requireBuyer, OrderController.refundPage);
+app.post("/orders/items/:id/refund", requireLogin, requireBuyer, uploadRefundProof.single("proof"), OrderController.requestRefund);
+
+// Membership (buyer only)
+app.get("/membership", requireLogin, requireBuyer, MembershipController.dashboard);
 
 // NEW: Seller CRUD routes (login + seller role required)
 app.get("/seller/dashboard", requireLogin, requireSeller, SellerController.dashboard);
@@ -204,6 +254,8 @@ app.get("/admin/books", requireLogin, requireAdmin, AdminController.listAllBooks
 app.get("/admin/charts", requireLogin, requireAdmin, AdminController.chartsPage);
 app.get("/admin/reports/sales", requireLogin, requireAdmin, AdminController.salesReport);
 app.get("/admin/orders", requireLogin, requireAdmin, OrderController.purchaseHistory);
+app.get("/admin/refunds", requireLogin, requireAdmin, AdminController.listRefunds);
+app.post("/admin/refunds/:id/decision", requireLogin, requireAdmin, AdminController.decideRefund);
 app.post("/admin/users/:id/delete", requireLogin, requireAdmin, AdminController.deleteUser);
 app.post("/admin/users/:id/disable", requireLogin, requireAdmin, AdminController.toggleUserDisabled);
 app.post("/admin/books/:id/delete", requireLogin, requireAdmin, AdminController.deleteBook);

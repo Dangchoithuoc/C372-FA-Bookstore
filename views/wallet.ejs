@@ -14,7 +14,7 @@
       <div class="pill">Wallet</div>
       <h1>My eWallet</h1>
       <p class="muted">Top up with NETS or PayPal. Balance updates after successful payment.</p>
-      <% if (String(error || "") === "insufficient") { %>
+      <% if (typeof error !== "undefined" && String(error || "") === "insufficient") { %>
         <div class="error">Insufficient balance. Please top up your wallet.</div>
       <% } %>
 

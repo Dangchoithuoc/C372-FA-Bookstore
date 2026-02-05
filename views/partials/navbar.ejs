@@ -61,10 +61,11 @@
         <details class="nav-menu-dropdown">
           <summary>Menu &#9776;</summary>
           <div class="nav-menu-panel">
-            <% if (user && user.role === "buyer") { %>
-              <a href="/wishlist">Wishlist &#x1F496;</a>
-              <a href="/wallet">Wallet &#x1F4B3;</a>
-            <% } %>
+          <% if (user && user.role === "buyer") { %>
+            <a href="/wishlist">Wishlist &#x1F496;</a>
+            <a href="/wallet">Wallet &#x1F4B3;</a>
+            <a href="/membership">Membership &#x1F4B0;</a>
+          <% } %>
             <% if (user) { %>
               <a href="/orders">Orders &#x1F4E6;</a>
             <% } %>

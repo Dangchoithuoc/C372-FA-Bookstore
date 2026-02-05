@@ -1,604 +1,1226 @@
-<!-- 
-
-I declare that this code was written by me. 
-
-I will not copy or allow others to copy my code. 
-
-I understand that copying code is considered as plagiarism.
-
-
-
-Student Name: Mizyana Binte Mansoor Ali
-
-Student ID: 24030289
-
-Class: C372-003
-
-Date created: 10 December 2025
-
--->
-
-<!DOCTYPE html>
-
-<html lang="en">
-
-<head>
-
-  <meta charset="UTF-8" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Checkout | The Bookmark</title>
-
-  <link rel="stylesheet" href="/css/styles.css">
-
-  <style>
-
-    .delivery-row { display:flex; gap:10px; margin-bottom: 14px; }
-
-    .delivery-btn{
-
-      border:0;
-
-      padding:10px 14px;
-
-      border-radius:10px;
-
-      cursor:pointer;
-
-      font-weight:800;
-
-      background:#e5e7eb; /* grey */
-
-      color:#0f172a;
-
-    }
-
-    .delivery-btn.active{
-
-      background:#1d4ed8; /* darker blue */
-
-      color:#fff;
-
-    }
-
-    .hidden{ display:none; }
-
-
-
-    .field-error{
-
-      margin-top:10px;
-
-      padding:10px 12px;
-
-      border-radius:10px;
-
-      background:#fee2e2;
-
-      border:1px solid #fecdd3;
-
-      color:#b91c1c;
-
-      font-size:0.95rem;
-
-    }
-
-
-
-    .pay-grid{ display:grid; gap:10px; margin-top:12px; }
-
-    .pay-btn{
-
-      width:100%;
-
-      padding:12px 14px;
-
-      border-radius:12px;
-
-      border:none;
-
-      background:#2563eb;
-
-      color:#fff;
-
-      font-weight:900;
-
-      cursor:pointer;
-
-    }
-
-    .pay-btn[disabled]{ opacity:0.55; cursor:not-allowed; }
-
-    .pay-btn.secondary{ background:#0b3aa6; }
-
-    .pay-btn.light{ background:#3b82f6; }
-
-    .note{ color: #52616f; font-size:0.9rem; margin-top:8px; }
-
-    .req{ color:#b91c1c; font-weight:700; }
-
-  </style>
-
-</head>
-
-<body class="buyer-ui">
-  <%- include("partials/navbar", { user: user }) %>
-
-
-
-  <div class="checkout-shell">
-
-    <div class="checkout-header">
-      <h2 class="checkout-title">Checkout</h2>
-      <p class="muted">Confirm delivery details and choose a payment method.</p>
-    </div>
-
-
-
-    <!-- ONE FORM FOR BOTH SIDES -->
-
-    <form id="checkoutForm" method="POST">
-
-      <input type="hidden" name="delivery_type" id="delivery_type" value="">
-
-      <input type="hidden" name="payment_method" id="payment_method" value="">
-
-
-
-      <div class="checkout-columns">
-
-
-
-        <!-- LEFT -->
-
-        <div class="checkout-section">
-
-          <h3>Delivery Options <span class="req">*</span></h3>
-
-
-
-          <div class="delivery-row">
-
-            <button type="button" class="delivery-btn" id="btnShip">Ship</button>
-
-            <button type="button" class="delivery-btn" id="btnPickup">Pick up</button>
-
-          </div>
-
-
-
-          <!-- SHIP -->
-
-          <div id="shipFields" class="hidden checkout-block">
-            <h4>Shipping Address <span class="req">*</span></h4>
-            <div class="checkout-grid-2">
-              <input type="text" name="ship_address1" id="ship_address1" placeholder="Address line 1 (required)">
-              <input type="text" name="ship_address2" id="ship_address2" placeholder="Address line 2 (optional)">
-              <input type="text" name="ship_city" id="ship_city" placeholder="City (required)">
-              <input type="text" name="ship_postal" id="ship_postal" placeholder="Postal Code (required)">
-            </div>
-          </div>
-
-
-
-          <!-- PICKUP -->
-
-          <div id="pickupFields" class="hidden checkout-block">
-            <h4>Pickup Details <span class="req">*</span></h4>
-            <select name="pickup_location" id="pickup_location" class="checkout-select">
-
-              <option value="">Select pickup location</option>
-
-              <option value="Woodlands MRT">Woodlands MRT</option>
-
-              <option value="Sengkang MRT">Sengkang MRT</option>
-
-              <option value="Tampines MRT">Tampines MRT</option>
-
-              <option value="Jurong East MRT">Jurong East MRT</option>
-
-              <option value="City Hall MRT">City Hall MRT</option>
-
-            </select>
-
-
-
-            <select name="pickup_timeslot" id="pickup_timeslot" class="checkout-select">
-
-              <option value="">Select pickup time slot</option>
-
-              <option value="2026-02-04 12:00:00">Today 12pm - 2pm</option>
-
-              <option value="2026-02-04 14:00:00">Today 2pm - 4pm</option>
-
-              <option value="2026-02-04 16:00:00">Today 4pm - 6pm</option>
-
-            </select>
-
-          </div>
-
-
-
-          <h3 style="margin-top: 18px;">Contact Information <span class="req">*</span></h3>
-          <div class="checkout-grid-2">
-            <input type="text" name="first_name" id="first_name" placeholder="First name" required>
-            <input type="text" name="last_name" id="last_name" placeholder="Last name" required>
-            <input type="email" name="email" id="email" placeholder="Email" required>
-            <input type="text" name="contact" id="contact" placeholder="Contact number" required>
-          </div>
-
-
-
-          <div id="formError" class="field-error hidden"></div>
-
-          <div class="note">Fill in required fields first. Payment buttons will unlock after.</div>
-
-        </div>
-
-
-
-        <!-- RIGHT -->
-
-        <div class="checkout-section">
-
-          <h3>Order Summary</h3>
-
-
-
-          <table style="width:100%; border-collapse: collapse;">
-
-            <tr style="border-bottom: 1px solid var(--border);">
-
-              <th style="text-align:left; padding-bottom: 8px;">Book</th>
-
-              <th>Qty</th>
-
-              <th style="text-align:right;">Subtotal</th>
-
-            </tr>
-
-
-
-            <% cart.forEach(item => { %>
-
-              <tr>
-
-                <td><%= item.title %></td>
-
-                <td style="text-align:center;"><%= item.qty %></td>
-
-                <td style="text-align:right;">$<%= (item.price * item.qty).toFixed(2) %></td>
-
-              </tr>
-
-            <% }) %>
-
-          </table>
-
-
-
-          <p class="checkout-total">Total: $<%= total %></p>
-
-
-
-          <h3 style="margin-top: 16px;">Payment Method</h3>
-
-          <div class="pay-grid">
-            <button type="button" class="pay-btn" id="btnWallet" disabled>Pay with eWallet &#x1F4B3;</button>
-            <button type="button" class="pay-btn" id="btnSkipPay" disabled>Skip Payment (Test) &#x1F9EA;</button>
-            <button type="button" class="pay-btn" id="btnStripe" disabled>Pay with Stripe (Coming Soon) &#x26A1;</button>
-            <button type="button" class="pay-btn" id="btnPayPal" disabled>Pay with PayPal &#x1F17F;&#xFE0F;</button>
-            <button type="button" class="pay-btn" id="btnNETS" disabled>Pay with NETS QR &#x1F4F1;</button>
-          </div>
-
-
-        </div>
-
-
-
-      </div>
-
-    </form>
-
-  </div>
-
-
-
-  <script>
-
-  const form = document.getElementById("checkoutForm");
-
-  const errBox = document.getElementById("formError");
-
-
-
-  const btnShip = document.getElementById("btnShip");
-
-  const btnPickup = document.getElementById("btnPickup");
-
-
-
-  const shipFields = document.getElementById("shipFields");
-
-  const pickupFields = document.getElementById("pickupFields");
-
-
-
-  const deliveryTypeInput = document.getElementById("delivery_type");
-
-
-
-  const payPalBtn = document.getElementById("btnPayPal");
-  const netsBtn = document.getElementById("btnNETS");
-  const skipPayBtn = document.getElementById("btnSkipPay");
-  const stripeBtn = document.getElementById("btnStripe");
-  const walletBtn = document.getElementById("btnWallet");
-
-
-  function showError(msg) {
-
-    errBox.textContent = msg;
-
-    errBox.classList.remove("hidden");
-
-  }
-
-
-
-  function clearError() {
-
-    errBox.textContent = "";
-
-    errBox.classList.add("hidden");
-
-  }
-
-
-
-  function getVal(id) {
-
-    const el = document.getElementById(id);
-
-    return (el && el.value || "").trim();
-
-  }
-
-
-
-  function setDelivery(type) {
-
-    deliveryTypeInput.value = type;
-
-
-
-    btnShip.classList.toggle("active", type === "SHIP");
-
-    btnPickup.classList.toggle("active", type === "PICKUP");
-
-
-
-    shipFields.classList.toggle("hidden", type !== "SHIP");
-
-    pickupFields.classList.toggle("hidden", type !== "PICKUP");
-
-
-
-    clearError();
-
-    validateAndTogglePayments();
-
-  }
-
-
-
-  btnShip.addEventListener("click", () => setDelivery("SHIP"));
-
-  btnPickup.addEventListener("click", () => setDelivery("PICKUP"));
-
-
-
-  function isValid() {
-
-    clearError();
-
-
-
-    if (!getVal("first_name") || !getVal("last_name") || !getVal("email") || !getVal("contact")) {
-
-      showError("Please fill in contact information (First name, Last name, Email, Contact number).");
-
-      return false;
-
-    }
-
-
-
-    const dt = deliveryTypeInput.value;
-
-    if (!dt) {
-
-      showError("Please choose a delivery option (Ship or Pick up).");
-
-      return false;
-
-    }
-
-
-
-    if (dt === "SHIP") {
-
-      if (!getVal("ship_address1") || !getVal("ship_city") || !getVal("ship_postal")) {
-
-        showError("Please fill Shipping Address Line 1, City, and Postal Code.");
-
-        return false;
-
-      }
-
-    }
-
-
-
-    if (dt === "PICKUP") {
-
-      if (!getVal("pickup_location") || !getVal("pickup_timeslot")) {
-
-        showError("Please select pickup location and time slot.");
-
-        return false;
-
-      }
-
-    }
-
-
-
-    return true;
-
-  }
-
-
-
-  function validateAndTogglePayments() {
-
-    const dt = deliveryTypeInput.value;
-
-
-
-    const contactOk = getVal("first_name") && getVal("last_name") && getVal("email") && getVal("contact");
-
-    const shipOk = dt === "SHIP" && getVal("ship_address1") && getVal("ship_city") && getVal("ship_postal");
-
-    const pickupOk = dt === "PICKUP" && getVal("pickup_location") && getVal("pickup_timeslot");
-
-
-
-    const ok = !!(contactOk && dt && (shipOk || pickupOk));
-
-
-
-    payPalBtn.disabled = !ok;
-    netsBtn.disabled = !ok;
-    skipPayBtn.disabled = !ok;
-    walletBtn.disabled = !ok;
-    stripeBtn.disabled = true;
-
-  }
-
-
-  form.addEventListener("input", validateAndTogglePayments);
-
-  form.addEventListener("change", validateAndTogglePayments);
-
-
-
-  // run once on load
-
-  validateAndTogglePayments();
-
-
-
-  async function saveDetailsOrShowError() {
-
-  if (!isValid()) return false;
-
-
-
-  // Convert form to x-www-form-urlencoded so express.urlencoded can read it
-
-  const params = new URLSearchParams();
-
-  for (const [k, v] of new FormData(form).entries()) {
-
-    params.append(k, v);
-
-  }
-
-
-
-  const resp = await fetch("/checkout/save-details", {
-
-    method: "POST",
-
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-
-    body: params.toString()
-
-  });
-
-
-
-  const data = await resp.json().catch(() => ({}));
-
-
-
-  if (!resp.ok) {
-
-    showError(data.error || "Please check your details.");
-
-    return false;
-
-  }
-
-  return true;
-
-}
-
-
-
-
-
-  // Skip payment (test)
-  skipPayBtn.addEventListener("click", async () => {
-    const ok = await saveDetailsOrShowError();
-    if (!ok) return;
-
-    form.action = "/checkout/skip";
-    form.method = "POST";
-    form.submit();
-  });
-
-  // eWallet
-  walletBtn.addEventListener("click", async () => {
-    const ok = await saveDetailsOrShowError();
-    if (!ok) return;
-
-    form.action = "/checkout/wallet";
-    form.method = "POST";
-    form.submit();
-  });
-
-
-  // PayPal: MUST be GET to /checkout/paypal page
-
-  payPalBtn.addEventListener("click", async () => {
-
-    const ok = await saveDetailsOrShowError();
-
-    if (!ok) return;
-
-
-
-    window.location.href = "/checkout/paypal";
-
-  });
-
-
-
-  // NETS: MUST be GET to /checkout/nets page
-
-  netsBtn.addEventListener("click", async () => {
-    const ok = await saveDetailsOrShowError();
-    if (!ok) return;
-
-    window.location.href = "/checkout/nets";
-  });
-</script>
-
-
-
-</body>
-
-</html>
-
+<!-- 
+
+
+
+I declare that this code was written by me. 
+
+
+
+I will not copy or allow others to copy my code. 
+
+
+
+I understand that copying code is considered as plagiarism.
+
+
+
+
+
+
+
+Student Name: Mizyana Binte Mansoor Ali
+
+
+
+Student ID: 24030289
+
+
+
+Class: C372-003
+
+
+
+Date created: 10 December 2025
+
+
+
+-->
+
+
+
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+<head>
+
+
+
+  <meta charset="UTF-8" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+
+  <title>Checkout | The Bookmark</title>
+
+
+
+  <link rel="stylesheet" href="/css/styles.css">
+
+
+
+  <style>
+
+
+
+    .delivery-row { display:flex; gap:10px; margin-bottom: 14px; }
+
+
+
+    .delivery-btn{
+
+
+
+      border:0;
+
+
+
+      padding:10px 14px;
+
+
+
+      border-radius:10px;
+
+
+
+      cursor:pointer;
+
+
+
+      font-weight:800;
+
+
+
+      background:#e5e7eb; /* grey */
+
+
+
+      color:#0f172a;
+
+
+
+    }
+
+
+
+    .delivery-btn.active{
+
+
+
+      background:#1d4ed8; /* darker blue */
+
+
+
+      color:#fff;
+
+
+
+    }
+
+
+
+    .hidden{ display:none; }
+
+
+
+
+
+
+
+    .field-error{
+
+
+
+      margin-top:10px;
+
+
+
+      padding:10px 12px;
+
+
+
+      border-radius:10px;
+
+
+
+      background:#fee2e2;
+
+
+
+      border:1px solid #fecdd3;
+
+
+
+      color:#b91c1c;
+
+
+
+      font-size:0.95rem;
+
+
+
+    }
+
+
+
+
+
+
+
+    .pay-grid{ display:grid; gap:10px; margin-top:12px; }
+
+
+
+    .pay-btn{
+
+
+
+      width:100%;
+
+
+
+      padding:12px 14px;
+
+
+
+      border-radius:12px;
+
+
+
+      border:none;
+
+
+
+      background:#2563eb;
+
+
+
+      color:#fff;
+
+
+
+      font-weight:900;
+
+
+
+      cursor:pointer;
+
+
+
+    }
+
+
+
+    .pay-btn[disabled]{ opacity:0.55; cursor:not-allowed; }
+
+
+
+    .pay-btn.secondary{ background:#0b3aa6; }
+
+
+
+    .pay-btn.light{ background:#3b82f6; }
+
+
+
+    .note{ color: #52616f; font-size:0.9rem; margin-top:8px; }
+
+
+
+    .req{ color:#b91c1c; font-weight:700; }
+
+
+
+  </style>
+
+
+
+</head>
+
+
+
+<body class="buyer-ui">
+
+  <%- include("partials/navbar", { user: user }) %>
+
+
+
+
+
+
+
+  <div class="checkout-shell">
+
+
+
+    <div class="checkout-header">
+
+      <h2 class="checkout-title">Checkout</h2>
+
+      <p class="muted">Confirm delivery details and choose a payment method.</p>
+
+    </div>
+
+
+
+
+
+
+
+    <!-- ONE FORM FOR BOTH SIDES -->
+
+
+
+    <form id="checkoutForm" method="POST">
+
+
+
+      <input type="hidden" name="delivery_type" id="delivery_type" value="">
+
+
+
+      <input type="hidden" name="payment_method" id="payment_method" value="">
+
+
+
+
+
+
+
+      <div class="checkout-columns">
+
+
+
+
+
+
+
+        <!-- LEFT -->
+
+
+
+        <div class="checkout-section">
+
+
+
+          <h3>Delivery Options <span class="req">*</span></h3>
+
+
+
+
+
+
+
+          <div class="delivery-row">
+
+
+
+            <button type="button" class="delivery-btn" id="btnShip">Ship</button>
+
+
+
+            <button type="button" class="delivery-btn" id="btnPickup">Pick up</button>
+
+
+
+          </div>
+
+
+
+
+
+
+
+          <!-- SHIP -->
+
+
+
+          <div id="shipFields" class="hidden checkout-block">
+
+            <h4>Shipping Address <span class="req">*</span></h4>
+
+            <div class="checkout-grid-2">
+
+              <input type="text" name="ship_address1" id="ship_address1" placeholder="Address line 1 (required)">
+
+              <input type="text" name="ship_address2" id="ship_address2" placeholder="Address line 2 (optional)">
+
+              <input type="text" name="ship_city" id="ship_city" placeholder="City (required)">
+
+              <input type="text" name="ship_postal" id="ship_postal" placeholder="Postal Code (required)">
+
+            </div>
+
+          </div>
+
+
+
+
+
+
+
+          <!-- PICKUP -->
+
+
+
+          <div id="pickupFields" class="hidden checkout-block">
+
+            <h4>Pickup Details <span class="req">*</span></h4>
+
+            <select name="pickup_location" id="pickup_location" class="checkout-select">
+
+
+
+              <option value="">Select pickup location</option>
+
+
+
+              <option value="Woodlands MRT">Woodlands MRT</option>
+
+
+
+              <option value="Sengkang MRT">Sengkang MRT</option>
+
+
+
+              <option value="Tampines MRT">Tampines MRT</option>
+
+
+
+              <option value="Jurong East MRT">Jurong East MRT</option>
+
+
+
+              <option value="City Hall MRT">City Hall MRT</option>
+
+
+
+            </select>
+
+
+
+
+
+
+
+            <select name="pickup_timeslot" id="pickup_timeslot" class="checkout-select">
+
+
+
+              <option value="">Select pickup time slot</option>
+
+
+
+              <option value="2026-02-04 12:00:00">Today 12pm - 2pm</option>
+
+
+
+              <option value="2026-02-04 14:00:00">Today 2pm - 4pm</option>
+
+
+
+              <option value="2026-02-04 16:00:00">Today 4pm - 6pm</option>
+
+
+
+            </select>
+
+
+
+          </div>
+
+
+
+
+
+
+
+          <h3 style="margin-top: 18px;">Contact Information <span class="req">*</span></h3>
+
+          <div class="checkout-grid-2">
+
+            <input type="text" name="first_name" id="first_name" placeholder="First name" required>
+
+            <input type="text" name="last_name" id="last_name" placeholder="Last name" required>
+
+            <input type="email" name="email" id="email" placeholder="Email" required>
+
+            <input type="text" name="contact" id="contact" placeholder="Contact number" required>
+
+          </div>
+
+
+
+
+
+
+
+          <div id="formError" class="field-error hidden"></div>
+
+
+
+          <div class="note">Fill in required fields first. Payment buttons will unlock after.</div>
+
+
+
+        </div>
+
+
+
+
+
+
+
+        <!-- RIGHT -->
+
+
+
+        <div class="checkout-section">
+
+
+
+          <h3>Order Summary</h3>
+
+
+
+
+
+
+
+          <table style="width:100%; border-collapse: collapse;">
+
+
+
+            <tr style="border-bottom: 1px solid var(--border);">
+
+
+
+              <th style="text-align:left; padding-bottom: 8px;">Book</th>
+
+
+
+              <th>Qty</th>
+
+
+
+              <th style="text-align:right;">Subtotal</th>
+
+
+
+            </tr>
+
+
+
+
+
+
+
+            <% cart.forEach(item => { %>
+
+
+
+              <tr>
+
+
+
+                <td><%= item.title %></td>
+
+
+
+                <td style="text-align:center;"><%= item.qty %></td>
+
+
+
+                <td style="text-align:right;">$<%= (item.price * item.qty).toFixed(2) %></td>
+
+
+
+              </tr>
+
+
+
+            <% }) %>
+
+
+
+          </table>
+
+
+
+
+
+
+
+          <% if (totals && totals.discountAmount > 0) { %>
+          <div class="order-row">
+            <span>Membership discount (<%= totals.discountPercent %>%)</span>
+            <strong>- $<%= totals.discountAmount.toFixed(2) %></strong>
+          </div>
+          <% } %>
+          <p class="checkout-total">Total: $<%= totals.total.toFixed(2) %></p>
+
+
+
+
+
+
+
+          <h3 style="margin-top: 16px;">Payment Method</h3>
+
+
+
+          <div class="membership-toggle">
+            <label class="switch">
+              <input type="checkbox" name="apply_membership" id="apply_membership" <% if (!checkout || checkout.apply_membership !== false) { %>checked<% } %>>
+              <span class="switch-slider"></span>
+              <span class="switch-text">
+                Apply membership discount
+                <% if (totals && totals.discountPercent > 0) { %>
+                  (<%= totals.discountPercent %>%)
+                <% } %>
+              </span>
+            </label>
+          </div>
+          <div class="pay-grid">
+
+            <button type="button" class="pay-btn" id="btnWallet" disabled>Pay with eWallet &#x1F4B3;</button>
+
+            <button type="button" class="pay-btn" id="btnSkipPay" disabled>Skip Payment (Test) &#x1F9EA;</button>
+
+            <button type="button" class="pay-btn" id="btnStripe" disabled>Pay with Stripe (Coming Soon) &#x26A1;</button>
+
+            <button type="button" class="pay-btn" id="btnPayPal" disabled>Pay with PayPal &#x1F17F;&#xFE0F;</button>
+
+            <button type="button" class="pay-btn" id="btnNETS" disabled>Pay with NETS QR &#x1F4F1;</button>
+
+          </div>
+
+
+
+
+
+        </div>
+
+
+
+
+
+
+
+      </div>
+
+
+
+    </form>
+
+
+
+  </div>
+
+
+
+
+
+
+
+  <script>
+
+
+
+  const form = document.getElementById("checkoutForm");
+
+
+
+  const errBox = document.getElementById("formError");
+
+
+
+
+
+
+
+  const btnShip = document.getElementById("btnShip");
+
+
+
+  const btnPickup = document.getElementById("btnPickup");
+
+
+
+
+
+
+
+  const shipFields = document.getElementById("shipFields");
+
+
+
+  const pickupFields = document.getElementById("pickupFields");
+
+
+
+
+
+
+
+  const deliveryTypeInput = document.getElementById("delivery_type");
+
+
+
+
+
+
+
+  const payPalBtn = document.getElementById("btnPayPal");
+
+  const netsBtn = document.getElementById("btnNETS");
+
+  const skipPayBtn = document.getElementById("btnSkipPay");
+
+  const stripeBtn = document.getElementById("btnStripe");
+
+  const walletBtn = document.getElementById("btnWallet");
+
+
+
+
+
+  function showError(msg) {
+
+
+
+    errBox.textContent = msg;
+
+
+
+    errBox.classList.remove("hidden");
+
+
+
+  }
+
+
+
+
+
+
+
+  function clearError() {
+
+
+
+    errBox.textContent = "";
+
+
+
+    errBox.classList.add("hidden");
+
+
+
+  }
+
+
+
+
+
+
+
+  function getVal(id) {
+
+
+
+    const el = document.getElementById(id);
+
+
+
+    return (el && el.value || "").trim();
+
+
+
+  }
+
+
+
+
+
+
+
+  function setDelivery(type) {
+
+
+
+    deliveryTypeInput.value = type;
+
+
+
+
+
+
+
+    btnShip.classList.toggle("active", type === "SHIP");
+
+
+
+    btnPickup.classList.toggle("active", type === "PICKUP");
+
+
+
+
+
+
+
+    shipFields.classList.toggle("hidden", type !== "SHIP");
+
+
+
+    pickupFields.classList.toggle("hidden", type !== "PICKUP");
+
+
+
+
+
+
+
+    clearError();
+
+
+
+    validateAndTogglePayments();
+
+
+
+  }
+
+
+
+
+
+
+
+  btnShip.addEventListener("click", () => setDelivery("SHIP"));
+
+
+
+  btnPickup.addEventListener("click", () => setDelivery("PICKUP"));
+
+
+
+
+
+
+
+  function isValid() {
+
+
+
+    clearError();
+
+
+
+
+
+
+
+    if (!getVal("first_name") || !getVal("last_name") || !getVal("email") || !getVal("contact")) {
+
+
+
+      showError("Please fill in contact information (First name, Last name, Email, Contact number).");
+
+
+
+      return false;
+
+
+
+    }
+
+
+
+
+
+
+
+    const dt = deliveryTypeInput.value;
+
+
+
+    if (!dt) {
+
+
+
+      showError("Please choose a delivery option (Ship or Pick up).");
+
+
+
+      return false;
+
+
+
+    }
+
+
+
+
+
+
+
+    if (dt === "SHIP") {
+
+
+
+      if (!getVal("ship_address1") || !getVal("ship_city") || !getVal("ship_postal")) {
+
+
+
+        showError("Please fill Shipping Address Line 1, City, and Postal Code.");
+
+
+
+        return false;
+
+
+
+      }
+
+
+
+    }
+
+
+
+
+
+
+
+    if (dt === "PICKUP") {
+
+
+
+      if (!getVal("pickup_location") || !getVal("pickup_timeslot")) {
+
+
+
+        showError("Please select pickup location and time slot.");
+
+
+
+        return false;
+
+
+
+      }
+
+
+
+    }
+
+
+
+
+
+
+
+    return true;
+
+
+
+  }
+
+
+
+
+
+
+
+  function validateAndTogglePayments() {
+
+
+
+    const dt = deliveryTypeInput.value;
+
+
+
+
+
+
+
+    const contactOk = getVal("first_name") && getVal("last_name") && getVal("email") && getVal("contact");
+
+
+
+    const shipOk = dt === "SHIP" && getVal("ship_address1") && getVal("ship_city") && getVal("ship_postal");
+
+
+
+    const pickupOk = dt === "PICKUP" && getVal("pickup_location") && getVal("pickup_timeslot");
+
+
+
+
+
+
+
+    const ok = !!(contactOk && dt && (shipOk || pickupOk));
+
+
+
+
+
+
+
+    payPalBtn.disabled = !ok;
+
+    netsBtn.disabled = !ok;
+
+    skipPayBtn.disabled = !ok;
+
+    walletBtn.disabled = !ok;
+
+    stripeBtn.disabled = true;
+
+
+
+  }
+
+
+
+
+
+  form.addEventListener("input", validateAndTogglePayments);
+
+
+
+  form.addEventListener("change", validateAndTogglePayments);
+
+
+
+
+
+
+
+  // run once on load
+
+
+
+  validateAndTogglePayments();
+
+
+
+
+
+
+
+  async function saveDetailsOrShowError() {
+
+
+
+  if (!isValid()) return false;
+
+
+
+
+
+
+
+  // Convert form to x-www-form-urlencoded so express.urlencoded can read it
+
+
+
+  const params = new URLSearchParams();
+
+
+
+  for (const [k, v] of new FormData(form).entries()) {
+
+
+
+    params.append(k, v);
+
+
+
+  }
+
+
+
+
+
+
+
+  const resp = await fetch("/checkout/save-details", {
+
+
+
+    method: "POST",
+
+
+
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+
+
+
+    body: params.toString()
+
+
+
+  });
+
+
+
+
+
+
+
+  const data = await resp.json().catch(() => ({}));
+
+
+
+
+
+
+
+  if (!resp.ok) {
+
+
+
+    showError(data.error || "Please check your details.");
+
+
+
+    return false;
+
+
+
+  }
+
+
+
+  return true;
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+  // Skip payment (test)
+
+  skipPayBtn.addEventListener("click", async () => {
+
+    const ok = await saveDetailsOrShowError();
+
+    if (!ok) return;
+
+
+
+    form.action = "/checkout/skip";
+
+    form.method = "POST";
+
+    form.submit();
+
+  });
+
+
+
+  // eWallet
+
+  walletBtn.addEventListener("click", async () => {
+
+    const ok = await saveDetailsOrShowError();
+
+    if (!ok) return;
+
+
+
+    form.action = "/checkout/wallet";
+
+    form.method = "POST";
+
+    form.submit();
+
+  });
+
+
+
+
+
+  // PayPal: MUST be GET to /checkout/paypal page
+
+
+
+  payPalBtn.addEventListener("click", async () => {
+
+
+
+    const ok = await saveDetailsOrShowError();
+
+
+
+    if (!ok) return;
+
+
+
+
+
+
+
+    window.location.href = "/checkout/paypal";
+
+
+
+  });
+
+
+
+
+
+
+
+  // NETS: MUST be GET to /checkout/nets page
+
+
+
+  netsBtn.addEventListener("click", async () => {
+
+    const ok = await saveDetailsOrShowError();
+
+    if (!ok) return;
+
+
+
+    window.location.href = "/checkout/nets";
+
+  });
+
+</script>
+
+
+
+
+
+
+
+</body>
+
+
+
+</html>
+
+
+

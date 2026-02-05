@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Refunds | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="admin-ui">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-logo">Control Room</div>
+      <nav class="admin-nav">
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/books">Books</a>
+        <a href="/admin/orders">Orders</a>
+        <a href="/admin/charts">Charts</a>
+        <a class="active" href="/admin/refunds">Refunds</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar admin-page-header">
+        <div>
+          <h1 class="admin-page-title">Refund Requests</h1>
+          <p class="admin-page-sub">Approve or reject buyer refund requests.</p>
+        </div>
+        <div class="admin-actions">
+          <a class="admin-btn" href="/logout">Log out</a>
+          <a class="admin-btn" href="/admin/dashboard">Back to Dashboard</a>
+        </div>
+      </div>
+
+      <% if (!refunds || refunds.length === 0) { %>
+        <div class="admin-empty">No refund requests yet.</div>
+      <% } else { %>
+        <table class="admin-table admin-table-compact">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Buyer</th>
+              <th>Book</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% refunds.forEach(function(r) { %>
+              <tr>
+                <td>#<%= r.refund_id %></td>
+                <td><%= r.buyer_name %> (<%= r.buyer_email %>)</td>
+                <td><%= r.title %></td>
+                <td>$<%= Number(r.amount || 0).toFixed(2) %></td>
+                <td><%= r.method === 'wallet' ? 'Wallet' : 'Original method' %></td>
+                <td><%= r.payment_method || 'Unknown' %></td>
+                <td><span class="admin-pill"><%= r.status %></span></td>
+                <td>
+                  <% if (r.status === 'Pending') { %>
+                    <div class="admin-actions">
+                      <form method="POST" action="/admin/refunds/<%= r.refund_id %>/decision">
+                        <input type="hidden" name="decision" value="approve">
+                        <button class="admin-btn admin-btn-primary" type="submit">Approve</button>
+                      </form>
+                      <form method="POST" action="/admin/refunds/<%= r.refund_id %>/decision">
+                        <input type="hidden" name="decision" value="reject">
+                        <button class="admin-btn admin-danger" type="submit">Reject</button>
+                      </form>
+                    </div>
+                  <% } else { %>
+                    <span class="admin-muted">Resolved</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </main>
+  </div>
+</body>
+</html>

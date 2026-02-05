@@ -64,8 +64,18 @@
                     <strong><%= r.username %></strong>
                     <span class="review-stars"><%= "★".repeat(r.rating) %><%= "☆".repeat(5 - r.rating) %></span>
                   </div>
+                  <% if (r.title) { %>
+                    <div><strong><%= r.title %></strong></div>
+                  <% } %>
                   <% if (r.comment) { %>
                     <div class="muted"><%= r.comment %></div>
+                  <% } %>
+                  <% if (r.pros || r.cons) { %>
+                    <div class="muted"><%= r.pros ? ('Pros: ' + r.pros) : '' %></div>
+                    <div class="muted"><%= r.cons ? ('Cons: ' + r.cons) : '' %></div>
+                  <% } %>
+                  <% if (r.photo_url) { %>
+                    <img class="review-photo" src="<%= r.photo_url %>" alt="Review photo">
                   <% } %>
                 </div>
               <% }) %>

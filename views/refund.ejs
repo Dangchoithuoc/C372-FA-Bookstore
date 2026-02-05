@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request Refund | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="buyer-ui">
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="detail-shell">
+    <div class="detail-grid">
+      <div class="detail-cover">
+        <img src="<%= item.coverImage || '/images/placeholder.svg' %>" alt="<%= item.title %> cover">
+      </div>
+      <div class="detail-info">
+        <h1>Request refund</h1>
+        <p class="muted"><strong><%= item.title %></strong> by <%= item.author %></p>
+        <div class="order-info">
+          <div><strong>Order date:</strong> <%= new Date(item.order_date).toLocaleString() %></div>
+          <div><strong>Payment:</strong> <%= item.payment_method || 'Unknown' %> (<%= item.payment_status || 'Paid' %>)</div>
+          <div><strong>Delivery status:</strong> <%= item.delivery_status %></div>
+          <div><strong>Item total:</strong> $<%= Number(item.price_at_purchase || 0).toFixed(2) %></div>
+          <div><strong>Order total:</strong> $<%= Number(item.total_price || 0).toFixed(2) %></div>
+        </div>
+        <form class="refund-form" method="POST" action="/orders/items/<%= item.order_item_id %>/refund" enctype="multipart/form-data">
+          <label>Refund to</label>
+          <select name="method" required>
+            <option value="">Select method</option>
+            <option value="wallet">Wallet</option>
+            <option value="original">Original method (simulated)</option>
+          </select>
+          <label>Reason</label>
+          <select name="reason" required>
+            <option value="">Select reason</option>
+            <option value="Damaged item">Damaged item</option>
+            <option value="Wrong item">Wrong item</option>
+            <option value="Late delivery">Late delivery</option>
+            <option value="Changed mind">Changed mind</option>
+            <option value="Other">Other</option>
+          </select>
+          <label>Notes (optional)</label>
+          <input type="text" name="note" placeholder="Add extra details">
+          <label>Proof (optional)</label>
+          <input type="file" name="proof" accept="image/*">
+          <div class="row" style="margin-top:10px;">
+            <button type="submit" class="cta">Request refund</button>
+            <a href="/orders" class="cta" style="background: #f7f1e7; color:#2b1b12; border:1px solid #e5d6c5;">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

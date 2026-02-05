@@ -72,7 +72,9 @@
                           </div>
                         </form>
                       <% } else { %>
-                        <div class="muted" style="margin-top:6px;">Delivery status: <%= item.delivery_status || "Pending" %></div>
+                        <div class="delivery-status-pill <%= (item.delivery_status || 'Pending').toLowerCase() %>">
+                          <strong>Delivery:</strong> <%= item.delivery_status || "Pending" %>
+                        </div>
                       <% } %>
 
                       <% if (item.review_rating) { %>
@@ -84,21 +86,23 @@
                           <% } %>
                         </div>
                       <% } else if (user && user.role === "buyer" && item.delivery_status === "Delivered") { %>
-                        <form class="review-form" method="POST" action="/orders/items/<%= item.order_item_id %>/review">
-                          <label>Leave a review</label>
-                          <div class="review-fields">
-                            <select name="rating" required>
-                              <option value="">Rating</option>
-                              <option value="5">5 - Excellent</option>
-                              <option value="4">4 - Good</option>
-                              <option value="3">3 - Okay</option>
-                              <option value="2">2 - Poor</option>
-                              <option value="1">1 - Bad</option>
-                            </select>
-                            <input type="text" name="comment" placeholder="Short comment (optional)">
-                            <button type="submit" class="cta">Submit ⭐</button>
+                        <div class="review-actions">
+                          <a class="cta" href="/orders/items/<%= item.order_item_id %>/review">Leave a review ⭐</a>
+                        </div>
+                      <% } %>
+
+                      <% if (user && user.role === "buyer") { %>
+                        <% if (item.refund_status) { %>
+                          <div class="review-readonly">
+                            <strong>Refund:</strong>
+                            <span class="admin-pill"><%= item.refund_status %></span>
+                            <span class="muted">(<%= item.refund_method === 'wallet' ? 'Wallet' : 'Original method' %>)</span>
                           </div>
-                        </form>
+                        <% } else if (item.delivery_status === "Delivered") { %>
+                          <div class="review-actions">
+                            <a class="cta" href="/orders/items/<%= item.order_item_id %>/refund">Request refund 💸</a>
+                          </div>
+                        <% } %>
                       <% } %>
                     </div>
                     <div class="order-item-price">$<%= item.price.toFixed(2) %></div>

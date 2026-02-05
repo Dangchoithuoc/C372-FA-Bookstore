@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Membership | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="buyer-ui">
+  <%- include("partials/navbar", { user }) %>
+
+  <main class="profile-shell">
+    <section class="profile-card">
+      <div class="pill">Membership</div>
+      <h1>Your Membership</h1>
+      <p class="muted">Tiers are based on total spending. You receive a discount voucher per order.</p>
+
+      <div class="membership-grid">
+        <div class="membership-card">
+          <h3>Current Tier</h3>
+          <div class="membership-tier"><%= membership.tier.name %></div>
+          <div class="membership-spend">Total spend: $<%= membership.totalSpend.toFixed(2) %></div>
+          <div class="membership-discount">Discount per order: <%= membership.tier.discount %>%</div>
+        </div>
+
+        <div class="membership-card">
+          <h3>Next Tier</h3>
+          <% if (membership.next) { %>
+            <div class="membership-tier"><%= membership.next.name %></div>
+            <div class="membership-spend">
+              Spend $<%= Math.max(0, membership.next.threshold - membership.totalSpend).toFixed(2) %> more
+            </div>
+            <div class="membership-discount">Unlock <%= membership.next.discount %>% per order</div>
+          <% } else { %>
+            <div class="membership-tier">Gold</div>
+            <div class="membership-spend">Top tier unlocked</div>
+            <div class="membership-discount">You are at the highest tier.</div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="membership-table">
+        <div><strong>Tier</strong></div>
+        <div><strong>Spend</strong></div>
+        <div><strong>Discount</strong></div>
+        <div>Bronze</div>
+        <div>$100+</div>
+        <div>5% per order</div>
+        <div>Silver</div>
+        <div>$300+</div>
+        <div>10% per order</div>
+        <div>Gold</div>
+        <div>$600+</div>
+        <div>20% per order</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

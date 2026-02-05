@@ -49,6 +49,7 @@
                   <th>Genre</th>
                   <th>Price</th>
                   <th>Status</th>
+                  <th>Review</th>
                 </tr>
               </thead>
               <tbody>
@@ -59,6 +60,16 @@
                     <td><%= item.genre || "-" %></td>
                     <td>$<%= item.price.toFixed(2) %></td>
                     <td><span class="admin-pill"><%= item.delivery_status || "Pending" %></span></td>
+                    <td>
+                      <% if (item.review_rating) { %>
+                        <span class="review-stars"><%= "★".repeat(item.review_rating) %><%= "☆".repeat(5 - item.review_rating) %></span>
+                        <% if (item.review_comment) { %>
+                          <div class="admin-muted"><%= item.review_comment %></div>
+                        <% } %>
+                      <% } else { %>
+                        <span class="admin-muted">—</span>
+                      <% } %>
+                    </td>
                   </tr>
                 <% }) %>
               </tbody>

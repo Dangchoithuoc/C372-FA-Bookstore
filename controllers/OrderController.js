@@ -44,7 +44,10 @@ module.exports = {
                     genre: row.genre,
                     coverImage: row.coverImage,
                     price: Number(row.price_at_purchase) || 0,
-                    delivery_status: row.delivery_status || "Pending"
+                    delivery_status: row.delivery_status || "Pending",
+                    review_rating: row.review_rating || null,
+                    review_comment: row.review_comment || null,
+                    review_created_at: row.review_created_at || null
                 });
                 if (role === "seller") {
                     const current = index.get(row.order_id);
@@ -103,6 +106,36 @@ module.exports = {
         } catch (err) {
             console.error("Update delivery status error:", err);
             res.status(500).send("Failed to update delivery status");
+        }
+    },
+
+    addReview: async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!user || user.role !== "buyer") {
+                return res.status(403).send("Access denied.");
+            }
+            const orderItemId = Number(req.params.id);
+            const rating = Number(req.body.rating);
+            const comment = (req.body.comment || "").trim();
+
+            if (!Number.isFinite(orderItemId)) {
+                return res.redirect("/orders");
+            }
+            if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+                return res.status(400).send("Invalid rating.");
+            }
+
+            const Review = require("../models/Review");
+            const created = await Review.createForOrderItem(user.id, orderItemId, rating, comment);
+            if (!created) {
+                return res.status(400).send("Unable to add review. Delivery must be completed and review must be unique.");
+            }
+
+            return res.redirect("/orders");
+        } catch (err) {
+            console.error("Add review error:", err);
+            res.status(500).send("Failed to add review");
         }
     },
 

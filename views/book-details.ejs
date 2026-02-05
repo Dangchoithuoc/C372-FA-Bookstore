@@ -42,6 +42,33 @@
         <% } else if (!user) { %>
           <p class="muted">Log in to add this book to your cart or wishlist.</p>
         <% } %>
+
+        <div class="detail-reviews">
+          <h3>Reviews</h3>
+          <% if (avgRating && avgRating > 0) { %>
+            <div class="review-summary">
+              <span class="review-stars"><%= "★".repeat(Math.round(avgRating)) %><%= "☆".repeat(5 - Math.round(avgRating)) %></span>
+              <span class="muted"><%= avgRating.toFixed(1) %> average from <%= reviews.length %> review(s)</span>
+            </div>
+          <% } else { %>
+            <p class="muted">No reviews yet.</p>
+          <% } %>
+          <% if (reviews && reviews.length) { %>
+            <div class="review-list">
+              <% reviews.forEach(function(r){ %>
+                <div class="review-item">
+                  <div class="review-header">
+                    <strong><%= r.username %></strong>
+                    <span class="review-stars"><%= "★".repeat(r.rating) %><%= "☆".repeat(5 - r.rating) %></span>
+                  </div>
+                  <% if (r.comment) { %>
+                    <div class="muted"><%= r.comment %></div>
+                  <% } %>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
       </div>
     </div>
   </main>

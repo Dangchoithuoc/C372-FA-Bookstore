@@ -185,6 +185,7 @@ app.get("/nets-qr/fail", requireLogin, NetsController.showFail);
 app.get("/orders", requireLogin, OrderController.purchaseHistory);
 app.get("/invoice/:id", requireLogin, requireBuyer, OrderController.invoicePage);
 app.post("/orders/items/:id/delivery", requireLogin, requireSeller, OrderController.updateDeliveryStatus);
+app.post("/orders/items/:id/review", requireLogin, requireBuyer, OrderController.addReview);
 
 // NEW: Seller CRUD routes (login + seller role required)
 app.get("/seller/dashboard", requireLogin, requireSeller, SellerController.dashboard);

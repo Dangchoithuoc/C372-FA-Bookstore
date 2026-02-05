@@ -94,6 +94,12 @@ module.exports = {
             const book = await Book.findDetails(bookId);
             if (!book) return res.status(404).send("Book not found");
 
+            const Review = require("../models/Review");
+            const reviews = await Review.getByBookId(bookId);
+            const avgRating = reviews.length
+                ? reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / reviews.length
+                : 0;
+
             const normalized = {
                 id: book.id,
                 title: book.title,
@@ -111,7 +117,9 @@ module.exports = {
 
             res.render("book-details", {
                 user: req.session.user || null,
-                book: normalized
+                book: normalized,
+                reviews,
+                avgRating
             });
         } catch (err) {
             console.error("Book details error:", err);

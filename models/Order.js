@@ -97,11 +97,15 @@ module.exports = {
           b.title,
           b.author,
           b.genre,
-          b.coverImage
+          b.coverImage,
+          r.rating AS review_rating,
+          r.comment AS review_comment,
+          r.created_at AS review_created_at
        FROM orders o
        LEFT JOIN payment p ON p.order_id = o.order_id
        JOIN order_items oi ON oi.order_id = o.order_id
        JOIN books b ON b.book_id = oi.book_id
+       LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
        WHERE o.buyer_id = ?
        ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`,
       [userId]
@@ -126,12 +130,16 @@ module.exports = {
           b.coverImage,
           u.user_id AS buyer_id,
           u.username AS buyer_name,
-          u.email AS buyer_email
+          u.email AS buyer_email,
+          r.rating AS review_rating,
+          r.comment AS review_comment,
+          r.created_at AS review_created_at
        FROM orders o
        JOIN users u ON u.user_id = o.buyer_id
        LEFT JOIN payment p ON p.order_id = o.order_id
        JOIN order_items oi ON oi.order_id = o.order_id
        JOIN books b ON b.book_id = oi.book_id
+       LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
        WHERE b.seller_id = ?
        ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`,
       [sellerId]
@@ -157,12 +165,16 @@ module.exports = {
           b.coverImage,
           u.user_id AS buyer_id,
           u.username AS buyer_name,
-          u.email AS buyer_email
+          u.email AS buyer_email,
+          r.rating AS review_rating,
+          r.comment AS review_comment,
+          r.created_at AS review_created_at
        FROM orders o
        JOIN users u ON u.user_id = o.buyer_id
        LEFT JOIN payment p ON p.order_id = o.order_id
        JOIN order_items oi ON oi.order_id = o.order_id
        JOIN books b ON b.book_id = oi.book_id
+       LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
        ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`
     );
     return rows;

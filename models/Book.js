@@ -3,7 +3,7 @@ const pool = require("../db");
 module.exports = {
     async getFeatured() {
         const [rows] = await pool.execute(
-            "SELECT book_id AS id, title, author, price, genre AS tagline, coverImage FROM books ORDER BY book_id ASC LIMIT 1"
+            "SELECT book_id AS id, title, author, price, genre AS tagline, coverImage, stock FROM books ORDER BY book_id ASC LIMIT 1"
         );
         const featured = rows[0];
         if (!featured) return null;
@@ -18,7 +18,7 @@ module.exports = {
     async getStaffPicks(limit = 6) {
         const safeLimit = Number.isFinite(Number(limit)) ? Number(limit) : 6;
         const [rows] = await pool.query(
-            `SELECT book_id AS id, title, author, price, genre AS vibe, coverImage FROM books ORDER BY book_id DESC LIMIT ${safeLimit}`
+            `SELECT book_id AS id, title, author, price, genre AS vibe, coverImage, stock FROM books ORDER BY book_id DESC LIMIT ${safeLimit}`
         );
         return rows.map(row => ({
             ...row,
@@ -47,7 +47,7 @@ module.exports = {
 
     async findById(id) {
         const [rows] = await pool.execute(
-            "SELECT book_id AS id, title, author, price, genre AS vibe, coverImage FROM books WHERE book_id = ? LIMIT 1",
+            "SELECT book_id AS id, title, author, price, genre AS vibe, coverImage, stock FROM books WHERE book_id = ? LIMIT 1",
             [id]
         );
         const book = rows[0];
@@ -62,6 +62,7 @@ module.exports = {
                     b.genre,
                     b.price,
                     b.coverImage,
+                    b.stock,
                     u.user_id AS sellerId,
                     u.username AS sellerName
              FROM books b
@@ -76,7 +77,7 @@ module.exports = {
 
    // Add this method to models/Book.js
     async getFilteredBooks({ search, genre, priceRange, sortBy, currentUserId, userRole }) {
-        let query = 'SELECT book_id, title, author, genre, price, seller_id, coverImage FROM books WHERE 1=1';
+        let query = 'SELECT book_id, title, author, genre, price, seller_id, coverImage, stock FROM books WHERE 1=1';
         const params = [];
         
         // CRITICAL FIX: Apply seller filter BEFORE other filters

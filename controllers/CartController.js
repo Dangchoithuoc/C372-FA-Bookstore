@@ -21,6 +21,10 @@ module.exports = {
             if (!book) {
                 return res.status(404).send("Book not found");
             }
+            const stock = Number(book.stock ?? 0);
+            if (stock <= 0) {
+                return res.redirect(req.get("referer") || "/");
+            }
             await Cart.addItem(userId, book.id, qty);
             res.redirect(req.get("referer") || "/");
         } catch (err) {
@@ -33,7 +37,10 @@ module.exports = {
         try {
             const userId = req.session.user.id;
             const { id, qty } = req.body;
-            await Cart.updateItem(userId, id, qty);
+            const book = await Book.findById(id);
+            const stock = Number(book && book.stock ? book.stock : 0);
+            const safeQty = Math.min(Number(qty) || 0, stock);
+            await Cart.updateItem(userId, id, safeQty);
             res.redirect("/cart");
         } catch (err) {
             console.error("Update cart error", err);

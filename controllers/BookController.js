@@ -107,6 +107,7 @@ module.exports = {
                 genre: book.genre,
                 price: Number(book.price) || 0,
                 coverImage: book.coverImage || "/images/default-book.svg",
+                stock: Number(book.stock ?? 0),
                 sellerId: book.sellerId,
                 sellerName: book.sellerName || "Independent seller",
                 tagline: book.genre ? `${book.genre} pick` : "Featured pick",

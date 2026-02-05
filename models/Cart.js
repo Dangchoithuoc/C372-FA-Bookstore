@@ -13,7 +13,7 @@ module.exports = {
     async getCart(userId) {
         const cartId = await ensureCart(userId);
         const [items] = await pool.execute(
-            `SELECT ci.cart_item_id, b.book_id AS id, b.title, b.price, b.coverImage, ci.quantity AS qty
+            `SELECT ci.cart_item_id, b.book_id AS id, b.title, b.price, b.coverImage, b.stock, ci.quantity AS qty
              FROM cart_items ci
              JOIN books b ON ci.book_id = b.book_id
              WHERE ci.cart_id = ?`,
@@ -27,20 +27,26 @@ module.exports = {
     async addItem(userId, bookId, qty) {
         const cartId = await ensureCart(userId);
         const safeQty = Math.max(1, Number(qty) || 1);
+        const [bookRows] = await pool.execute("SELECT stock FROM books WHERE book_id = ? LIMIT 1", [bookId]);
+        const stock = bookRows[0] ? Number(bookRows[0].stock || 0) : 0;
+        if (stock <= 0) {
+            return cartId;
+        }
         const [existingRows] = await pool.execute(
             "SELECT cart_item_id, quantity FROM cart_items WHERE cart_id = ? AND book_id = ?",
             [cartId, bookId]
         );
         if (existingRows.length) {
-            const newQty = existingRows[0].quantity + safeQty;
+            const newQty = Math.min(existingRows[0].quantity + safeQty, stock);
             await pool.execute(
                 "UPDATE cart_items SET quantity = ? WHERE cart_item_id = ?",
                 [newQty, existingRows[0].cart_item_id]
             );
         } else {
+            const insertQty = Math.min(safeQty, stock);
             await pool.execute(
                 "INSERT INTO cart_items (cart_id, book_id, quantity) VALUES (?, ?, ?)",
-                [cartId, bookId, safeQty]
+                [cartId, bookId, insertQty]
             );
         }
         return cartId;

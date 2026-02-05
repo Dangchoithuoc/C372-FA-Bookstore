@@ -74,6 +74,19 @@
             color: #666;
             font-size: 0.9rem;
         }
+
+        .stock-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid #e6c6a9;
+            background: #fff3e6;
+            color: #7a2a1f;
+        }
         
         .book-actions {
             display: flex;
@@ -149,6 +162,12 @@
                 <div class="stat-label">Total Books</div>
             </div>
             <div class="stat-card">
+                <div class="stat-value">
+                    <%= books.filter(b => Number(b.stock || 0) <= 5).length %>
+                </div>
+                <div class="stat-label">Low Stock (≤ 5)</div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-value"><%= stats.total_orders %></div>
                 <div class="stat-label">Total Orders</div>
             </div>
@@ -189,6 +208,10 @@
                                 <h4><%= book.title %></h4>
                                 <div class="book-meta">
                                     by <%= book.author %> | <%= book.genre || 'No genre' %> | $<%= parseFloat(book.price).toFixed(2) %>
+                                    | Stock: <%= Number(book.stock || 0) %>
+                                    <% if (Number(book.stock || 0) <= 5) { %>
+                                        <span class="stock-pill">Low stock</span>
+                                    <% } %>
                                 </div>
                             </div>
                             <div class="book-actions">

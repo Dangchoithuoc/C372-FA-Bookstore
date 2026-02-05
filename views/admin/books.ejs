@@ -59,6 +59,7 @@
             <th>Seller</th>
             <th>Genre</th>
             <th>Price</th>
+            <th>Stock</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -71,6 +72,7 @@
               <td><%= b.seller_name %></td>
               <td><%= b.genre || "-" %></td>
               <td>$<%= parseFloat(b.price || 0).toFixed(2) %></td>
+              <td><%= typeof b.stock === 'number' ? b.stock : (b.stock || 0) %></td>
               <td>
                 <form method="POST" action="/admin/books/<%= b.book_id %>/delete" onsubmit="return confirm('Delete this book?');">
                   <button class="admin-btn admin-danger" type="submit">Delete</button>

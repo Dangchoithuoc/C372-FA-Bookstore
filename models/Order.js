@@ -18,13 +18,22 @@ module.exports = {
       const cartId = cartRows[0].cart_id;
       const totalAmount = Number(cartRows[0].total_amount || 0);
 
-      // 2) Check cart has items
+      // 2) Check cart has items + stock
       const [cartItems] = await conn.execute(
-        "SELECT book_id FROM cart_items WHERE cart_id = ?",
+        `SELECT ci.book_id, ci.quantity, b.stock
+         FROM cart_items ci
+         JOIN books b ON b.book_id = ci.book_id
+         WHERE ci.cart_id = ?`,
         [cartId]
       );
       if (!cartItems.length) {
         throw new Error("Cart is empty");
+      }
+      for (const item of cartItems) {
+        const stock = Number(item.stock || 0);
+        if (stock < Number(item.quantity || 0)) {
+          throw new Error("Insufficient stock for one or more items.");
+        }
       }
 
       // 3) Create order
@@ -42,6 +51,15 @@ module.exports = {
          JOIN books b ON ci.book_id = b.book_id
          WHERE ci.cart_id = ?`,
         [orderId, cartId]
+      );
+
+      // 4b) Decrement stock
+      await conn.execute(
+        `UPDATE books b
+         JOIN cart_items ci ON ci.book_id = b.book_id
+         SET b.stock = GREATEST(b.stock - ci.quantity, 0)
+         WHERE ci.cart_id = ?`,
+        [cartId]
       );
 
       // 5) Insert delivery (NEW)

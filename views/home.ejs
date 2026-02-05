@@ -392,6 +392,7 @@
                 </h3>
                 <p class="book-author">by <%= book.author %></p>
                 <p class="book-price">$<%= book.price.toFixed(2) %></p>
+                <div class="muted" style="margin-bottom:8px;">Stock: <%= typeof book.stock === 'number' ? book.stock : (book.stock || 0) %></div>
                 
                 <% if (user && user.role === 'seller') { %>
                   <!-- Seller sees Edit/Delete buttons -->
@@ -407,11 +408,14 @@
                   </div>
                 <% } else if (user && user.role === 'buyer') { %>
                   <!-- Buyer sees Add to Cart button -->
+                  <% const inStock = (typeof book.stock === 'number' ? book.stock : (book.stock || 0)) > 0; %>
                   <form method="POST" action="/cart/add">
                     <input type="hidden" name="bookId" value="<%= book.book_id %>">
                     <input type="hidden" name="title" value="<%= book.title %>">
                     <input type="hidden" name="price" value="<%= book.price %>">
-                    <button class="add-to-cart-btn" type="submit">Add to Cart</button>
+                    <button class="add-to-cart-btn" type="submit" <%= inStock ? '' : 'disabled' %>>
+                      <%= inStock ? 'Add to Cart' : 'Out of Stock' %>
+                    </button>
                   </form>
                   <form method="POST" action="/wishlist/add" class="wishlist-form">
                     <input type="hidden" name="bookId" value="<%= book.book_id %>">

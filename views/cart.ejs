@@ -38,9 +38,12 @@
             <div class="center">
               <form action="/cart/update" method="POST" style="display:flex; gap:6px; justify-content:center;">
                 <input type="hidden" name="id" value="<%= item.id %>">
-                <input type="number" name="qty" value="<%= item.qty %>" min="1" style="width:70px;">
+                <input type="number" name="qty" value="<%= item.qty %>" min="1" max="<%= item.stock || item.qty %>" style="width:70px;">
                 <button type="submit" class="cta" style="padding:8px 12px;">Update</button>
               </form>
+              <% if (item.stock === 0) { %>
+                <div class="muted" style="margin-top:6px;">Out of stock</div>
+              <% } %>
             </div>
             <div class="center">
               <form action="/cart/remove" method="POST">

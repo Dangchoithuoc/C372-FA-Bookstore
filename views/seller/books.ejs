@@ -24,6 +24,7 @@
                         <th>Author</th>
                         <th>Genre</th>
                         <th>Price</th>
+                        <th>Stock</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -35,6 +36,12 @@
                             <td><%= book.author %></td>
                             <td><%= book.genre || '-' %></td>
                             <td>$<%= parseFloat(book.price).toFixed(2) %></td>
+                            <td>
+                                <%= typeof book.stock === 'number' ? book.stock : (book.stock || 0) %>
+                                <% if (Number(book.stock || 0) <= 5) { %>
+                                    <span class="stock-warning">Low</span>
+                                <% } %>
+                            </td>
                             <td>
                                 <div class="seller-actions">
                                     <a href="/seller/books/<%= book.book_id %>/edit" class="admin-btn">Edit</a>

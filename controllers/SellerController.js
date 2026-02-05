@@ -97,7 +97,7 @@ module.exports = {
     // Create new book
     createBook: async (req, res) => {
         try {
-            const { title, author, genre, price } = req.body;
+            const { title, author, genre, price, stock } = req.body;
             const sellerId = req.session.user.id;
             const coverImage = getCoverImagePath(req.file);
 
@@ -118,10 +118,11 @@ module.exports = {
                     error: "Title, author, and price are required"
                 });
             }
+            const safeStock = Math.max(0, Number(stock) || 0);
             
             const [result] = await pool.execute(
-                "INSERT INTO books (title, author, genre, price, seller_id, coverImage) VALUES (?, ?, ?, ?, ?, ?)",
-                [title, author, genre || null, parseFloat(price), sellerId, coverImage]
+                "INSERT INTO books (title, author, genre, price, stock, seller_id, coverImage) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [title, author, genre || null, parseFloat(price), safeStock, sellerId, coverImage]
             );
             
             res.redirect("/seller/books");
@@ -168,7 +169,7 @@ module.exports = {
         let currentBook = null;
         try {
             const { id } = req.params;
-            const { title, author, genre, price } = req.body;
+            const { title, author, genre, price, stock } = req.body;
             const sellerId = req.session.user.id;
             const coverImageFromFile = getCoverImagePath(req.file);
 
@@ -202,9 +203,10 @@ module.exports = {
                 });
             }
 
+            const safeStock = Math.max(0, Number(stock) || 0);
             await pool.execute(
-                "UPDATE books SET title = ?, author = ?, genre = ?, price = ?, coverImage = ? WHERE book_id = ? AND seller_id = ?",
-                [title, author, genre || null, parseFloat(price), finalCoverImage, id, sellerId]
+                "UPDATE books SET title = ?, author = ?, genre = ?, price = ?, stock = ?, coverImage = ? WHERE book_id = ? AND seller_id = ?",
+                [title, author, genre || null, parseFloat(price), safeStock, finalCoverImage, id, sellerId]
             );
 
             res.redirect("/seller/books");

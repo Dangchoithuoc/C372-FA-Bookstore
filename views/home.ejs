@@ -279,7 +279,7 @@
 </head>
 <body class="<%= (user && user.role === 'admin') ? 'admin-ui' : 'buyer-ui' %>">
   <% if (!(user && user.role === 'admin')) { %>
-    <%- include("partials/navbar", { user: user, showSearch: true, showMenu: false, searchQuery: searchQuery, genre: genre, priceRange: priceRange, sortBy: sortBy }) %>
+    <%- include("partials/navbar", { user: user, showSearch: true, showMenu: !!user, searchQuery: searchQuery, genre: genre, priceRange: priceRange, sortBy: sortBy }) %>
   <% } %>
 
   <% if (user && user.role === 'admin') { %>
@@ -398,11 +398,11 @@
                   <!-- Seller sees Edit/Delete buttons -->
                   <div class="seller-actions" style="margin-top: 14px;">
                     <a class="admin-btn admin-btn-primary" href="/seller/books/<%= book.book_id %>/edit">
-                      Edit
+                      Edit ✏️
                     </a>
                     <form method="POST" action="/seller/books/<%= book.book_id %>/delete">
                       <button type="submit" class="admin-btn admin-btn-warning" onclick="return confirm('Delete this book?')">
-                        Delete
+                        Delete 🗑️
                       </button>
                     </form>
                   </div>

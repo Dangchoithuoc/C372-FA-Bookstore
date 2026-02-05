@@ -57,7 +57,7 @@
         <a href="/register">Register &#x270D;&#xFE0F;</a>
       <% } %>
 
-      <% if (typeof showMenu === "undefined" || showMenu !== false) { %>
+      <% if (user && (typeof showMenu === "undefined" || showMenu !== false)) { %>
         <details class="nav-menu-dropdown">
           <summary>Menu &#9776;</summary>
           <div class="nav-menu-panel">

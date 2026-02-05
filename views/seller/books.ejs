@@ -11,7 +11,7 @@
 
     <main class="seller-shell">
         <div class="seller-header">
-            <h1>Manage Your Books</h1>
+            <h1>Manage Your Books 📚</h1>
             <a href="/seller/books/new" class="cta">Add New Book ✨</a>
         </div>
 
@@ -25,7 +25,7 @@
                         <th>Genre</th>
                         <th>Price</th>
                         <th>Stock</th>
-                        <th>Actions</th>
+                        <th>Actions ⚙️</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,11 +44,11 @@
                             </td>
                             <td>
                                 <div class="seller-actions">
-                                    <a href="/seller/books/<%= book.book_id %>/edit" class="admin-btn">Edit</a>
+                                    <a href="/seller/books/<%= book.book_id %>/edit" class="admin-btn">Edit ✏️</a>
                                     <form method="POST" action="/seller/books/<%= book.book_id %>/delete">
                                         <button type="submit" class="admin-btn admin-danger"
                                                 onclick="return confirm('Are you sure? This cannot be undone.')">
-                                            Delete
+                                            Delete 🗑️
                                         </button>
                                     </form>
                                 </div>

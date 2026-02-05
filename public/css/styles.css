@@ -1090,7 +1090,7 @@ footer { padding: 20px 0 40px; color: var(--muted); text-align: center; font-siz
 .invoice-item-price { font-weight: 700; color: #1e40af; }
 
 /* Admin users list */
-.admin-table { display: grid; gap: 8px; }
+.admin-table { display: table; width: 100%; }
 .admin-row { display: grid; grid-template-columns: 70px 1.2fr 1.6fr 120px 120px; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(15, 23, 42, 0.1); background: #ffffff; }
 .admin-header { font-weight: 700; background: #f8fafc; font-family: Arial, "Helvetica Neue", sans-serif; }
 .admin-cta { padding: 8px 12px; font-size: 0.9rem; box-shadow: none; }

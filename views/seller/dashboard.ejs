@@ -152,38 +152,38 @@
 
     <main class="dashboard-container">
         <div class="dashboard-header">
-            <h1>Seller Dashboard</h1>
+            <h1>Seller Dashboard 📊</h1>
             <p class="muted">Welcome back, <%= user.name %>! Manage your books and view sales.</p>
         </div>
 
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value"><%= books.length %></div>
-                <div class="stat-label">Total Books</div>
+                <div class="stat-label">Total Books 📚</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">
                     <%= books.filter(b => Number(b.stock || 0) <= 5).length %>
                 </div>
-                <div class="stat-label">Low Stock (≤ 5)</div>
+                <div class="stat-label">Low Stock (≤ 5) ⚠️</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value"><%= stats.total_orders %></div>
-                <div class="stat-label">Total Orders</div>
+                <div class="stat-label">Total Orders 📦</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">$<%= parseFloat(stats.total_revenue || 0).toFixed(2) %></div>
-                <div class="stat-label">Total Revenue</div>
+                <div class="stat-label">Total Revenue 💰</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">$<%= parseFloat(stats.total_book_sales || 0).toFixed(2) %></div>
-                <div class="stat-label">Book Sales</div>
+                <div class="stat-label">Book Sales 🧾</div>
             </div>
         </div>
 
         <div class="recent-books" style="margin-bottom: 30px;">
             <div class="actions-header">
-                <h2>Sales Analytics</h2>
+                <h2>Sales Analytics 📈</h2>
                 <div class="book-actions" style="gap: 8px;">
                     <button class="btn btn-secondary" type="button" data-chart="revenue">Revenue</button>
                     <button class="btn btn-secondary" type="button" data-chart="orders">Orders</button>
@@ -196,7 +196,7 @@
 
         <div class="recent-books">
             <div class="actions-header">
-                <h2>Your Books</h2>
+                <h2>Your Books 📚</h2>
                 <a href="/seller/books/new" class="btn btn-primary">Add New Book ✨</a>
             </div>
             

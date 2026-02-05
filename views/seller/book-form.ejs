@@ -103,7 +103,7 @@
     <%- include("../partials/navbar", { user: user }) %>
 
     <main class="container">
-        <h1><%= action %> Book</h1>
+        <h1><%= action %> Book ✍️</h1>
         
         <% if (error) { %>
             <div class="error-message">
@@ -167,9 +167,9 @@
                 </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                <%= book ? 'Update Book' : 'Create Book' %>
-            </button>
+                    <button type="submit" class="btn btn-primary">
+                        <%= book ? 'Update Book ✅' : 'Create Book ✅' %>
+                    </button>
                     <a href="/seller/books" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>

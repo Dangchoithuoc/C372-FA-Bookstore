@@ -139,17 +139,25 @@ app.post("/cart/clear", requireLogin, CartController.clearCart);
 
 // Checkout routes (login + cart required)
 app.get("/checkout", requireLogin, requireCartItems, CheckoutController.checkoutPage);
+
+// save checkout details before payment
+app.post("/checkout/save-details", requireLogin, requireCartItems, CheckoutController.saveCheckoutDetails);
+
+// PayLah (simulate later)
 app.post("/checkout/paylah", requireLogin, requireCartItems, CheckoutController.payLah);
+
+// PayPal flow 
 app.get("/checkout/paypal", requireLogin, requireCartItems, PaypalController.paypalPage);
-app.post("/checkout/paypal", requireLogin, requireCartItems, CheckoutController.paypal);
 app.post("/api/paypal/create-order", requireLogin, requireCartItems, PaypalController.createOrder);
 app.post("/api/paypal/capture-order", requireLogin, PaypalController.captureOrder);
+
+// NETS flow 
 app.get("/checkout/nets", requireLogin, requireCartItems, NetsController.generateQrCode);
-app.post("/checkout/nets", requireLogin, requireCartItems, NetsController.generateQrCode);
 app.get("/sse/payment-status/:txnRetrievalRef", requireLogin, NetsController.streamPaymentStatus);
 app.get("/api/nets/payment-status/:txnRetrievalRef", requireLogin, NetsController.getStatus);
 app.get("/nets-qr/success", requireLogin, NetsController.showSuccess);
 app.get("/nets-qr/fail", requireLogin, NetsController.showFail);
+
 
 // Buyer order history
 app.get("/orders", requireLogin, requireBuyer, OrderController.purchaseHistory);

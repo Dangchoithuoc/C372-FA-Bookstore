@@ -166,119 +166,160 @@ Date created: 10 December 2025
   </div>
 
   <script>
-    const form = document.getElementById("checkoutForm");
-    const errBox = document.getElementById("formError");
+  const form = document.getElementById("checkoutForm");
+  const errBox = document.getElementById("formError");
 
-    const btnShip = document.getElementById("btnShip");
-    const btnPickup = document.getElementById("btnPickup");
+  const btnShip = document.getElementById("btnShip");
+  const btnPickup = document.getElementById("btnPickup");
 
-    const shipFields = document.getElementById("shipFields");
-    const pickupFields = document.getElementById("pickupFields");
+  const shipFields = document.getElementById("shipFields");
+  const pickupFields = document.getElementById("pickupFields");
 
-    const deliveryTypeInput = document.getElementById("delivery_type");
-    const paymentMethodInput = document.getElementById("payment_method");
+  const deliveryTypeInput = document.getElementById("delivery_type");
 
-    const payLahBtn = document.getElementById("btnPayLah");
-    const payPalBtn = document.getElementById("btnPayPal");
-    const netsBtn = document.getElementById("btnNETS");
+  const payLahBtn = document.getElementById("btnPayLah");
+  const payPalBtn = document.getElementById("btnPayPal");
+  const netsBtn = document.getElementById("btnNETS");
 
-    const payNowBtn = document.getElementById("btnPayNow");
-    const cardBtn = document.getElementById("btnCard");
+  const payNowBtn = document.getElementById("btnPayNow");
+  const cardBtn = document.getElementById("btnCard");
 
-    function setDelivery(type) {
-      deliveryTypeInput.value = type;
+  function showError(msg) {
+    errBox.textContent = msg;
+    errBox.classList.remove("hidden");
+  }
 
-      btnShip.classList.toggle("active", type === "SHIP");
-      btnPickup.classList.toggle("active", type === "PICKUP");
+  function clearError() {
+    errBox.textContent = "";
+    errBox.classList.add("hidden");
+  }
 
-      shipFields.classList.toggle("hidden", type !== "SHIP");
-      pickupFields.classList.toggle("hidden", type !== "PICKUP");
+  function getVal(id) {
+    const el = document.getElementById(id);
+    return (el && el.value || "").trim();
+  }
 
-      validateAndTogglePayments();
+  function setDelivery(type) {
+    deliveryTypeInput.value = type;
+
+    btnShip.classList.toggle("active", type === "SHIP");
+    btnPickup.classList.toggle("active", type === "PICKUP");
+
+    shipFields.classList.toggle("hidden", type !== "SHIP");
+    pickupFields.classList.toggle("hidden", type !== "PICKUP");
+
+    clearError();
+    validateAndTogglePayments();
+  }
+
+  btnShip.addEventListener("click", () => setDelivery("SHIP"));
+  btnPickup.addEventListener("click", () => setDelivery("PICKUP"));
+
+  function isValid() {
+    clearError();
+
+    if (!getVal("first_name") || !getVal("last_name") || !getVal("email") || !getVal("contact")) {
+      showError("Please fill in contact information (First name, Last name, Email, Contact number).");
+      return false;
     }
 
-    btnShip.addEventListener("click", () => setDelivery("SHIP"));
-    btnPickup.addEventListener("click", () => setDelivery("PICKUP"));
-
-    function showError(msg) {
-      errBox.textContent = msg;
-      errBox.classList.remove("hidden");
+    const dt = deliveryTypeInput.value;
+    if (!dt) {
+      showError("Please choose a delivery option (Ship or Pick up).");
+      return false;
     }
 
-    function clearError() {
-      errBox.textContent = "";
-      errBox.classList.add("hidden");
-    }
-
-    function getVal(id) {
-      const el = document.getElementById(id);
-      return (el && el.value || "").trim();
-    }
-
-    function isValid() {
-      clearError();
-
-      if (!getVal("first_name") || !getVal("last_name") || !getVal("email") || !getVal("contact")) {
-        showError("Please fill in contact information (First name, Last name, Email, Contact number).");
+    if (dt === "SHIP") {
+      if (!getVal("ship_address1") || !getVal("ship_city") || !getVal("ship_postal")) {
+        showError("Please fill Shipping Address Line 1, City, and Postal Code.");
         return false;
       }
+    }
 
-      const dt = deliveryTypeInput.value;
-      if (!dt) {
-        showError("Please choose a delivery option (Ship or Pick up).");
+    if (dt === "PICKUP") {
+      if (!getVal("pickup_location") || !getVal("pickup_timeslot")) {
+        showError("Please select pickup location and time slot.");
         return false;
       }
-
-      if (dt === "SHIP") {
-        if (!getVal("ship_address1") || !getVal("ship_city") || !getVal("ship_postal")) {
-          showError("Please fill Shipping Address Line 1, City, and Postal Code.");
-          return false;
-        }
-      }
-
-      if (dt === "PICKUP") {
-        if (!getVal("pickup_location") || !getVal("pickup_timeslot")) {
-          showError("Please select pickup location and time slot.");
-          return false;
-        }
-      }
-
-      return true;
     }
 
-    function validateAndTogglePayments() {
-      // enable/disable without spamming error messages
-      const dt = deliveryTypeInput.value;
+    return true;
+  }
 
-      const contactOk = getVal("first_name") && getVal("last_name") && getVal("email") && getVal("contact");
-      const shipOk = dt === "SHIP" && getVal("ship_address1") && getVal("ship_city") && getVal("ship_postal");
-      const pickupOk = dt === "PICKUP" && getVal("pickup_location") && getVal("pickup_timeslot");
+  function validateAndTogglePayments() {
+    const dt = deliveryTypeInput.value;
 
-      const ok = contactOk && dt && (shipOk || pickupOk);
+    const contactOk = getVal("first_name") && getVal("last_name") && getVal("email") && getVal("contact");
+    const shipOk = dt === "SHIP" && getVal("ship_address1") && getVal("ship_city") && getVal("ship_postal");
+    const pickupOk = dt === "PICKUP" && getVal("pickup_location") && getVal("pickup_timeslot");
 
-      payLahBtn.disabled = !ok;
-      payPalBtn.disabled = !ok;
-      netsBtn.disabled = !ok;
+    const ok = !!(contactOk && dt && (shipOk || pickupOk));
 
-      payNowBtn.disabled = true;
-      cardBtn.disabled = true;
-    }
+    payLahBtn.disabled = !ok;
+    payPalBtn.disabled = !ok;
+    netsBtn.disabled = !ok;
 
-    form.addEventListener("input", validateAndTogglePayments);
-    form.addEventListener("change", validateAndTogglePayments);
+    payNowBtn.disabled = true;
+    cardBtn.disabled = true;
+  }
 
-    function submitPayment(method, actionUrl) {
-      if (!isValid()) return;
+  form.addEventListener("input", validateAndTogglePayments);
+  form.addEventListener("change", validateAndTogglePayments);
 
-      paymentMethodInput.value = method;
-      form.action = actionUrl;
-      form.method = "POST";
-      form.submit();
-    }
+  // run once on load
+  validateAndTogglePayments();
 
-    payLahBtn.addEventListener("click", () => submitPayment("PayLah", "/checkout/paylah"));
-    payPalBtn.addEventListener("click", () => submitPayment("PayPal", "/checkout/paypal"));
-    netsBtn.addEventListener("click", () => submitPayment("NETS_QR", "/checkout/nets"));
-  </script>
+  async function saveDetailsOrShowError() {
+  if (!isValid()) return false;
+
+  // Convert form to x-www-form-urlencoded so express.urlencoded can read it
+  const params = new URLSearchParams();
+  for (const [k, v] of new FormData(form).entries()) {
+    params.append(k, v);
+  }
+
+  const resp = await fetch("/checkout/save-details", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString()
+  });
+
+  const data = await resp.json().catch(() => ({}));
+
+  if (!resp.ok) {
+    showError(data.error || "Please check your details.");
+    return false;
+  }
+  return true;
+}
+
+
+  // PayLah: your own POST endpoint
+  payLahBtn.addEventListener("click", async () => {
+    const ok = await saveDetailsOrShowError();
+    if (!ok) return;
+
+    form.action = "/checkout/paylah";
+    form.method = "POST";
+    form.submit();
+  });
+
+  // PayPal: MUST be GET to /checkout/paypal page
+  payPalBtn.addEventListener("click", async () => {
+    const ok = await saveDetailsOrShowError();
+    if (!ok) return;
+
+    window.location.href = "/checkout/paypal";
+  });
+
+  // NETS: MUST be GET to /checkout/nets page
+  netsBtn.addEventListener("click", async () => {
+    const ok = await saveDetailsOrShowError();
+    if (!ok) return;
+
+    window.location.href = "/checkout/nets";
+  });
+</script>
+
 </body>
 </html>

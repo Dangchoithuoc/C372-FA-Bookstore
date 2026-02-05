@@ -13,7 +13,7 @@
     <div class="row" style="margin-bottom:16px;">
       <h1>Your Cart</h1>
       <form action="/cart/clear" method="POST" style="margin:0;">
-        <button class="cta" type="submit">Clear cart</button>
+        <button class="cta" type="submit">Clear cart 🧹</button>
       </form>
     </div>
     <% if (!cart || cart.length === 0) { %>
@@ -39,7 +39,7 @@
               <form action="/cart/update" method="POST" style="display:flex; gap:6px; justify-content:center;">
                 <input type="hidden" name="id" value="<%= item.id %>">
                 <input type="number" name="qty" value="<%= item.qty %>" min="1" max="<%= item.stock || item.qty %>" style="width:70px;">
-                <button type="submit" class="cta" style="padding:8px 12px;">Update</button>
+                <button type="submit" class="cta" style="padding:8px 12px;">Update 🔄</button>
               </form>
               <% if (item.stock === 0) { %>
                 <div class="muted" style="margin-top:6px;">Out of stock</div>
@@ -48,7 +48,7 @@
             <div class="center">
               <form action="/cart/remove" method="POST">
                 <input type="hidden" name="id" value="<%= item.id %>">
-                <button type="submit" class="cta cart-remove-btn" style="padding:8px 12px;">Remove</button>
+                <button type="submit" class="cta cart-remove-btn" style="padding:8px 12px;">Remove 🗑️</button>
               </form>
             </div>
           <% }); %>
@@ -61,7 +61,7 @@
         </div>
         <div class="row" style="gap:12px;">
           <div class="price" style="margin:0;">Subtotal: $<%= total %></div>
-          <a class="cta" href="/checkout">Checkout</a>
+          <a class="cta" href="/checkout">Checkout ✅</a>
         </div>
       </div>
     <% } %>

@@ -279,7 +279,7 @@
 </head>
 <body class="<%= (user && user.role === 'admin') ? 'admin-ui' : 'buyer-ui' %>">
   <% if (!(user && user.role === 'admin')) { %>
-    <%- include("partials/navbar", { user: user, showSearch: true, searchQuery: searchQuery, genre: genre, priceRange: priceRange, sortBy: sortBy }) %>
+    <%- include("partials/navbar", { user: user, showSearch: true, showMenu: false, searchQuery: searchQuery, genre: genre, priceRange: priceRange, sortBy: sortBy }) %>
   <% } %>
 
   <% if (user && user.role === 'admin') { %>
@@ -343,11 +343,11 @@
             <input type="hidden" name="title" value="<%= spotlight.title %>">
             <input type="hidden" name="price" value="<%= spotlight.price %>">
             <% if (user && user.role === 'buyer') { %>
-              <button class="cta" type="submit">Add to cart</button>
-              <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
+            <button class="cta" type="submit">Add to cart 🛒</button>
+            <button class="cta" type="button" onclick="location.href='/cart'">View cart 🧾</button>
             <% } else if (!user || user.role !== 'seller') { %>
-              <button class="cta" type="submit">Add to cart</button>
-              <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
+            <button class="cta" type="submit">Add to cart 🛒</button>
+            <button class="cta" type="button" onclick="location.href='/cart'">View cart 🧾</button>
             <% } %>
           </form>
         </div>
@@ -414,12 +414,12 @@
                     <input type="hidden" name="title" value="<%= book.title %>">
                     <input type="hidden" name="price" value="<%= book.price %>">
                     <button class="add-to-cart-btn" type="submit" <%= inStock ? '' : 'disabled' %>>
-                      <%= inStock ? 'Add to Cart' : 'Out of Stock' %>
+                      <%= inStock ? 'Add to Cart 🛒' : 'Out of Stock ❌' %>
                     </button>
                   </form>
                   <form method="POST" action="/wishlist/add" class="wishlist-form">
                     <input type="hidden" name="bookId" value="<%= book.book_id %>">
-                    <button class="wishlist-btn" type="submit">Save to Wishlist</button>
+                    <button class="wishlist-btn" type="submit">Save to Wishlist 💖</button>
                   </form>
                 <% } else if (!user) { %>
                   <!-- Guest sees Add to Cart (redirects to login) -->
@@ -427,7 +427,7 @@
                     <input type="hidden" name="bookId" value="<%= book.book_id %>">
                     <input type="hidden" name="title" value="<%= book.title %>">
                     <input type="hidden" name="price" value="<%= book.price %>">
-                    <button class="add-to-cart-btn" type="submit">Add to Cart</button>
+                    <button class="add-to-cart-btn" type="submit">Add to Cart 🛒</button>
                   </form>
                 <% } %>
               </div>
@@ -473,7 +473,7 @@
                     <input type="hidden" name="bookId" value="<%= book.id || '' %>">
                     <input type="hidden" name="title" value="<%= book.title %>">
                     <input type="hidden" name="price" value="<%= book.price %>">
-                    <button class="cta" type="submit">Add</button>
+                    <button class="cta" type="submit">Add 🛒</button>
                   </form>
                 <% } else if (!user || user.role !== 'seller') { %>
                   <!-- Guest sees Add button (redirects to login) -->
@@ -481,7 +481,7 @@
                     <input type="hidden" name="bookId" value="<%= book.id || '' %>">
                     <input type="hidden" name="title" value="<%= book.title %>">
                     <input type="hidden" name="price" value="<%= book.price %>">
-                    <button class="cta" type="submit">Add</button>
+                    <button class="cta" type="submit">Add 🛒</button>
                   </form>
                 <% } %>
               </div>

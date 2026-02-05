@@ -34,13 +34,13 @@
             <input type="hidden" name="title" value="<%= book.title %>">
             <input type="hidden" name="price" value="<%= book.price %>">
             <button class="cta" type="submit" <%= book.stock > 0 ? '' : 'disabled' %>>
-              <%= book.stock > 0 ? 'Add to cart' : 'Out of stock' %>
+              <%= book.stock > 0 ? 'Add to cart 🛒' : 'Out of stock ❌' %>
             </button>
-            <button class="cta" type="button" onclick="location.href='/cart'">View cart</button>
+            <button class="cta" type="button" onclick="location.href='/cart'">View cart 🧾</button>
           </form>
           <form method="POST" action="/wishlist/add" style="margin-top:10px;">
             <input type="hidden" name="bookId" value="<%= book.id %>">
-            <button class="wishlist-btn" type="submit">Save to Wishlist</button>
+            <button class="wishlist-btn" type="submit">Save to Wishlist 💖</button>
           </form>
         <% } else if (!user) { %>
           <p class="muted">Log in to add this book to your cart or wishlist.</p>

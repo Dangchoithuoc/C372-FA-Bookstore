@@ -8,6 +8,8 @@
 </head>
 <body class="admin-ui">
   <div class="admin-shell">
+
+    <!-- SIDEBAR -->
     <aside class="admin-sidebar">
       <div class="admin-logo">Control Room</div>
       <nav class="admin-nav">
@@ -20,11 +22,14 @@
       </nav>
     </aside>
 
+    <!-- MAIN -->
     <main class="admin-main">
+
+      <!-- HEADER -->
       <div class="admin-topbar admin-page-header">
         <div>
           <h1 class="admin-page-title">User Operations</h1>
-          <p class="admin-page-sub">Audit accounts, roles, and activity.</p>
+          <p class="admin-page-sub">Audit accounts, roles, spending, and activity.</p>
         </div>
         <div class="admin-actions">
           <a class="admin-btn" href="/logout">Log out</a>
@@ -32,11 +37,13 @@
         </div>
       </div>
 
+      <!-- TOOLBAR -->
       <div class="admin-toolbar">
         <div class="admin-search">
           <input type="text" placeholder="Search users (UI only)">
           <span class="admin-muted">Search not wired</span>
         </div>
+
         <div>
           <% if (success) { %>
             <span class="admin-pill"><%= success %></span>
@@ -47,46 +54,128 @@
         </div>
       </div>
 
+      <!-- USERS TABLE -->
       <div class="admin-section">
       <% if (!users || users.length === 0) { %>
-        <div class="admin-empty">No users found.</div>
+
+        <div class="admin-empty">
+          No registered users found in the system.
+        </div>
+
       <% } else { %>
-      <table class="admin-table admin-table-compact">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% users.forEach(function(u) { %>
+
+        <table class="admin-table admin-table-compact">
+          <thead>
             <tr>
-              <td>#<%= u.user_id %></td>
-              <td><%= u.username %></td>
-              <td><%= u.email %></td>
-              <td><span class="admin-pill"><%= u.role %></span></td>
-              <td>
-                <div class="admin-actions">
-                  <form method="POST" action="/admin/users/<%= u.user_id %>/disable">
-                    <input type="hidden" name="action" value="<%= u.disabled ? 'enable' : 'disable' %>">
-                    <button class="admin-btn admin-btn-warning" type="submit">
-                      <%= u.disabled ? 'Enable' : 'Disable' %>
-                    </button>
-                  </form>
-                  <form method="POST" action="/admin/users/<%= u.user_id %>/delete" onsubmit="return confirm('Delete this user?');">
-                    <button class="admin-btn admin-danger" type="submit">Delete</button>
-                  </form>
-                </div>
-              </td>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Email (masked)</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Orders</th>
+              <th>Total Spent</th>
+              <th>Last Order</th>
+              <th>Actions</th>
             </tr>
-          <% }) %>
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            <% users.forEach(function(u) { %>
+              <tr>
+                <td>#<%= u.user_id %></td>
+                <td><%= u.username %></td>
+                <td><%= u.email_masked || u.email %></td>
+
+                <!-- ROLE -->
+                <td>
+                  <span class="admin-pill"><%= u.role %></span>
+                </td>
+
+                <!-- STATUS -->
+                <td>
+                  <% if (u.disabled) { %>
+                    <span class="admin-pill admin-danger">Disabled</span>
+                  <% } else { %>
+                    <span class="admin-pill">Active</span>
+                  <% } %>
+                </td>
+
+                <!-- ORDERS COUNT -->
+                <td><%= Number(u.orders_count || 0) %></td>
+
+                <!-- TOTAL SPENT -->
+                <td>$<%= Number(u.total_spent || 0).toFixed(2) %></td>
+
+                <!-- LAST ORDER -->
+                <td>
+                  <%= u.last_order_date
+                        ? new Date(u.last_order_date)
+                            .toLocaleString("en-SG", { timeZone: "Asia/Singapore" })
+                        : "-" %>
+                </td>
+
+                <!-- ACTIONS -->
+                <td>
+                  <div class="admin-actions" style="display:flex; gap:6px; flex-wrap:wrap;">
+
+                    <% if (u.role !== "admin") { %>
+
+                      <!-- BUYER BUTTON -->
+                      <% if (u.role === "buyer") { %>
+                        <a class="admin-btn"
+                           href="/admin/orders?buyer=<%= u.user_id %>">
+                          View Purchases
+                        </a>
+                      <% } %>
+
+                      <!-- SELLER BUTTON -->
+                      <% if (u.role === "seller") { %>
+                        <a class="admin-btn"
+                           href="/admin/sales?seller=<%= u.user_id %>">
+                          View Sales
+                        </a>
+                      <% } %>
+
+                      <!-- ENABLE / DISABLE -->
+                      <form method="POST"
+                            action="/admin/users/<%= u.user_id %>/disable"
+                            style="display:inline;">
+                        <input type="hidden"
+                               name="action"
+                               value="<%= u.disabled ? 'enable' : 'disable' %>">
+
+                        <button class="admin-btn <%= u.disabled ? '' : 'admin-btn-warning' %>"
+                                type="submit">
+                          <%= u.disabled ? 'Enable' : 'Disable' %>
+                        </button>
+                      </form>
+
+                      <!-- DELETE -->
+                      <form method="POST"
+                            action="/admin/users/<%= u.user_id %>/delete"
+                            style="display:inline;"
+                            onsubmit="return confirm('Delete this user permanently?');">
+                        <button class="admin-btn admin-danger"
+                                type="submit">
+                          Delete
+                        </button>
+                      </form>
+
+                    <% } else { %>
+                      <span class="admin-muted">Protected Account</span>
+                    <% } %>
+
+                  </div>
+                </td>
+
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+
       <% } %>
       </div>
+
     </main>
   </div>
 </body>

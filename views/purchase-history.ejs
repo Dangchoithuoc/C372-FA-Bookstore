@@ -122,7 +122,18 @@
   </main>
   <script>
     document.querySelectorAll("[data-auto-submit]").forEach(form => {
-      form.addEventListener("change", () => form.submit());
+      form.addEventListener("change", event => {
+        const input = event.target;
+        if (!input || input.name !== "status") return;
+        const nextStatus = input.value;
+        const ok = window.confirm(`Confirm update delivery status to "${nextStatus}"?`);
+        if (!ok) {
+          event.preventDefault();
+          form.reset();
+          return;
+        }
+        form.submit();
+      });
     });
   </script>
 </body>

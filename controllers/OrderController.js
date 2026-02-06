@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Notification = require("../models/Notification");
+const PDFDocument = require("pdfkit");
 
 const DELIVERY_STATUSES = ["Pending", "Processing", "Shipping", "Delivered"];
 
@@ -309,6 +310,91 @@ module.exports = {
         } catch (err) {
             console.error("Invoice error:", err);
             res.status(500).send("Could not load invoice");
+        }
+    },
+
+    invoicePdf: async (req, res) => {
+        try {
+            const userId = req.session.user.id;
+            const orderId = Number(req.params.id);
+            if (!Number.isFinite(orderId)) {
+                return res.redirect("/orders");
+            }
+
+            const invoice = await Order.getInvoice(orderId, userId);
+            if (!invoice) {
+                return res.status(404).send("Invoice not found");
+            }
+
+            const items = invoice.items.map(item => ({
+                ...item,
+                price: Number(item.price_at_purchase) || 0
+            }));
+            const total = Number(invoice.order.total_price) || 0;
+            const issuedAt = new Date(invoice.order.order_date);
+
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename="invoice-${orderId}.pdf"`);
+
+            const doc = new PDFDocument({ size: "A4", margin: 50 });
+            doc.pipe(res);
+
+            const lineGap = 6;
+            const labelColor = "#6b7280";
+
+            doc.fontSize(20).text("Invoice", { align: "left" });
+            doc.moveDown(0.4);
+            doc.fontSize(12).text(`Invoice #${orderId}`);
+            doc.fillColor(labelColor).text(`Issued on ${issuedAt.toLocaleString("en-SG", { timeZone: "Asia/Singapore" })}`);
+            doc.fillColor("black");
+
+            doc.moveDown(1);
+            doc.fontSize(12).text("Bill to", { underline: true });
+            doc.moveDown(0.4);
+            doc.fontSize(11).text(invoice.order.username || "");
+            if (invoice.order.email) doc.text(invoice.order.email);
+            if (invoice.order.contact_number) doc.text(invoice.order.contact_number);
+            if (invoice.order.address) doc.text(invoice.order.address);
+
+            doc.moveDown(1);
+            doc.fontSize(12).text("Order summary", { underline: true });
+            doc.moveDown(0.4);
+            doc.fontSize(11).text(`${items.length} item(s)`);
+            doc.text(`Payment status: ${invoice.order.payment_status || "Paid"}`);
+            doc.text(`Payment method: ${invoice.order.payment_method || "Unknown"}`);
+
+            doc.moveDown(1);
+            doc.fontSize(12).text("Items", { underline: true });
+            doc.moveDown(0.4);
+
+            const startX = doc.x;
+            const titleX = startX;
+            const priceX = 420;
+
+            items.forEach((item) => {
+                doc.fontSize(11).text(item.title || "Untitled", titleX, doc.y, { continued: false });
+                const meta = [item.author, item.genre].filter(Boolean).join(" - ");
+                if (meta) {
+                    doc.fillColor(labelColor).fontSize(10).text(meta, titleX, doc.y);
+                    doc.fillColor("black");
+                }
+                doc.fontSize(11).text(`$${item.price.toFixed(2)}`, priceX, doc.y - 24, {
+                    width: 100,
+                    align: "right"
+                });
+                doc.moveDown(0.6);
+            });
+
+            doc.moveDown(0.5);
+            doc.moveTo(startX, doc.y).lineTo(545, doc.y).strokeColor("#e5e7eb").stroke();
+            doc.moveDown(0.6);
+            doc.fontSize(12).text("Total paid", priceX - 120, doc.y, { width: 220, align: "right" });
+            doc.fontSize(13).text(`$${total.toFixed(2)}`, priceX - 120, doc.y, { width: 220, align: "right" });
+
+            doc.end();
+        } catch (err) {
+            console.error("Invoice PDF error:", err);
+            res.status(500).send("Could not generate invoice PDF");
         }
     }
 };

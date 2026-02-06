@@ -260,6 +260,7 @@ app.get("/nets-qr/fail", requireLogin, NetsController.showFail);
 // Orders (role-aware)
 app.get("/orders", requireLogin, OrderController.purchaseHistory);
 app.get("/invoice/:id", requireLogin, requireBuyer, OrderController.invoicePage);
+app.get("/invoice/:id/pdf", requireLogin, requireBuyer, OrderController.invoicePdf);
 app.post("/orders/items/:id/delivery", requireLogin, requireSeller, OrderController.updateDeliveryStatus);
 app.get("/orders/items/:id/review", requireLogin, requireBuyer, OrderController.reviewPage);
 app.post("/orders/items/:id/review", requireLogin, requireBuyer, uploadReviewImage.single("photo"), OrderController.addReview);

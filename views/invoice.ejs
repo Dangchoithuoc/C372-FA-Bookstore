@@ -16,6 +16,7 @@
           <div class="pill">Invoice</div>
           <h1>Invoice #<%= order.order_id %></h1>
           <p class="muted">Issued on <%= new Date(order.order_date).toLocaleString("en-SG", { timeZone: "Asia/Singapore" }) %></p>
+          <a class="invoice-download" href="/invoice/<%= order.order_id %>/pdf">Download PDF</a>
         </div>
         <div class="invoice-total">
           <span>Total paid</span>

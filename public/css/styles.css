@@ -1255,6 +1255,23 @@ footer { padding: 20px 0 40px; color: var(--muted); text-align: center; font-siz
 .invoice-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .invoice-total { background: #e0e7ff; border-radius: 14px; padding: 12px 16px; display: grid; gap: 6px; text-align: right; }
 .invoice-total strong { font-size: 1.4rem; color: #1e40af; }
+.invoice-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  background: rgba(37, 99, 235, 0.12);
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.invoice-download:hover {
+  border-color: rgba(37, 99, 235, 0.55);
+  background: rgba(37, 99, 235, 0.18);
+}
 .invoice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .invoice-panel { background: #f8fafc; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 14px; padding: 14px; }
 .invoice-items { display: grid; gap: 10px; }

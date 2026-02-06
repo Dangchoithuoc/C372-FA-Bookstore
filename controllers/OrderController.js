@@ -208,7 +208,14 @@ module.exports = {
             const Refund = require("../models/Refund");
             const result = await Refund.request(user.id, orderItemId, method, reason, note, proofUrl);
             if (!result.ok) {
-                return res.status(400).send("Refund request could not be created.");
+                const reasonMap = {
+                    not_found: "Order item not found.",
+                    forbidden: "You can only request refunds for your own orders.",
+                    not_delivered: "Refunds are only allowed after delivery.",
+                    invalid_amount: "Refund amount is invalid.",
+                    unsupported_method: "Original method refunds are only available for PayPal, NETS, or Stripe.",
+                };
+                return res.status(400).send(reasonMap[result.reason] || "Refund request could not be created.");
             }
             return res.redirect("/orders");
         } catch (err) {

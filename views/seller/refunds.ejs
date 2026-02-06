@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Refund Requests | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="seller-ui">
+  <%- include("../partials/navbar", { user: user }) %>
+
+  <main class="seller-shell">
+    <div class="seller-header">
+      <div>
+        <h1>Refund Requests</h1>
+        <p class="muted">Approve or reject refunds for your books.</p>
+      </div>
+      <a class="cta" href="/seller/books">Back to Books</a>
+    </div>
+
+    <% if (!refunds || refunds.length === 0) { %>
+      <div class="seller-card muted">No refund requests yet.</div>
+    <% } else { %>
+      <div class="seller-card">
+        <table class="seller-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Buyer</th>
+              <th>Book</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% refunds.forEach(function(r) { %>
+              <tr>
+                <td>#<%= r.refund_id %></td>
+                <td><%= r.buyer_name %> (<%= r.buyer_email %>)</td>
+                <td><%= r.title %></td>
+                <td>$<%= Number(r.amount || 0).toFixed(2) %></td>
+                <td><%= r.method === 'wallet' ? 'Wallet' : 'Original method' %></td>
+                <td><%= r.payment_method || 'Unknown' %></td>
+                <td><span class="admin-pill"><%= r.status %></span></td>
+                <td>
+                  <% if (r.status === 'Pending') { %>
+                    <div class="seller-actions">
+                      <form method="POST" action="/seller/refunds/<%= r.refund_id %>/decision">
+                        <input type="hidden" name="decision" value="approve">
+                        <button class="cta" type="submit">Approve</button>
+                      </form>
+                      <form method="POST" action="/seller/refunds/<%= r.refund_id %>/decision">
+                        <input type="hidden" name="decision" value="reject">
+                        <button class="cta danger" type="submit">Reject</button>
+                      </form>
+                    </div>
+                  <% } else { %>
+                    <span class="muted">Resolved</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>

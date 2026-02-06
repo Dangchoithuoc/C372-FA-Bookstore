@@ -69,11 +69,12 @@
             <% if (user) { %>
               <a href="/orders">Orders &#x1F4E6;</a>
             <% } %>
-            <% if (user && user.role === "admin") { %>
+          <% if (user && user.role === "admin") { %>
               <a href="/admin/users">Admin &#x1F6E1;&#xFE0F;</a>
               <a href="/seller/books">Manage Books &#x1F4DA;</a>
             <% } else if (user && user.role === "seller") { %>
               <a href="/seller/books">Manage Books &#x1F4DA;</a>
+              <a href="/seller/refunds">Refunds &#x1F4B8;</a>
             <% } %>
             <% if (!user) { %>
               <a href="/login">Login &#x1F510;</a>

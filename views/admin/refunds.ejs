@@ -44,6 +44,7 @@
               <th>Amount</th>
               <th>Method</th>
               <th>Payment</th>
+              <th>Reason</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -57,6 +58,15 @@
                 <td>$<%= Number(r.amount || 0).toFixed(2) %></td>
                 <td><%= r.method === 'wallet' ? 'Wallet' : 'Original method' %></td>
                 <td><%= r.payment_method || 'Unknown' %></td>
+                <td>
+                  <div><%= r.reason || '—' %></div>
+                  <% if (r.note) { %>
+                    <div class="admin-muted"><%= r.note %></div>
+                  <% } %>
+                  <% if (r.proof_url) { %>
+                    <div><a href="<%= r.proof_url %>" target="_blank" rel="noopener">Proof</a></div>
+                  <% } %>
+                </td>
                 <td><span class="admin-pill"><%= r.status %></span></td>
                 <td>
                   <% if (r.status === 'Pending') { %>

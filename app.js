@@ -248,6 +248,8 @@ app.post("/seller/books", requireLogin, requireSeller, uploadBookImage.single("i
 app.get("/seller/books/:id/edit", requireLogin, requireSeller, SellerController.editBookPage);
 app.post("/seller/books/:id/update", requireLogin, requireSeller, uploadBookImage.single("image"), SellerController.updateBook);
 app.post("/seller/books/:id/delete", requireLogin, requireSeller, SellerController.deleteBook);
+app.get("/seller/refunds", requireLogin, requireSeller, SellerController.listRefunds);
+app.post("/seller/refunds/:id/decision", requireLogin, requireSeller, SellerController.decideRefund);
 
 
 // Admin routes

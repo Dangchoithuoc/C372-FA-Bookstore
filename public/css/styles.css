@@ -470,6 +470,8 @@ body.admin-ui a { color: inherit; }
 
 /* Seller books */
 .seller-shell { width: min(1200px, calc(100% - 48px)); margin: 0 auto; padding: 20px 0 60px; }
+.seller-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.seller-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: var(--shadow-soft); }
 .seller-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
 .seller-shell h1 {
   margin: 0;
@@ -779,6 +781,8 @@ nav a:hover {
   box-shadow: 0 16px 30px rgba(70, 45, 25, 0.22);
 }
 .cta:hover { transform: translateY(-1px); }
+.cta.danger { background: #f4d6c9; color: #7b1f1a; border: 1px solid rgba(123, 31, 26, 0.2); }
+.cta.danger:hover { background: #f0c7b7; }
 
 .nav-search {
   display: flex;

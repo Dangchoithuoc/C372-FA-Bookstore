@@ -59,20 +59,7 @@
                 <td><%= r.payment_method || 'Unknown' %></td>
                 <td><span class="admin-pill"><%= r.status %></span></td>
                 <td>
-                  <% if (r.status === 'Pending') { %>
-                    <div class="admin-actions">
-                      <form method="POST" action="/admin/refunds/<%= r.refund_id %>/decision">
-                        <input type="hidden" name="decision" value="approve">
-                        <button class="admin-btn admin-btn-primary" type="submit">Approve</button>
-                      </form>
-                      <form method="POST" action="/admin/refunds/<%= r.refund_id %>/decision">
-                        <input type="hidden" name="decision" value="reject">
-                        <button class="admin-btn admin-danger" type="submit">Reject</button>
-                      </form>
-                    </div>
-                  <% } else { %>
-                    <span class="admin-muted">Resolved</span>
-                  <% } %>
+                  <span class="admin-muted">Read-only</span>
                 </td>
               </tr>
             <% }) %>

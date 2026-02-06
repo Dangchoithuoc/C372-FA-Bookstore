@@ -116,7 +116,7 @@ module.exports = {
       `SELECT 
           o.order_id,
           o.total_price,
-          o.order_date,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
           p.payment_method,
           p.payment_status,
           oi.order_item_id,
@@ -129,7 +129,7 @@ module.exports = {
           b.coverImage,
           r.rating AS review_rating,
           r.comment AS review_comment,
-          r.created_at AS review_created_at,
+          DATE_ADD(r.created_at, INTERVAL 8 HOUR) AS review_created_at,
           rf.refund_id AS refund_id,
           rf.status AS refund_status,
           rf.method AS refund_method,
@@ -151,7 +151,7 @@ module.exports = {
     const [rows] = await pool.execute(
       `SELECT 
           o.order_id,
-          o.order_date,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
           p.payment_method,
           p.payment_status,
           oi.order_item_id,
@@ -167,7 +167,7 @@ module.exports = {
           u.email AS buyer_email,
           r.rating AS review_rating,
           r.comment AS review_comment,
-          r.created_at AS review_created_at,
+          DATE_ADD(r.created_at, INTERVAL 8 HOUR) AS review_created_at,
           rf.refund_id AS refund_id,
           rf.status AS refund_status,
           rf.method AS refund_method,
@@ -191,7 +191,7 @@ module.exports = {
       `SELECT 
           o.order_id,
           o.total_price,
-          o.order_date,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
           p.payment_method,
           p.payment_status,
           oi.order_item_id,
@@ -240,7 +240,7 @@ module.exports = {
       `SELECT 
           o.order_id,
           o.total_price,
-          o.order_date,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
           u.username,
           u.email,
           u.address,
@@ -287,7 +287,7 @@ module.exports = {
           b.author,
           b.genre,
           b.coverImage,
-          o.order_date,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
           o.total_price,
           p.payment_method,
           p.payment_status,

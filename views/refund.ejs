@@ -18,7 +18,7 @@
         <h1>Request refund</h1>
         <p class="muted"><strong><%= item.title %></strong> by <%= item.author %></p>
         <div class="order-info">
-          <div><strong>Order date:</strong> <%= new Date(item.order_date).toLocaleString() %></div>
+          <div><strong>Order date:</strong> <%= new Date(item.order_date).toLocaleString("en-SG", { timeZone: "Asia/Singapore" }) %></div>
           <div><strong>Payment:</strong> <%= item.payment_method || 'Unknown' %> (<%= item.payment_status || 'Paid' %>)</div>
           <div><strong>Delivery status:</strong> <%= item.delivery_status %></div>
           <div><strong>Item total:</strong> $<%= Number(item.price_at_purchase || 0).toFixed(2) %></div>
@@ -29,7 +29,7 @@
           <select name="method" required>
             <option value="">Select method</option>
             <option value="wallet">Wallet</option>
-            <option value="original">Original method (simulated)</option>
+            <option value="original">Original payment method</option>
           </select>
           <label>Reason</label>
           <select name="reason" required>

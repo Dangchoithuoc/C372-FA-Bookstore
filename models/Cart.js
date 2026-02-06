@@ -1,4 +1,5 @@
 const pool = require("../db");
+const Offer = require("./Offer");
 
 async function ensureCart(userId) {
     const [rows] = await pool.execute("SELECT cart_id FROM cart WHERE user_id = ? LIMIT 1", [userId]);
@@ -13,37 +14,65 @@ module.exports = {
     async getCart(userId) {
         const cartId = await ensureCart(userId);
         const [items] = await pool.execute(
-            `SELECT ci.cart_item_id, b.book_id AS id, b.title, b.price, b.coverImage, b.stock, ci.quantity AS qty
+            `SELECT ci.cart_item_id,
+                    b.book_id AS id,
+                    b.title,
+                    b.price AS original_price,
+                    COALESCE(o.offered_price, b.price) AS price,
+                    b.coverImage,
+                    b.stock,
+                    ci.quantity AS qty,
+                    o.offer_id AS offer_id
              FROM cart_items ci
              JOIN books b ON ci.book_id = b.book_id
+             LEFT JOIN offers o
+               ON o.book_id = b.book_id
+              AND o.buyer_id = ?
+              AND o.status = 'accepted'
+              AND o.is_active = 1
+              AND (o.expires_at IS NULL OR o.expires_at > NOW())
              WHERE ci.cart_id = ?`,
-            [cartId]
+            [userId, cartId]
         );
-        const [cartRows] = await pool.execute("SELECT total_amount FROM cart WHERE cart_id = ?", [cartId]);
-        const total = cartRows[0] ? Number(cartRows[0].total_amount || 0) : 0;
+        const total = items.reduce((sum, item) => {
+            const price = Number(item.price || 0);
+            const qty = Number(item.qty || 0);
+            return sum + price * qty;
+        }, 0);
+        await pool.execute("UPDATE cart SET total_amount = ? WHERE cart_id = ?", [total, cartId]);
         return { cartId, items, total };
     },
 
     async addItem(userId, bookId, qty) {
         const cartId = await ensureCart(userId);
-        const safeQty = Math.max(1, Number(qty) || 1);
+        let safeQty = Math.max(1, Number(qty) || 1);
         const [bookRows] = await pool.execute("SELECT stock FROM books WHERE book_id = ? LIMIT 1", [bookId]);
         const stock = bookRows[0] ? Number(bookRows[0].stock || 0) : 0;
         if (stock <= 0) {
             return cartId;
         }
+
+        const acceptedPrice = await Offer.getAcceptedPriceForBuyerBook(userId, bookId);
+        if (Number.isFinite(acceptedPrice)) {
+            // Offer applies to a single copy only.
+            safeQty = 1;
+        }
+
         const [existingRows] = await pool.execute(
             "SELECT cart_item_id, quantity FROM cart_items WHERE cart_id = ? AND book_id = ?",
             [cartId, bookId]
         );
         if (existingRows.length) {
-            const newQty = Math.min(existingRows[0].quantity + safeQty, stock);
+            const desiredQty = existingRows[0].quantity + safeQty;
+            const newQty = Number.isFinite(acceptedPrice)
+                ? 1
+                : Math.min(desiredQty, stock);
             await pool.execute(
                 "UPDATE cart_items SET quantity = ? WHERE cart_item_id = ?",
                 [newQty, existingRows[0].cart_item_id]
             );
         } else {
-            const insertQty = Math.min(safeQty, stock);
+            const insertQty = Number.isFinite(acceptedPrice) ? 1 : Math.min(safeQty, stock);
             await pool.execute(
                 "INSERT INTO cart_items (cart_id, book_id, quantity) VALUES (?, ?, ?)",
                 [cartId, bookId, insertQty]
@@ -54,7 +83,11 @@ module.exports = {
 
     async updateItem(userId, bookId, qty) {
         const cartId = await ensureCart(userId);
-        const newQty = Number(qty);
+        let newQty = Number(qty);
+        const acceptedPrice = await Offer.getAcceptedPriceForBuyerBook(userId, bookId);
+        if (Number.isFinite(acceptedPrice)) {
+            newQty = 1;
+        }
         if (!Number.isFinite(newQty) || newQty <= 0) {
             await pool.execute(
                 "DELETE FROM cart_items WHERE cart_id = ? AND book_id = ?",

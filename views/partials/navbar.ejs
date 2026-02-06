@@ -57,24 +57,38 @@
         <a href="/register">Register &#x270D;&#xFE0F;</a>
       <% } %>
 
-      <% if (user && (typeof showMenu === "undefined" || showMenu !== false)) { %>
+        <% if (user && (typeof showMenu === "undefined" || showMenu !== false)) { %>
+        <% const hasUnreadNotifications = typeof unreadNotificationCount === "number" && unreadNotificationCount > 0; %>
+        <% const hasUnreadOrders = typeof unreadOrdersCount === "number" && unreadOrdersCount > 0; %>
+        <% const hasUnreadRefunds = typeof unreadRefundsCount === "number" && unreadRefundsCount > 0; %>
+        <% const hasUnreadOffers = typeof unreadOffersCount === "number" && unreadOffersCount > 0; %>
         <details class="nav-menu-dropdown">
-          <summary>Menu &#9776;</summary>
+          <summary>Menu &#9776;<% if (hasUnreadNotifications) { %> <span class="nav-new-badge" data-new-badge data-badge-kind="menu">NEW</span><% } %></summary>
           <div class="nav-menu-panel">
           <% if (user && user.role === "buyer") { %>
             <a href="/wishlist">Wishlist &#x1F496;</a>
             <a href="/wallet">Wallet &#x1F4B3;</a>
             <a href="/membership">Membership &#x1F4B0;</a>
+            <a href="/offers" data-mark-read data-mark-types="offer_update">
+              Offers &#x1F4AC;<% if (hasUnreadOffers) { %> <span class="nav-new-badge nav-new-badge-inline" data-new-badge data-badge-kind="offers">NEW</span><% } %>
+            </a>
           <% } %>
             <% if (user) { %>
-              <a href="/orders">Orders &#x1F4E6;</a>
+              <a href="/orders" data-mark-read data-mark-types="<%= user.role === 'seller' ? 'order_new' : 'delivery_update,refund_update' %>">
+                Orders &#x1F4E6;<% if (hasUnreadOrders) { %> <span class="nav-new-badge nav-new-badge-inline" data-new-badge data-badge-kind="orders">NEW</span><% } %>
+              </a>
             <% } %>
           <% if (user && user.role === "admin") { %>
               <a href="/admin/users">Admin &#x1F6E1;&#xFE0F;</a>
               <a href="/seller/books">Manage Books &#x1F4DA;</a>
             <% } else if (user && user.role === "seller") { %>
               <a href="/seller/books">Manage Books &#x1F4DA;</a>
-              <a href="/seller/refunds">Refunds &#x1F4B8;</a>
+              <a href="/seller/offers" data-mark-read data-mark-types="offer_request">
+                Offers &#x1F4AC;<% if (hasUnreadOffers) { %> <span class="nav-new-badge nav-new-badge-inline" data-new-badge data-badge-kind="offers">NEW</span><% } %>
+              </a>
+              <a href="/seller/refunds" data-mark-read data-mark-types="refund_request">
+                Refunds &#x1F4B8;<% if (hasUnreadRefunds) { %> <span class="nav-new-badge nav-new-badge-inline" data-new-badge data-badge-kind="refunds">NEW</span><% } %>
+              </a>
             <% } %>
             <% if (!user) { %>
               <a href="/login">Login &#x1F510;</a>
@@ -87,7 +101,47 @@
   </div>
 </header>
 
-<% if (user && user.role === "buyer") { %>
+<script>
+  (() => {
+    const badges = document.querySelectorAll("[data-new-badge]");
+    if (!badges.length) return;
+    const targets = document.querySelectorAll("[data-mark-read]");
+    if (!targets.length) return;
+    const markRead = (types) => fetch("/notifications/mark-read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ types })
+    }).catch(() => {});
+    targets.forEach((target) => {
+      target.addEventListener("click", () => {
+        const typesAttr = target.getAttribute("data-mark-types") || "";
+        const types = typesAttr.split(",").map((t) => t.trim()).filter(Boolean);
+        if (types.length) {
+          if (types.includes("refund_request")) {
+            document.querySelectorAll('[data-new-badge][data-badge-kind="refunds"]').forEach((badge) => badge.remove());
+          }
+          if (types.includes("order_new") || types.includes("delivery_update") || types.includes("refund_update")) {
+            document.querySelectorAll('[data-new-badge][data-badge-kind="orders"]').forEach((badge) => badge.remove());
+          }
+          if (types.includes("offer_request") || types.includes("offer_update")) {
+            document.querySelectorAll('[data-new-badge][data-badge-kind="offers"]').forEach((badge) => badge.remove());
+          }
+          markRead(types);
+        } else {
+          document.querySelectorAll("[data-new-badge]").forEach((badge) => badge.remove());
+          markRead([]);
+        }
+
+        const remaining = document.querySelectorAll('[data-new-badge]:not([data-badge-kind="menu"])');
+        if (!remaining.length) {
+          document.querySelectorAll('[data-new-badge][data-badge-kind="menu"]').forEach((badge) => badge.remove());
+        }
+      });
+    });
+  })();
+</script>
+
+<% if (user && user.role === "buyer") { %>
   <a class="floating-cart" href="/cart" aria-label="Open cart">
     <span class="floating-cart-icon">&#x1F6D2;</span>
     <% if (typeof cartCount === "number" && cartCount > 0) { %>

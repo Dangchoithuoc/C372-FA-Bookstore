@@ -1,4 +1,5 @@
 const Book = require("../models/Book");
+const Offer = require("../models/Offer");
 const pool = require("../db");
 
 module.exports = {
@@ -116,11 +117,17 @@ module.exports = {
                     : "A curated title from The Bookmark collection."
             };
 
+            let offer = null;
+            if (req.session.user && req.session.user.role === "buyer") {
+                offer = await Offer.getActiveForBuyerBook(req.session.user.id, bookId);
+            }
+
             res.render("book-details", {
                 user: req.session.user || null,
                 book: normalized,
                 reviews,
-                avgRating
+                avgRating,
+                offer
             });
         } catch (err) {
             console.error("Book details error:", err);

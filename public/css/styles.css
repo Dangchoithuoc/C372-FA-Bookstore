@@ -723,6 +723,26 @@ nav a {
   box-shadow: 0 8px 18px rgba(70, 45, 25, 0.16);
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
+
+.nav-new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  margin-left: 6px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  background: #b23b2a;
+  color: #fffaf2;
+  border: 1px solid rgba(255, 250, 242, 0.7);
+  text-transform: uppercase;
+}
+
+.nav-new-badge-inline {
+  margin-left: 8px;
+}
 nav a:hover {
   transform: translateY(-1px);
   border-color: rgba(140, 96, 35, 0.5);
@@ -1157,6 +1177,42 @@ footer { padding: 20px 0 40px; color: var(--muted); text-align: center; font-siz
   display: grid;
   gap: 10px;
 }
+.negotiate-card {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(224, 231, 255, 0.4));
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.12);
+  display: grid;
+  gap: 10px;
+}
+.negotiate-header {
+  display: grid;
+  gap: 4px;
+}
+.negotiate-status {
+  font-weight: 700;
+  color: #1e3a8a;
+}
+.negotiate-form {
+  display: grid;
+  gap: 8px;
+}
+.negotiate-form label {
+  font-weight: 700;
+  color: var(--highlight);
+}
+.negotiate-form input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  background: #ffffff;
+}
+.negotiate-cta {
+  justify-self: start;
+  padding: 10px 16px;
+}
 .review-summary {
   display: flex;
   gap: 10px;
@@ -1235,6 +1291,23 @@ footer { padding: 20px 0 40px; color: var(--muted); text-align: center; font-siz
 .invoice-top { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .invoice-total { background: #e0e7ff; border-radius: 14px; padding: 12px 16px; display: grid; gap: 6px; text-align: right; }
 .invoice-total strong { font-size: 1.4rem; color: #1e40af; }
+.invoice-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  background: rgba(37, 99, 235, 0.12);
+  color: #1e3a8a;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.invoice-download:hover {
+  border-color: rgba(37, 99, 235, 0.55);
+  background: rgba(37, 99, 235, 0.18);
+}
 .invoice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .invoice-panel { background: #f8fafc; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 14px; padding: 14px; }
 .invoice-items { display: grid; gap: 10px; }
@@ -1325,6 +1398,11 @@ footer { padding: 20px 0 40px; color: var(--muted); text-align: center; font-siz
 .auth-card form { text-align: left; }
 .auth-card label { display: block; margin-bottom: 6px; font-size: 0.95rem; color: var(--muted); }
 .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: var(--pill); color: var(--accent-strong); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.8px; border: 1px solid rgba(180, 137, 44, 0.35); text-transform: uppercase; }
+.tag-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: grayscale(0.2);
+}
 input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); font-size: 1rem; color: var(--highlight); }
 input::placeholder { color: #9b8a78; }
 body.auth-body input[type="text"],

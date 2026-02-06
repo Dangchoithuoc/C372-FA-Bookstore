@@ -34,7 +34,15 @@
               <img class="cart-thumb" src="<%= item.coverImage || '/images/placeholder.svg' %>" alt="<%= item.title %> cover">
               <div><%= item.title %></div>
             </div>
-            <div class="center">$<%= Number(item.price || 0).toFixed(2) %></div>
+            <div class="center">
+              <% if (item.offer_id && Number(item.original_price || 0) > Number(item.price || 0)) { %>
+                <div class="muted" style="text-decoration: line-through;">$<%= Number(item.original_price || 0).toFixed(2) %></div>
+                <div>$<%= Number(item.price || 0).toFixed(2) %></div>
+                <div class="muted">Offer applies to 1 copy</div>
+              <% } else { %>
+                $<%= Number(item.price || 0).toFixed(2) %>
+              <% } %>
+            </div>
             <div class="center">
               <form action="/cart/update" method="POST" style="display:flex; gap:6px; justify-content:center;">
                 <input type="hidden" name="id" value="<%= item.id %>">

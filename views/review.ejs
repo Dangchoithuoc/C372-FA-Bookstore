@@ -15,7 +15,8 @@
         <img src="<%= item.coverImage || '/images/placeholder.svg' %>" alt="<%= item.title %> cover">
       </div>
       <div class="detail-info">
-        <h1>Leave a review</h1>
+        <% const existingReview = review || null; %>
+        <h1><%= existingReview ? "Edit your review" : "Leave a review" %></h1>
         <p class="muted"><strong><%= item.title %></strong> by <%= item.author %></p>
         <div class="order-info">
           <div><strong>Order date:</strong> <%= new Date(item.order_date).toLocaleString("en-SG", { timeZone: "Asia/Singapore" }) %></div>
@@ -26,30 +27,34 @@
         <form class="review-form" method="POST" action="/orders/items/<%= item.order_item_id %>/review" enctype="multipart/form-data">
           <label>Rating</label>
           <div class="star-rating">
-            <input type="radio" id="star5" name="rating" value="5" required><label for="star5">★</label>
-            <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
-            <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
-            <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
-            <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+            <input type="radio" id="star5" name="rating" value="5" <%= existingReview && Number(existingReview.rating) === 5 ? "checked" : "" %> required><label for="star5">&#9733;</label>
+            <input type="radio" id="star4" name="rating" value="4" <%= existingReview && Number(existingReview.rating) === 4 ? "checked" : "" %>><label for="star4">&#9733;</label>
+            <input type="radio" id="star3" name="rating" value="3" <%= existingReview && Number(existingReview.rating) === 3 ? "checked" : "" %>><label for="star3">&#9733;</label>
+            <input type="radio" id="star2" name="rating" value="2" <%= existingReview && Number(existingReview.rating) === 2 ? "checked" : "" %>><label for="star2">&#9733;</label>
+            <input type="radio" id="star1" name="rating" value="1" <%= existingReview && Number(existingReview.rating) === 1 ? "checked" : "" %>><label for="star1">&#9733;</label>
           </div>
 
           <label>Review title</label>
-          <input type="text" name="title" placeholder="Summarize your experience">
+          <input type="text" name="title" placeholder="Summarize your experience" value="<%= existingReview ? (existingReview.title || '') : '' %>">
 
           <label>Pros</label>
-          <input type="text" name="pros" placeholder="What did you like?">
+          <input type="text" name="pros" placeholder="What did you like?" value="<%= existingReview ? (existingReview.pros || '') : '' %>">
 
           <label>Cons</label>
-          <input type="text" name="cons" placeholder="What could be improved?">
+          <input type="text" name="cons" placeholder="What could be improved?" value="<%= existingReview ? (existingReview.cons || '') : '' %>">
 
           <label>Comment (optional)</label>
-          <input type="text" name="comment" placeholder="Short comment">
+          <input type="text" name="comment" placeholder="Short comment" value="<%= existingReview ? (existingReview.comment || '') : '' %>">
 
           <label>Photo (optional)</label>
           <input type="file" name="photo" accept="image/*">
+          <% if (existingReview && existingReview.photo_url) { %>
+            <div class="muted">Current photo will be kept unless you upload a new one.</div>
+            <img class="review-photo" src="<%= existingReview.photo_url %>" alt="Review photo">
+          <% } %>
 
           <div class="row" style="margin-top:10px;">
-            <button type="submit" class="cta">Submit ⭐</button>
+            <button type="submit" class="cta"><%= existingReview ? "Update" : "Submit" %> &#11088;</button>
             <a href="/orders" class="cta" style="background: #f7f1e7; color:#2b1b12; border:1px solid #e5d6c5;">Cancel</a>
           </div>
         </form>

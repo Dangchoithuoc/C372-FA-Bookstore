@@ -54,6 +54,23 @@ module.exports = {
         return rows[0] || null;
     },
 
+    async getNotificationContext(refundId) {
+        const [rows] = await pool.execute(
+            `SELECT r.refund_id,
+                    r.order_item_id,
+                    o.buyer_id,
+                    b.title
+             FROM refunds r
+             JOIN order_items oi ON oi.order_item_id = r.order_item_id
+             JOIN orders o ON o.order_id = oi.order_id
+             JOIN books b ON b.book_id = oi.book_id
+             WHERE r.refund_id = ?
+             LIMIT 1`,
+            [refundId]
+        );
+        return rows[0] || null;
+    },
+
     async setStatus(refundId, status, adminId) {
         await pool.execute(
             `UPDATE refunds

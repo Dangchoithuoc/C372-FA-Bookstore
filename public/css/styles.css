@@ -723,6 +723,26 @@ nav a {
   box-shadow: 0 8px 18px rgba(70, 45, 25, 0.16);
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
+
+.nav-new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  margin-left: 6px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  background: #b23b2a;
+  color: #fffaf2;
+  border: 1px solid rgba(255, 250, 242, 0.7);
+  text-transform: uppercase;
+}
+
+.nav-new-badge-inline {
+  margin-left: 8px;
+}
 nav a:hover {
   transform: translateY(-1px);
   border-color: rgba(140, 96, 35, 0.5);

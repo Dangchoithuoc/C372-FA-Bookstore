@@ -103,6 +103,7 @@ const MembershipController = require("./controllers/MembershipController");
 const StripeController = require("./controllers/StripeController");
 const CartModel = require("./models/Cart");
 const WishlistController = require("./controllers/WishlistController");
+const Notification = require("./models/Notification");
 
 // Cart count for nav badges
 app.use(async (req, res, next) => {
@@ -115,6 +116,34 @@ app.use(async (req, res, next) => {
         res.locals.cartCount = items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
     } catch (err) {
         console.error("Cart count error", err);
+    }
+    next();
+});
+
+// Notification count for nav badges
+app.use(async (req, res, next) => {
+    res.locals.unreadNotificationCount = 0;
+    res.locals.unreadOrdersCount = 0;
+    res.locals.unreadRefundsCount = 0;
+    if (!req.session.user) {
+        return next();
+    }
+    try {
+        const user = req.session.user;
+        const userId = user.id;
+        const role = user.role || "buyer";
+        if (role === "seller") {
+            res.locals.unreadOrdersCount = await Notification.getUnreadCountByTypes(userId, ["order_new"]);
+            res.locals.unreadRefundsCount = await Notification.getUnreadCountByTypes(userId, ["refund_request"]);
+            res.locals.unreadNotificationCount = res.locals.unreadOrdersCount + res.locals.unreadRefundsCount;
+        } else if (role === "buyer") {
+            res.locals.unreadOrdersCount = await Notification.getUnreadCountByTypes(userId, ["delivery_update", "refund_update"]);
+            res.locals.unreadNotificationCount = res.locals.unreadOrdersCount;
+        } else {
+            res.locals.unreadNotificationCount = await Notification.getUnreadCount(userId);
+        }
+    } catch (err) {
+        console.error("Notification count error", err);
     }
     next();
 });
@@ -236,6 +265,22 @@ app.get("/orders/items/:id/review", requireLogin, requireBuyer, OrderController.
 app.post("/orders/items/:id/review", requireLogin, requireBuyer, uploadReviewImage.single("photo"), OrderController.addReview);
 app.get("/orders/items/:id/refund", requireLogin, requireBuyer, OrderController.refundPage);
 app.post("/orders/items/:id/refund", requireLogin, requireBuyer, uploadRefundProof.single("proof"), OrderController.requestRefund);
+
+// Notifications
+app.post("/notifications/mark-read", requireLogin, async (req, res) => {
+    try {
+        const types = req.body && Array.isArray(req.body.types) ? req.body.types : [];
+        if (types.length) {
+            await Notification.markReadByTypes(req.session.user.id, types);
+        } else {
+            await Notification.markAllRead(req.session.user.id);
+        }
+        res.json({ ok: true });
+    } catch (err) {
+        console.error("Mark notifications read error", err);
+        res.status(500).json({ ok: false });
+    }
+});
 
 // Membership (buyer only)
 app.get("/membership", requireLogin, requireBuyer, MembershipController.dashboard);

@@ -1,4 +1,5 @@
 const Order = require("../models/Order");
+const Notification = require("../models/Notification");
 
 const DELIVERY_STATUSES = ["Pending", "Processing", "Shipping", "Delivered"];
 
@@ -104,6 +105,20 @@ module.exports = {
             const updated = await Order.updateItemDeliveryStatus(orderItemId, user.id, status);
             if (!updated) {
                 return res.status(403).send("Access denied.");
+            }
+
+            try {
+                const info = await Order.getOrderItemNotification(orderItemId);
+                if (info && info.buyer_id) {
+                    await Notification.create(
+                        info.buyer_id,
+                        "delivery_update",
+                        `Delivery status updated to ${status} for ${info.title}`,
+                        "/orders"
+                    );
+                }
+            } catch (err) {
+                console.error("Delivery notification error:", err);
             }
 
             return res.redirect("/orders");
@@ -216,6 +231,20 @@ module.exports = {
                     unsupported_method: "Original method refunds are only available for PayPal, NETS, or Stripe.",
                 };
                 return res.status(400).send(reasonMap[result.reason] || "Refund request could not be created.");
+            }
+
+            try {
+                const info = await Order.getOrderItemNotification(orderItemId);
+                if (info && info.seller_id) {
+                    await Notification.create(
+                        info.seller_id,
+                        "refund_request",
+                        `New refund request for ${info.title}`,
+                        "/seller/refunds"
+                    );
+                }
+            } catch (err) {
+                console.error("Refund request notification error:", err);
             }
             return res.redirect("/orders");
         } catch (err) {

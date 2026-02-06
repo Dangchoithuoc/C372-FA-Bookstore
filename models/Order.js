@@ -62,6 +62,35 @@ module.exports = {
         [orderId, cartId]
       );
 
+      // 4a) Notify sellers about new order (best effort)
+      try {
+        const [sellerRows] = await conn.execute(
+          `SELECT DISTINCT b.seller_id
+           FROM cart_items ci
+           JOIN books b ON b.book_id = ci.book_id
+           WHERE ci.cart_id = ?`,
+          [cartId]
+        );
+        if (sellerRows.length) {
+          const values = sellerRows.map(() => "(?, ?, ?, ?)").join(", ");
+          const params = [];
+          for (const row of sellerRows) {
+            params.push(
+              row.seller_id,
+              "order_new",
+              `New order placed (Order #${orderId})`,
+              "/orders"
+            );
+          }
+          await conn.execute(
+            `INSERT INTO notifications (user_id, type, message, link) VALUES ${values}`,
+            params
+          );
+        }
+      } catch (err) {
+        console.error("Order notification error:", err);
+      }
+
       // 4b) Decrement stock
       await conn.execute(
         `UPDATE books b
@@ -303,6 +332,24 @@ module.exports = {
        WHERE oi.order_item_id = ? AND o.buyer_id = ?
        LIMIT 1`,
       [orderItemId, userId]
+    );
+    return rows[0] || null;
+  },
+
+  async getOrderItemNotification(orderItemId) {
+    const [rows] = await pool.execute(
+      `SELECT 
+          oi.order_item_id,
+          o.order_id,
+          o.buyer_id,
+          b.title,
+          b.seller_id
+       FROM order_items oi
+       JOIN orders o ON o.order_id = oi.order_id
+       JOIN books b ON b.book_id = oi.book_id
+       WHERE oi.order_item_id = ?
+       LIMIT 1`,
+      [orderItemId]
     );
     return rows[0] || null;
   }

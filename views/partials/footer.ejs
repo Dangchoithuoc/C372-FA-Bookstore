@@ -1,5 +1,246 @@
-<footer style="padding:32px 0; text-align:center; color:#475569; font-size:0.9rem;">
-  <div class="shell">
-    The Bookmark &mdash; independent bookstore · open daily
+<!-- views/partials/footer.ejs -->
+<footer class="site-footer">
+  <div class="footer-container">
+    <div class="footer-grid">
+      <!-- Brand Section -->
+      <div class="footer-brand">
+        <div class="footer-logo">The Bookmark 📚</div>
+        <p class="footer-tagline">Independent bookstore since 2015. Curated titles, community-focused.</p>
+        <div class="footer-social">
+          <a href="#" class="social-link" aria-label="Instagram">📸</a>
+          <a href="#" class="social-link" aria-label="Twitter">🐦</a>
+          <a href="#" class="social-link" aria-label="Facebook">📘</a>
+          <a href="#" class="social-link" aria-label="Goodreads">📖</a>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer-section">
+        <h3 class="footer-heading">Shop</h3>
+        <ul class="footer-links">
+          <li><a href="/">All Books</a></li>
+          <li><a href="/?genre=Fiction">Fiction</a></li>
+          <li><a href="/?genre=Non-fiction">Non-fiction</a></li>
+          <li><a href="/?genre=Fantasy">Fantasy & Sci-Fi</a></li>
+          <li><a href="/?genre=Mystery">Mystery</a></li>
+        </ul>
+      </div>
+
+      <!-- Account -->
+      <div class="footer-section">
+        <h3 class="footer-heading">Account</h3>
+        <ul class="footer-links">
+          <li><a href="/login">Sign In</a></li>
+          <li><a href="/register">Create Account</a></li>
+          <li><a href="/orders">Order History</a></li>
+          <li><a href="/wishlist">Wishlist</a></li>
+          <li><a href="/cart">Shopping Cart</a></li>
+        </ul>
+      </div>
+
+      <!-- Store Info -->
+      <div class="footer-section">
+        <h3 class="footer-heading">Visit Us</h3>
+        <div class="footer-contact">
+          <p>📌 123 Story Street, Bookville</p>
+          <p>📞 (65) 6123 4567</p>
+          <p>✉️ hello@thebookmark.sg</p>
+          <p class="footer-hours">
+            <strong>Hours:</strong><br>
+            Mon-Fri: 10am–9pm<br>
+            Sat-Sun: 9am–10pm
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-divider"></div>
+
+    <div class="footer-bottom">
+      <div class="footer-copyright">
+        © 2025 The Bookmark. All stories welcome.
+      </div>
+      <div class="footer-legal">
+        <a href="/privacy">Privacy Policy</a>
+        <span class="separator">•</span>
+        <a href="/terms">Terms of Service</a>
+        <span class="separator">•</span>
+        <a href="/shipping">Shipping Info</a>
+        <span class="separator">•</span>
+        <a href="/returns">Returns</a>
+      </div>
+    </div>
   </div>
+
+  <style>
+    /* Footer Styles */
+    .site-footer {
+      background: #1a1512;
+      color: #e5d6c5;
+      padding: 50px 0 25px;
+      margin-top: 60px;
+      border-top: 1px solid rgba(180, 137, 44, 0.2);
+    }
+    
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1.5fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    
+    @media (max-width: 900px) {
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+    }
+    
+    .footer-brand {
+      max-width: 300px;
+    }
+    
+    .footer-logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #f7f1e7;
+      margin-bottom: 15px;
+    }
+    
+    .footer-tagline {
+      color: #b4892c;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+    
+    .footer-social {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: rgba(180, 137, 44, 0.1);
+      border-radius: 50%;
+      color: #e5d6c5;
+      text-decoration: none;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+    }
+    
+    .social-link:hover {
+      background: rgba(180, 137, 44, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .footer-heading {
+      color: #f7f1e7;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    
+    .footer-links {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .footer-links li {
+      margin-bottom: 10px;
+    }
+    
+    .footer-links a {
+      color: #e5d6c5;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+      color: #b4892c;
+      text-decoration: underline;
+    }
+    
+    .footer-contact p {
+      margin: 0 0 10px 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    
+    .footer-hours {
+      margin-top: 15px !important;
+      padding-top: 15px;
+      border-top: 1px solid rgba(229, 214, 197, 0.1);
+    }
+    
+    .footer-divider {
+      height: 1px;
+      background: rgba(229, 214, 197, 0.1);
+      margin: 30px 0;
+    }
+    
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    @media (max-width: 600px) {
+      .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+      }
+    }
+    
+    .footer-copyright {
+      color: #b4892c;
+      font-size: 0.9rem;
+    }
+    
+    .footer-legal {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    
+    .footer-legal a {
+      color: #e5d6c5;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    
+    .footer-legal a:hover {
+      color: #b4892c;
+      text-decoration: underline;
+    }
+    
+    .separator {
+      color: rgba(229, 214, 197, 0.4);
+      margin: 0 8px;
+    }
+  </style>
 </footer>

@@ -1,52 +1,101 @@
-<header>
-  <div class="shell header-inner">
-    <div class="brand">
-      <a href="/" style="text-decoration:none; color:inherit;">The Bookmark</a>
-    </div>
-    <% if (typeof showSearch !== "undefined" && showSearch) { %>
-      <div class="search-container">
-        <form method="GET" action="/" class="nav-search">
-          <input type="text" name="search" placeholder="Search books..."
-                 value="<%= searchQuery || '' %>">
-          <details class="filter-dropdown">
-            <summary>Filters</summary>
-            <div class="filter-menu">
-              <label>Genre</label>
-              <select name="genre">
-                <option value="" <%= (typeof genre === "undefined" || !genre) ? "selected" : "" %>>All Genres</option>
-                <option value="Mystery" <%= genre === 'Mystery' ? 'selected' : '' %>>Mystery</option>
-                <option value="Fantasy" <%= genre === 'Fantasy' ? 'selected' : '' %>>Fantasy</option>
-                <option value="Non-fiction" <%= genre === 'Non-fiction' ? 'selected' : '' %>>Non-fiction</option>
-                <option value="Romance" <%= genre === 'Romance' ? 'selected' : '' %>>Romance</option>
-                <option value="Comics" <%= genre === 'Comics' ? 'selected' : '' %>>Comics</option>
-              </select>
-
-              <label>Price Range</label>
-              <select name="priceRange">
-                <option value="" <%= (typeof priceRange === "undefined" || !priceRange) ? "selected" : "" %>>Any Price</option>
-                <option value="0-15" <%= priceRange === '0-15' ? 'selected' : '' %>>Under $15</option>
-                <option value="15-20" <%= priceRange === '15-20' ? 'selected' : '' %>>$15 - $20</option>
-                <option value="20+" <%= priceRange === '20+' ? 'selected' : '' %>>Over $20</option>
-              </select>
-
-              <label>Sort By</label>
-              <select name="sortBy">
-                <option value="title_asc" <%= (typeof sortBy === "undefined" || sortBy === 'title_asc') ? 'selected' : '' %>>Title A-Z</option>
-                <option value="title_desc" <%= sortBy === 'title_desc' ? 'selected' : '' %>>Title Z-A</option>
-                <option value="price_asc" <%= sortBy === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
-                <option value="price_desc" <%= sortBy === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
-              </select>
-
-              <div class="filter-actions">
-                <button type="submit">Apply</button>
-                <button type="button" onclick="location.href='/'">Clear</button>
-              </div>
-            </div>
-          </details>
-          <button type="submit" class="nav-search-btn">Search</button>
-        </form>
-      </div>
-    <% } %>
+<header>
+
+  <div class="shell header-inner">
+
+    <div class="brand">
+
+      <a href="/" style="text-decoration:none; color:inherit;">The Bookmark</a>
+
+    </div>
+
+    <% if (typeof showSearch !== "undefined" && showSearch) { %>
+
+      <div class="search-container">
+
+        <form method="GET" action="/" class="nav-search">
+
+          <input type="text" name="search" placeholder="Search books..."
+
+                 value="<%= searchQuery || '' %>">
+
+          <details class="filter-dropdown">
+
+            <summary>Filters</summary>
+
+            <div class="filter-menu">
+
+              <label>Genre</label>
+
+              <select name="genre">
+
+                <option value="" <%= (typeof genre === "undefined" || !genre) ? "selected" : "" %>>All Genres</option>
+
+                <option value="Mystery" <%= genre === 'Mystery' ? 'selected' : '' %>>Mystery</option>
+
+                <option value="Fantasy" <%= genre === 'Fantasy' ? 'selected' : '' %>>Fantasy</option>
+
+                <option value="Non-fiction" <%= genre === 'Non-fiction' ? 'selected' : '' %>>Non-fiction</option>
+
+                <option value="Romance" <%= genre === 'Romance' ? 'selected' : '' %>>Romance</option>
+
+                <option value="Comics" <%= genre === 'Comics' ? 'selected' : '' %>>Comics</option>
+
+              </select>
+
+
+
+              <label>Price Range</label>
+
+              <select name="priceRange">
+
+                <option value="" <%= (typeof priceRange === "undefined" || !priceRange) ? "selected" : "" %>>Any Price</option>
+
+                <option value="0-15" <%= priceRange === '0-15' ? 'selected' : '' %>>Under $15</option>
+
+                <option value="15-20" <%= priceRange === '15-20' ? 'selected' : '' %>>$15 - $20</option>
+
+                <option value="20+" <%= priceRange === '20+' ? 'selected' : '' %>>Over $20</option>
+
+              </select>
+
+
+
+              <label>Sort By</label>
+
+              <select name="sortBy">
+
+                <option value="title_asc" <%= (typeof sortBy === "undefined" || sortBy === 'title_asc') ? 'selected' : '' %>>Title A-Z</option>
+
+                <option value="title_desc" <%= sortBy === 'title_desc' ? 'selected' : '' %>>Title Z-A</option>
+
+                <option value="price_asc" <%= sortBy === 'price_asc' ? 'selected' : '' %>>Price: Low to High</option>
+
+                <option value="price_desc" <%= sortBy === 'price_desc' ? 'selected' : '' %>>Price: High to Low</option>
+
+              </select>
+
+
+
+              <div class="filter-actions">
+
+                <button type="submit">Apply</button>
+
+                <button type="button" onclick="location.href='/'">Clear</button>
+
+              </div>
+
+            </div>
+
+          </details>
+
+          <button type="submit" class="nav-search-btn">Search</button>
+
+        </form>
+
+      </div>
+
+    <% } %>
+
         <nav>
       <a href="/">Home &#x1F3E0;</a>
       <% if (user) { %>
@@ -89,6 +138,9 @@
               <a href="/seller/refunds" data-mark-read data-mark-types="refund_request">
                 Refunds &#x1F4B8;<% if (hasUnreadRefunds) { %> <span class="nav-new-badge nav-new-badge-inline" data-new-badge data-badge-kind="refunds">NEW</span><% } %>
               </a>
+              <a href="/seller/dashboard" data-mark-read data-mark-types="refund_request">
+                Dashboard &#x1F3E0;<% if (hasUnreadRefunds) { %> <span class="nav-new-badge nav-new-badge-inline" data-new-badge data-badge-kind="refunds">NEW</span><% } %>
+              </a>
             <% } %>
             <% if (!user) { %>
               <a href="/login">Login &#x1F510;</a>
@@ -97,10 +149,14 @@
           </div>
         </details>
       <% } %>
-    </nav>
-  </div>
-</header>
-
+    </nav>
+
+  </div>
+
+</header>
+
+
+
 <script>
   (() => {
     const badges = document.querySelectorAll("[data-new-badge]");
@@ -142,10 +198,17 @@
 </script>
 
 <% if (user && user.role === "buyer") { %>
-  <a class="floating-cart" href="/cart" aria-label="Open cart">
-    <span class="floating-cart-icon">&#x1F6D2;</span>
-    <% if (typeof cartCount === "number" && cartCount > 0) { %>
-      <span class="floating-cart-badge"><%= cartCount %></span>
-    <% } %>
-  </a>
-<% } %>
+  <a class="floating-cart" href="/cart" aria-label="Open cart">
+
+    <span class="floating-cart-icon">&#x1F6D2;</span>
+
+    <% if (typeof cartCount === "number" && cartCount > 0) { %>
+
+      <span class="floating-cart-badge"><%= cartCount %></span>
+
+    <% } %>
+
+  </a>
+
+<% } %>
+

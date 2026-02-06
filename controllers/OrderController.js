@@ -303,7 +303,8 @@ module.exports = {
                 order: invoice.order,
                 items: invoice.items.map(item => ({
                     ...item,
-                    price: Number(item.price_at_purchase) || 0
+                    price: Number(item.price_at_purchase) || 0,
+                    original_price: Number(item.original_price) || 0
                 })),
                 total
             });
@@ -328,7 +329,8 @@ module.exports = {
 
             const items = invoice.items.map(item => ({
                 ...item,
-                price: Number(item.price_at_purchase) || 0
+                price: Number(item.price_at_purchase) || 0,
+                original_price: Number(item.original_price) || 0
             }));
             const total = Number(invoice.order.total_price) || 0;
             const issuedAt = new Date(invoice.order.order_date);
@@ -376,6 +378,25 @@ module.exports = {
                 const meta = [item.author, item.genre].filter(Boolean).join(" - ");
                 if (meta) {
                     doc.fillColor(labelColor).fontSize(10).text(meta, titleX, doc.y);
+                    doc.fillColor("black");
+                }
+                if (item.original_price && item.original_price > item.price) {
+                    doc.fillColor(labelColor).fontSize(10).text(
+                        `Original: $${Number(item.original_price).toFixed(2)}`,
+                        titleX,
+                        doc.y
+                    );
+                    doc.fillColor(labelColor).fontSize(10).text(
+                        `Offer price: $${Number(item.price).toFixed(2)}`,
+                        titleX,
+                        doc.y
+                    );
+                    const saved = Number(item.original_price) - Number(item.price);
+                    doc.fillColor(labelColor).fontSize(10).text(
+                        `You saved: $${saved.toFixed(2)}`,
+                        titleX,
+                        doc.y
+                    );
                     doc.fillColor("black");
                 }
                 doc.fontSize(11).text(`$${item.price.toFixed(2)}`, priceX, doc.y - 24, {

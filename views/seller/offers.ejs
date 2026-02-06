@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offer Requests | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="seller-ui">
+  <%- include("../partials/navbar", { user: user }) %>
+
+  <main class="seller-shell">
+    <div class="seller-header">
+      <div>
+        <h1>Offer Requests</h1>
+        <p class="muted">Review and respond to buyer offers.</p>
+      </div>
+      <a class="cta" href="/seller/books">Back to Books</a>
+    </div>
+
+    <% if (!offers || offers.length === 0) { %>
+      <div class="seller-card muted">No offers yet.</div>
+    <% } else { %>
+      <div class="seller-card">
+        <table class="seller-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Buyer</th>
+              <th>Book</th>
+              <th>Offer</th>
+              <th>Reason</th>
+              <th>Expires</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% offers.forEach(function(o) { %>
+              <tr>
+                <td>#<%= o.offer_id %></td>
+                <td><%= o.buyer_name %> (<%= o.buyer_email %>)</td>
+                <td><%= o.title %></td>
+                <td>$<%= Number(o.offered_price || 0).toFixed(2) %></td>
+                <td><%= o.reason || '-' %></td>
+                <td>
+                  <% if (o.expires_at) { %>
+                    <%= new Date(o.expires_at).toLocaleString("en-SG", { timeZone: "Asia/Singapore" }) %>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td>
+                  <div class="seller-actions">
+                    <form method="POST" action="/seller/offers/<%= o.offer_id %>/decision">
+                      <input type="hidden" name="decision" value="accept">
+                      <button class="cta" type="submit">Accept</button>
+                    </form>
+                    <form method="POST" action="/seller/offers/<%= o.offer_id %>/decision">
+                      <input type="hidden" name="decision" value="reject">
+                      <button class="cta danger" type="submit">Reject</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>

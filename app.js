@@ -103,6 +103,7 @@ const MembershipController = require("./controllers/MembershipController");
 const StripeController = require("./controllers/StripeController");
 const CartModel = require("./models/Cart");
 const WishlistController = require("./controllers/WishlistController");
+const OfferController = require("./controllers/OfferController");
 const Notification = require("./models/Notification");
 
 // Cart count for nav badges
@@ -125,6 +126,7 @@ app.use(async (req, res, next) => {
     res.locals.unreadNotificationCount = 0;
     res.locals.unreadOrdersCount = 0;
     res.locals.unreadRefundsCount = 0;
+    res.locals.unreadOffersCount = 0;
     if (!req.session.user) {
         return next();
     }
@@ -135,10 +137,14 @@ app.use(async (req, res, next) => {
         if (role === "seller") {
             res.locals.unreadOrdersCount = await Notification.getUnreadCountByTypes(userId, ["order_new"]);
             res.locals.unreadRefundsCount = await Notification.getUnreadCountByTypes(userId, ["refund_request"]);
-            res.locals.unreadNotificationCount = res.locals.unreadOrdersCount + res.locals.unreadRefundsCount;
+            res.locals.unreadOffersCount = await Notification.getUnreadCountByTypes(userId, ["offer_request"]);
+            res.locals.unreadNotificationCount =
+                res.locals.unreadOrdersCount + res.locals.unreadRefundsCount + res.locals.unreadOffersCount;
         } else if (role === "buyer") {
             res.locals.unreadOrdersCount = await Notification.getUnreadCountByTypes(userId, ["delivery_update", "refund_update"]);
-            res.locals.unreadNotificationCount = res.locals.unreadOrdersCount;
+            res.locals.unreadOffersCount = await Notification.getUnreadCountByTypes(userId, ["offer_update"]);
+            res.locals.unreadNotificationCount =
+                res.locals.unreadOrdersCount + res.locals.unreadOffersCount;
         } else {
             res.locals.unreadNotificationCount = await Notification.getUnreadCount(userId);
         }
@@ -266,6 +272,12 @@ app.get("/orders/items/:id/review", requireLogin, requireBuyer, OrderController.
 app.post("/orders/items/:id/review", requireLogin, requireBuyer, uploadReviewImage.single("photo"), OrderController.addReview);
 app.get("/orders/items/:id/refund", requireLogin, requireBuyer, OrderController.refundPage);
 app.post("/orders/items/:id/refund", requireLogin, requireBuyer, uploadRefundProof.single("proof"), OrderController.requestRefund);
+
+// Offers (buyer + seller)
+app.post("/offers", requireLogin, requireBuyer, OfferController.createOffer);
+app.get("/offers", requireLogin, requireBuyer, OfferController.listBuyerOffers);
+app.get("/seller/offers", requireLogin, requireSeller, OfferController.listSellerOffers);
+app.post("/seller/offers/:id/decision", requireLogin, requireSeller, OfferController.decideOffer);
 
 // Notifications
 app.post("/notifications/mark-read", requireLogin, async (req, res) => {

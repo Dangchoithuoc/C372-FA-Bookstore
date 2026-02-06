@@ -50,6 +50,11 @@
             <img src="<%= item.coverImage || '/images/placeholder.svg' %>" alt="<%= item.title %> cover">
             <div>
               <div class="invoice-item-title"><%= item.title %></div>
+              <% if (item.original_price && item.original_price > item.price) { %>
+                <div class="muted">Original: $<%= Number(item.original_price).toFixed(2) %></div>
+                <div class="muted">Offer price: $<%= Number(item.price).toFixed(2) %></div>
+                <div class="muted">You saved $<%= (Number(item.original_price) - Number(item.price)).toFixed(2) %></div>
+              <% } %>
               <div class="muted"><%= item.author %> · <%= item.genre || 'General' %></div>
             </div>
             <div class="invoice-item-price">$<%= item.price.toFixed(2) %></div>

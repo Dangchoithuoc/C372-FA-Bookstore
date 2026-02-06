@@ -1,4 +1,10 @@
 const pool = require("../db");
+const Refund = require("../models/Refund");
+const Wallet = require("../models/Wallet");
+const Notification = require("../models/Notification");
+const paypalService = require("../services/paypal");
+const netsService = require("../services/nets");
+const stripeService = require("../services/stripe");
 
 const getCoverImagePath = (file) => (file ? `/uploads/books/${file.filename}` : null);
 
@@ -248,6 +254,183 @@ module.exports = {
         } catch (err) {
             console.error("Delete book error:", err);
             res.redirect("/seller/books");
+        }
+    },
+
+    // List refund requests for seller's books
+    listRefunds: async (req, res) => {
+        try {
+            const sellerId = req.session.user.id;
+            const [rows] = await pool.execute(
+                `SELECT r.refund_id,
+                        r.order_item_id,
+                        r.amount,
+                        r.method,
+                        r.status,
+                        r.requested_at,
+                        b.title,
+                        b.book_id,
+                        u.user_id AS buyer_id,
+                        u.username AS buyer_name,
+                        u.email AS buyer_email,
+                        p.payment_method
+                 FROM refunds r
+                 JOIN order_items oi ON oi.order_item_id = r.order_item_id
+                 JOIN books b ON b.book_id = oi.book_id
+                 JOIN orders o ON o.order_id = oi.order_id
+                 LEFT JOIN payment p ON p.order_id = o.order_id
+                 JOIN users u ON u.user_id = o.buyer_id
+                 WHERE b.seller_id = ?
+                 ORDER BY r.requested_at DESC`,
+                [sellerId]
+            );
+
+            res.render("seller/refunds", {
+                user: req.session.user,
+                refunds: rows || []
+            });
+        } catch (err) {
+            console.error("Seller refunds list error:", err);
+            res.status(500).send("Could not load refunds");
+        }
+    },
+
+    // Approve / Reject refund for seller's books
+    decideRefund: async (req, res) => {
+        try {
+            const sellerId = req.session.user.id;
+            const refundId = Number(req.params.id);
+            const decision = (req.body.decision || "").trim().toLowerCase();
+
+            if (!Number.isFinite(refundId)) return res.redirect("/seller/refunds");
+            if (decision !== "approve" && decision !== "reject") {
+                return res.redirect("/seller/refunds");
+            }
+
+            const [rows] = await pool.execute(
+                `SELECT r.refund_id,
+                        r.status,
+                        r.method,
+                        r.amount,
+                        o.buyer_id,
+                        p.payment_method,
+                        p.provider_txn_id,
+                        p.provider_txn_ref
+                 FROM refunds r
+                 JOIN order_items oi ON oi.order_item_id = r.order_item_id
+                 JOIN books b ON b.book_id = oi.book_id
+                 JOIN orders o ON o.order_id = oi.order_id
+                 LEFT JOIN payment p ON p.order_id = o.order_id
+                 WHERE r.refund_id = ? AND b.seller_id = ?
+                 LIMIT 1`,
+                [refundId, sellerId]
+            );
+
+            const refund = rows[0];
+            if (!refund || refund.status !== "Pending") {
+                return res.redirect("/seller/refunds");
+            }
+
+            if (decision === "reject") {
+                await Refund.setStatus(refundId, "Rejected", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Rejected for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/seller/refunds");
+            }
+
+            if (refund.method === "wallet") {
+                await Wallet.credit(refund.buyer_id, refund.amount, "refund_wallet");
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Approved for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/seller/refunds");
+            }
+
+            const paymentMethod = String(refund.payment_method || "").toLowerCase();
+            if (paymentMethod === "paypal") {
+                await paypalService.refundCapture(refund.provider_txn_id, refund.amount);
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Approved for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/seller/refunds");
+            }
+            if (paymentMethod === "nets") {
+                await netsService.refundNets({
+                    txnRetrievalRef: refund.provider_txn_ref,
+                    amount: refund.amount
+                });
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Approved for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/seller/refunds");
+            }
+            if (paymentMethod === "stripe") {
+                await stripeService.refundPaymentIntent(refund.provider_txn_id, refund.amount);
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Approved for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/seller/refunds");
+            }
+
+            return res.redirect("/seller/refunds");
+        } catch (err) {
+            console.error("Seller decide refund error:", err);
+            res.redirect("/seller/refunds");
         }
     }
 };

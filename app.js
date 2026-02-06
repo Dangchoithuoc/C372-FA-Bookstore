@@ -8,8 +8,13 @@ const app = express();
 
 const bookUploadsDir = path.join(__dirname, "public", "uploads", "books");
 fs.mkdirSync(bookUploadsDir, { recursive: true });
+const reviewUploadsDir = path.join(__dirname, "public", "uploads", "reviews");
+fs.mkdirSync(reviewUploadsDir, { recursive: true });
+const refundUploadsDir = path.join(__dirname, "public", "uploads", "refunds");
+fs.mkdirSync(refundUploadsDir, { recursive: true });
 
 const allowedBookImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+const allowedUploadTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const bookImageStorage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, bookUploadsDir),
     filename: (req, file, cb) => {
@@ -22,6 +27,44 @@ const uploadBookImage = multer({
     limits: { fileSize: 2 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (!allowedBookImageTypes.includes(file.mimetype)) {
+            req.fileValidationError = "Only JPEG, PNG, GIF, or WEBP images are allowed.";
+            return cb(null, false);
+        }
+        cb(null, true);
+    }
+});
+
+const reviewImageStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, reviewUploadsDir),
+    filename: (req, file, cb) => {
+        const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "-");
+        cb(null, `${Date.now()}-${safeName}`);
+    }
+});
+const uploadReviewImage = multer({
+    storage: reviewImageStorage,
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (!allowedUploadTypes.includes(file.mimetype)) {
+            req.fileValidationError = "Only JPEG, PNG, GIF, or WEBP images are allowed.";
+            return cb(null, false);
+        }
+        cb(null, true);
+    }
+});
+
+const refundProofStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, refundUploadsDir),
+    filename: (req, file, cb) => {
+        const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "-");
+        cb(null, `${Date.now()}-${safeName}`);
+    }
+});
+const uploadRefundProof = multer({
+    storage: refundProofStorage,
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (!allowedUploadTypes.includes(file.mimetype)) {
             req.fileValidationError = "Only JPEG, PNG, GIF, or WEBP images are allowed.";
             return cb(null, false);
         }
@@ -56,8 +99,12 @@ const PaypalController = require("./controllers/PaypalController");
 const NetsController = require("./controllers/NetsController");
 const OrderController = require("./controllers/OrderController");
 const WalletController = require("./controllers/WalletController");
+const MembershipController = require("./controllers/MembershipController");
+const StripeController = require("./controllers/StripeController");
 const CartModel = require("./models/Cart");
 const WishlistController = require("./controllers/WishlistController");
+const OfferController = require("./controllers/OfferController");
+const Notification = require("./models/Notification");
 
 // Cart count for nav badges
 app.use(async (req, res, next) => {
@@ -70,6 +117,39 @@ app.use(async (req, res, next) => {
         res.locals.cartCount = items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
     } catch (err) {
         console.error("Cart count error", err);
+    }
+    next();
+});
+
+// Notification count for nav badges
+app.use(async (req, res, next) => {
+    res.locals.unreadNotificationCount = 0;
+    res.locals.unreadOrdersCount = 0;
+    res.locals.unreadRefundsCount = 0;
+    res.locals.unreadOffersCount = 0;
+    if (!req.session.user) {
+        return next();
+    }
+    try {
+        const user = req.session.user;
+        const userId = user.id;
+        const role = user.role || "buyer";
+        if (role === "seller") {
+            res.locals.unreadOrdersCount = await Notification.getUnreadCountByTypes(userId, ["order_new"]);
+            res.locals.unreadRefundsCount = await Notification.getUnreadCountByTypes(userId, ["refund_request"]);
+            res.locals.unreadOffersCount = await Notification.getUnreadCountByTypes(userId, ["offer_request"]);
+            res.locals.unreadNotificationCount =
+                res.locals.unreadOrdersCount + res.locals.unreadRefundsCount + res.locals.unreadOffersCount;
+        } else if (role === "buyer") {
+            res.locals.unreadOrdersCount = await Notification.getUnreadCountByTypes(userId, ["delivery_update", "refund_update"]);
+            res.locals.unreadOffersCount = await Notification.getUnreadCountByTypes(userId, ["offer_update"]);
+            res.locals.unreadNotificationCount =
+                res.locals.unreadOrdersCount + res.locals.unreadOffersCount;
+        } else {
+            res.locals.unreadNotificationCount = await Notification.getUnreadCount(userId);
+        }
+    } catch (err) {
+        console.error("Notification count error", err);
     }
     next();
 });
@@ -142,6 +222,8 @@ app.post("/api/wallet/paypal/capture-order", requireLogin, requireBuyer, WalletC
 app.post("/wallet/nets", requireLogin, requireBuyer, WalletController.netsQr);
 app.get("/wallet/nets/success", requireLogin, requireBuyer, WalletController.netsSuccess);
 app.get("/wallet/nets/fail", requireLogin, requireBuyer, WalletController.netsFail);
+app.post("/wallet/stripe", requireLogin, requireBuyer, StripeController.walletSession);
+app.get("/wallet/stripe/success", requireLogin, requireBuyer, StripeController.walletSuccess);
 
 // Cart routes (login required)
 app.get("/cart", requireLogin, CartController.viewCart);
@@ -157,14 +239,14 @@ app.post("/wishlist/remove", requireLogin, requireBuyer, WishlistController.remo
 
 // Checkout routes (login + cart required)
 app.get("/checkout", requireLogin, requireCartItems, CheckoutController.checkoutPage);
+app.get("/checkout/stripe", requireLogin, requireCartItems, StripeController.checkoutSession);
+app.get("/checkout/stripe/success", requireLogin, requireCartItems, StripeController.checkoutSuccess);
 
 // save checkout details before payment
 app.post("/checkout/save-details", requireLogin, requireCartItems, CheckoutController.saveCheckoutDetails);
 
 // PayLah (simulate later)
 app.post("/checkout/paylah", requireLogin, requireCartItems, CheckoutController.payLah);
-// Skip payment (testing)
-app.post("/checkout/skip", requireLogin, requireCartItems, CheckoutController.skipPayment);
 // eWallet (buyer only)
 app.post("/checkout/wallet", requireLogin, requireBuyer, requireCartItems, CheckoutController.walletPay);
 
@@ -184,8 +266,37 @@ app.get("/nets-qr/fail", requireLogin, NetsController.showFail);
 // Orders (role-aware)
 app.get("/orders", requireLogin, OrderController.purchaseHistory);
 app.get("/invoice/:id", requireLogin, requireBuyer, OrderController.invoicePage);
+app.get("/invoice/:id/pdf", requireLogin, requireBuyer, OrderController.invoicePdf);
 app.post("/orders/items/:id/delivery", requireLogin, requireSeller, OrderController.updateDeliveryStatus);
-app.post("/orders/items/:id/review", requireLogin, requireBuyer, OrderController.addReview);
+app.get("/orders/items/:id/review", requireLogin, requireBuyer, OrderController.reviewPage);
+app.post("/orders/items/:id/review", requireLogin, requireBuyer, uploadReviewImage.single("photo"), OrderController.addReview);
+app.get("/orders/items/:id/refund", requireLogin, requireBuyer, OrderController.refundPage);
+app.post("/orders/items/:id/refund", requireLogin, requireBuyer, uploadRefundProof.single("proof"), OrderController.requestRefund);
+
+// Offers (buyer + seller)
+app.post("/offers", requireLogin, requireBuyer, OfferController.createOffer);
+app.get("/offers", requireLogin, requireBuyer, OfferController.listBuyerOffers);
+app.get("/seller/offers", requireLogin, requireSeller, OfferController.listSellerOffers);
+app.post("/seller/offers/:id/decision", requireLogin, requireSeller, OfferController.decideOffer);
+
+// Notifications
+app.post("/notifications/mark-read", requireLogin, async (req, res) => {
+    try {
+        const types = req.body && Array.isArray(req.body.types) ? req.body.types : [];
+        if (types.length) {
+            await Notification.markReadByTypes(req.session.user.id, types);
+        } else {
+            await Notification.markAllRead(req.session.user.id);
+        }
+        res.json({ ok: true });
+    } catch (err) {
+        console.error("Mark notifications read error", err);
+        res.status(500).json({ ok: false });
+    }
+});
+
+// Membership (buyer only)
+app.get("/membership", requireLogin, requireBuyer, MembershipController.dashboard);
 
 // NEW: Seller CRUD routes (login + seller role required)
 app.get("/seller/dashboard", requireLogin, requireSeller, SellerController.dashboard);
@@ -195,6 +306,8 @@ app.post("/seller/books", requireLogin, requireSeller, uploadBookImage.single("i
 app.get("/seller/books/:id/edit", requireLogin, requireSeller, SellerController.editBookPage);
 app.post("/seller/books/:id/update", requireLogin, requireSeller, uploadBookImage.single("image"), SellerController.updateBook);
 app.post("/seller/books/:id/delete", requireLogin, requireSeller, SellerController.deleteBook);
+app.get("/seller/refunds", requireLogin, requireSeller, SellerController.listRefunds);
+app.post("/seller/refunds/:id/decision", requireLogin, requireSeller, SellerController.decideRefund);
 
 
 // Admin routes
@@ -204,6 +317,8 @@ app.get("/admin/books", requireLogin, requireAdmin, AdminController.listAllBooks
 app.get("/admin/charts", requireLogin, requireAdmin, AdminController.chartsPage);
 app.get("/admin/reports/sales", requireLogin, requireAdmin, AdminController.salesReport);
 app.get("/admin/orders", requireLogin, requireAdmin, OrderController.purchaseHistory);
+app.get("/admin/refunds", requireLogin, requireAdmin, AdminController.listRefunds);
+app.post("/admin/refunds/:id/decision", requireLogin, requireAdmin, AdminController.decideRefund);
 app.post("/admin/users/:id/delete", requireLogin, requireAdmin, AdminController.deleteUser);
 app.post("/admin/users/:id/disable", requireLogin, requireAdmin, AdminController.toggleUserDisabled);
 app.post("/admin/books/:id/delete", requireLogin, requireAdmin, AdminController.deleteBook);

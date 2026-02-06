@@ -22,7 +22,12 @@
         <p class="muted">
           by <strong><%= book.author %></strong> - Seller: <%= book.sellerName %>
         </p>
-        <p class="price">$<%= book.price.toFixed(2) %></p>
+        <% if (offer && offer.status === "accepted") { %>
+          <p class="price">Special Price: $<%= Number(offer.offered_price || 0).toFixed(2) %></p>
+          <div class="muted" style="margin-bottom:6px;">Offer accepted for you.</div>
+        <% } else { %>
+          <p class="price">$<%= book.price.toFixed(2) %></p>
+        <% } %>
         <div class="muted" style="margin-bottom:8px;">Stock: <%= book.stock %></div>
         <% if (book.tagline) { %>
           <p><%= book.tagline %></p>
@@ -38,6 +43,25 @@
             </button>
             <button class="cta" type="button" onclick="location.href='/cart'">View cart 🧾</button>
           </form>
+          <div class="negotiate-card">
+            <% if (offer && offer.status === "pending") { %>
+              <div class="negotiate-status">Offer pending: $<%= Number(offer.offered_price || 0).toFixed(2) %></div>
+              <div class="muted">Waiting for seller response.</div>
+            <% } else if (!offer || offer.status !== "accepted") { %>
+              <div class="negotiate-header">
+                <strong>Negotiate Price</strong>
+                <span class="muted">Make a private offer to the seller.</span>
+              </div>
+              <form method="POST" action="/offers" class="negotiate-form">
+                <input type="hidden" name="book_id" value="<%= book.id %>">
+                <label>Offer price</label>
+                <input type="number" name="offered_price" min="0.5" step="0.01" required>
+                <label>Reason (optional)</label>
+                <input type="text" name="reason" maxlength="255" placeholder="e.g., The spine is slightly damaged">
+                <button class="cta negotiate-cta" type="submit">Submit Offer</button>
+              </form>
+            <% } %>
+          </div>
           <form method="POST" action="/wishlist/add" style="margin-top:10px;">
             <input type="hidden" name="bookId" value="<%= book.id %>">
             <button class="wishlist-btn" type="submit">Save to Wishlist 💖</button>
@@ -64,8 +88,18 @@
                     <strong><%= r.username %></strong>
                     <span class="review-stars"><%= "★".repeat(r.rating) %><%= "☆".repeat(5 - r.rating) %></span>
                   </div>
+                  <% if (r.title) { %>
+                    <div><strong><%= r.title %></strong></div>
+                  <% } %>
                   <% if (r.comment) { %>
                     <div class="muted"><%= r.comment %></div>
+                  <% } %>
+                  <% if (r.pros || r.cons) { %>
+                    <div class="muted"><%= r.pros ? ('Pros: ' + r.pros) : '' %></div>
+                    <div class="muted"><%= r.cons ? ('Cons: ' + r.cons) : '' %></div>
+                  <% } %>
+                  <% if (r.photo_url) { %>
+                    <img class="review-photo" src="<%= r.photo_url %>" alt="Review photo">
                   <% } %>
                 </div>
               <% }) %>

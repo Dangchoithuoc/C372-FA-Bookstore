@@ -83,3 +83,29 @@ async function captureOrder(orderId) {
 }
 
 module.exports = { createOrder, captureOrder }
+
+
+async function refundCapture(captureId, amount, currency = 'SGD') {
+    if (!captureId) throw new Error('Missing PayPal capture id.');
+    const accessToken = await getAccessToken();
+    const response = await fetch(`${PAYPAL_API}/v2/payments/captures/${captureId}/refund`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+            amount: {
+                currency_code: currency,
+                value: Number(amount).toFixed(2)
+            }
+        })
+    });
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`PayPal refund failed: ${text}`);
+    }
+    return response.json();
+}
+
+module.exports = { createOrder, captureOrder, refundCapture };

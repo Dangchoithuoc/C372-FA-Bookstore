@@ -87,3 +87,23 @@ exports.generateQrCode = async (req, res) => {
     res.redirect("/nets-qr/fail");
   }
 };
+
+exports.refundNets = async ({ txnRetrievalRef, amount }) => {
+  if (!process.env.NETS_REFUND_URL) {
+    throw new Error("NETS_REFUND_URL is not configured.");
+  }
+  if (!txnRetrievalRef) {
+    throw new Error("Missing NETS transaction reference.");
+  }
+  const payload = {
+    txn_retrieval_ref: txnRetrievalRef,
+    amt_in_dollars: Number(amount).toFixed(2),
+  };
+  const response = await axios.post(process.env.NETS_REFUND_URL, payload, {
+    headers: {
+      "api-key": process.env.API_KEY,
+      "project-id": process.env.PROJECT_ID,
+    },
+  });
+  return response.data;
+};

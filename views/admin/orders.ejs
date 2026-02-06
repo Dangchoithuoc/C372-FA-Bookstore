@@ -16,6 +16,7 @@
         <a href="/admin/books">Books</a>
         <a class="active" href="/admin/orders">Orders</a>
         <a href="/admin/charts">Charts</a>
+        <a href="/admin/refunds">Refunds</a>
       </nav>
     </aside>
 
@@ -37,7 +38,7 @@
         <% orders.forEach(order => { %>
           <div class="admin-card">
             <div class="admin-list">
-              <div>Order #<%= order.id %> · <%= new Date(order.order_date).toLocaleString() %></div>
+              <div>Order #<%= order.id %> · <%= new Date(order.order_date).toLocaleString("en-SG", { timeZone: "Asia/Singapore" }) %></div>
               <div>Buyer: <%= order.buyer_name || "Unknown" %> (<%= order.buyer_email || "No email" %>)</div>
               <div>Total: $<%= order.total_price.toFixed(2) %></div>
             </div>

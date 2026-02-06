@@ -166,6 +166,7 @@ module.exports = {
           projectId: process.env.PROJECT_ID,
           balance: walletData.wallet.balance || 0,
           transactions: walletData.transactions || [],
+          error: req.query.error || null,
           paypalClientId: process.env.PAYPAL_CLIENT_ID
         });
       }

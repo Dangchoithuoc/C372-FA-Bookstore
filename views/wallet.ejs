@@ -13,8 +13,8 @@
     <section class="profile-card">
       <div class="pill">Wallet</div>
       <h1>My eWallet</h1>
-      <p class="muted">Top up with NETS or PayPal. Balance updates after successful payment.</p>
-      <% if (String(error || "") === "insufficient") { %>
+      <p class="muted">Top up with NETS, PayPal, or Stripe. Balance updates after successful payment.</p>
+      <% if (typeof error !== "undefined" && String(error || "") === "insufficient") { %>
         <div class="error">Insufficient balance. Please top up your wallet.</div>
       <% } %>
 
@@ -28,10 +28,16 @@
             <input id="amount" name="amount" type="number" min="1" step="0.01" placeholder="10.00" required>
           </div>
           <div class="wallet-actions">
-            <form method="POST" action="/wallet/nets">
-              <input type="hidden" name="amount" id="amount_nets">
-              <button class="cta wallet-cta" type="submit">Top up with NETS 📱</button>
-            </form>
+            <div class="wallet-actions-row">
+              <form method="POST" action="/wallet/nets">
+                <input type="hidden" name="amount" id="amount_nets">
+                <button class="cta wallet-cta" type="submit">Top up with NETS &#x1F4F1;</button>
+              </form>
+              <form method="POST" action="/wallet/stripe">
+                <input type="hidden" name="amount" id="amount_stripe">
+                <button class="cta wallet-cta" type="submit">Top up with Stripe &#x26A1;</button>
+              </form>
+            </div>
             <div id="paypal-button-container"></div>
             <div id="paypal-error" class="error" style="display:none;"></div>
           </div>
@@ -97,18 +103,39 @@
     <script>
       const netsAmountInput = document.getElementById("amount_nets");
       const amountInput = document.getElementById("amount");
-      document.querySelector('form[action="/wallet/nets"]')?.addEventListener("submit", () => {
-        netsAmountInput.value = amountInput.value;
+      const requireAmount = () => {
+        const amount = Number(amountInput.value || 0);
+        if (!amount || amount <= 0) {
+          paypalError.style.display = "block";
+          paypalError.textContent = "Please enter a valid top up amount.";
+          return null;
+        }
+        paypalError.style.display = "none";
+        return amount.toFixed(2);
+      };
+
+      document.querySelector('form[action="/wallet/nets"]')?.addEventListener("submit", (event) => {
+        const amount = requireAmount();
+        if (!amount) {
+          event.preventDefault();
+          return;
+        }
+        netsAmountInput.value = amount;
+      });
+      const stripeAmountInput = document.getElementById("amount_stripe");
+      document.querySelector('form[action="/wallet/stripe"]')?.addEventListener("submit", (event) => {
+        const amount = requireAmount();
+        if (!amount) {
+          event.preventDefault();
+          return;
+        }
+        stripeAmountInput.value = amount;
       });
       const paypalError = document.getElementById("paypal-error");
       paypal.Buttons({
         createOrder: async () => {
-          const amount = Number(amountInput.value || 0).toFixed(2);
-          if (!amount || Number(amount) <= 0) {
-            paypalError.style.display = "block";
-            paypalError.textContent = "Please enter a valid top up amount.";
-            throw new Error("Invalid amount");
-          }
+          const amount = requireAmount();
+          if (!amount) throw new Error("Invalid amount");
           const response = await fetch("/api/wallet/paypal/create-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

@@ -1,14 +1,14 @@
 const pool = require("../db");
 
 module.exports = {
-  async checkout(userId, paymentMethod = "Manual", delivery = null) {
+  async checkout(userId, paymentMethod = "Manual", delivery = null, paymentMeta = null, discount = null) {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
 
       // 1) Get cart + total
       const [cartRows] = await conn.execute(
-        "SELECT cart_id, total_amount FROM cart WHERE user_id = ? LIMIT 1",
+        "SELECT cart_id FROM cart WHERE user_id = ? LIMIT 1",
         [userId]
       );
       if (!cartRows.length) {
@@ -16,15 +16,28 @@ module.exports = {
       }
 
       const cartId = cartRows[0].cart_id;
-      const totalAmount = Number(cartRows[0].total_amount || 0);
+      const discountPercent = discount && Number.isFinite(Number(discount.discountPercent))
+        ? Number(discount.discountPercent)
+        : 0;
+      const discountAmount = discount && Number.isFinite(Number(discount.discountAmount))
+        ? Number(discount.discountAmount)
+        : 0;
+      let computedSubtotal = 0;
 
       // 2) Check cart has items + stock
       const [cartItems] = await conn.execute(
-        `SELECT ci.book_id, ci.quantity, b.stock
+        `SELECT ci.book_id, ci.quantity, b.stock,
+                COALESCE(o.offered_price, b.price) AS unit_price
          FROM cart_items ci
          JOIN books b ON b.book_id = ci.book_id
+         LEFT JOIN offers o
+           ON o.book_id = b.book_id
+          AND o.buyer_id = ?
+          AND o.status = 'accepted'
+          AND o.is_active = 1
+          AND (o.expires_at IS NULL OR o.expires_at > NOW())
          WHERE ci.cart_id = ?`,
-        [cartId]
+        [userId, cartId]
       );
       if (!cartItems.length) {
         throw new Error("Cart is empty");
@@ -34,24 +47,64 @@ module.exports = {
         if (stock < Number(item.quantity || 0)) {
           throw new Error("Insufficient stock for one or more items.");
         }
+        computedSubtotal += Number(item.unit_price || 0) * Number(item.quantity || 0);
       }
+
+      const totalAmount = discount && Number.isFinite(Number(discount.total))
+        ? Number(discount.total)
+        : Math.max(0, computedSubtotal - discountAmount);
 
       // 3) Create order
       const [orderResult] = await conn.execute(
-        "INSERT INTO orders (buyer_id, total_price) VALUES (?, ?)",
-        [userId, totalAmount]
+        "INSERT INTO orders (buyer_id, total_price, discount_percent, discount_amount) VALUES (?, ?, ?, ?)",
+        [userId, totalAmount, discountPercent, discountAmount]
       );
       const orderId = orderResult.insertId;
 
       // 4) Move cart_items -> order_items
       await conn.execute(
         `INSERT INTO order_items (order_id, book_id, price_at_purchase, delivery_status)
-         SELECT ?, ci.book_id, b.price, 'Pending'
+         SELECT ?, ci.book_id, COALESCE(o.offered_price, b.price), 'Pending'
          FROM cart_items ci
          JOIN books b ON ci.book_id = b.book_id
+         LEFT JOIN offers o
+           ON o.book_id = b.book_id
+          AND o.buyer_id = ?
+          AND o.status = 'accepted'
+          AND o.is_active = 1
+          AND (o.expires_at IS NULL OR o.expires_at > NOW())
          WHERE ci.cart_id = ?`,
-        [orderId, cartId]
+        [orderId, userId, cartId]
       );
+
+      // 4a) Notify sellers about new order (best effort)
+      try {
+        const [sellerRows] = await conn.execute(
+          `SELECT DISTINCT b.seller_id
+           FROM cart_items ci
+           JOIN books b ON b.book_id = ci.book_id
+           WHERE ci.cart_id = ?`,
+          [cartId]
+        );
+        if (sellerRows.length) {
+          const values = sellerRows.map(() => "(?, ?, ?, ?)").join(", ");
+          const params = [];
+          for (const row of sellerRows) {
+            params.push(
+              row.seller_id,
+              "order_new",
+              `New order placed (Order #${orderId})`,
+              "/orders"
+            );
+          }
+          await conn.execute(
+            `INSERT INTO notifications (user_id, type, message, link) VALUES ${values}`,
+            params
+          );
+        }
+      } catch (err) {
+        console.error("Order notification error:", err);
+      }
 
       // 4b) Decrement stock
       await conn.execute(
@@ -84,10 +137,29 @@ module.exports = {
       await conn.execute("DELETE FROM cart_items WHERE cart_id = ?", [cartId]);
       await conn.execute("UPDATE cart SET total_amount = 0 WHERE cart_id = ?", [cartId]);
 
+      // 6b) Deactivate accepted offers used in this purchase
+      try {
+        const bookIds = cartItems.map(item => item.book_id);
+        if (bookIds.length) {
+          const placeholders = bookIds.map(() => "?").join(", ");
+          await conn.execute(
+            `UPDATE offers
+             SET is_active = 0, updated_at = NOW()
+             WHERE buyer_id = ? AND status = 'accepted' AND is_active = 1
+               AND book_id IN (${placeholders})`,
+            [userId, ...bookIds]
+          );
+        }
+      } catch (err) {
+        console.error("Offer deactivation error:", err);
+      }
+
       // 7) Payment record
+      const providerTxnId = paymentMeta && paymentMeta.providerTxnId ? paymentMeta.providerTxnId : null;
+      const providerTxnRef = paymentMeta && paymentMeta.providerTxnRef ? paymentMeta.providerTxnRef : null;
       await conn.execute(
-        "INSERT INTO payment (order_id, payment_method, payment_status) VALUES (?, ?, ?)",
-        [orderId, paymentMethod, "Paid"]
+        "INSERT INTO payment (order_id, payment_method, payment_status, provider_txn_id, provider_txn_ref) VALUES (?, ?, ?, ?, ?)",
+        [orderId, paymentMethod, "Paid", providerTxnId, providerTxnRef]
       );
 
       await conn.commit();
@@ -105,7 +177,7 @@ module.exports = {
       `SELECT 
           o.order_id,
           o.total_price,
-          o.order_date,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
           p.payment_method,
           p.payment_status,
           oi.order_item_id,
@@ -118,12 +190,17 @@ module.exports = {
           b.coverImage,
           r.rating AS review_rating,
           r.comment AS review_comment,
-          r.created_at AS review_created_at
+          DATE_ADD(r.created_at, INTERVAL 8 HOUR) AS review_created_at,
+          rf.refund_id AS refund_id,
+          rf.status AS refund_status,
+          rf.method AS refund_method,
+          rf.amount AS refund_amount
        FROM orders o
        LEFT JOIN payment p ON p.order_id = o.order_id
        JOIN order_items oi ON oi.order_id = o.order_id
        JOIN books b ON b.book_id = oi.book_id
        LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
+       LEFT JOIN refunds rf ON rf.order_item_id = oi.order_item_id
        WHERE o.buyer_id = ?
        ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`,
       [userId]
@@ -135,7 +212,7 @@ module.exports = {
     const [rows] = await pool.execute(
       `SELECT 
           o.order_id,
-          o.order_date,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
           p.payment_method,
           p.payment_status,
           oi.order_item_id,
@@ -151,13 +228,18 @@ module.exports = {
           u.email AS buyer_email,
           r.rating AS review_rating,
           r.comment AS review_comment,
-          r.created_at AS review_created_at
+          DATE_ADD(r.created_at, INTERVAL 8 HOUR) AS review_created_at,
+          rf.refund_id AS refund_id,
+          rf.status AS refund_status,
+          rf.method AS refund_method,
+          rf.amount AS refund_amount
        FROM orders o
        JOIN users u ON u.user_id = o.buyer_id
        LEFT JOIN payment p ON p.order_id = o.order_id
        JOIN order_items oi ON oi.order_id = o.order_id
        JOIN books b ON b.book_id = oi.book_id
        LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
+       LEFT JOIN refunds rf ON rf.order_item_id = oi.order_item_id
        WHERE b.seller_id = ?
        ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`,
       [sellerId]
@@ -170,7 +252,7 @@ module.exports = {
       `SELECT 
           o.order_id,
           o.total_price,
-          o.order_date,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
           p.payment_method,
           p.payment_status,
           oi.order_item_id,
@@ -186,13 +268,18 @@ module.exports = {
           u.email AS buyer_email,
           r.rating AS review_rating,
           r.comment AS review_comment,
-          r.created_at AS review_created_at
+          r.created_at AS review_created_at,
+          rf.refund_id AS refund_id,
+          rf.status AS refund_status,
+          rf.method AS refund_method,
+          rf.amount AS refund_amount
        FROM orders o
        JOIN users u ON u.user_id = o.buyer_id
        LEFT JOIN payment p ON p.order_id = o.order_id
        JOIN order_items oi ON oi.order_id = o.order_id
        JOIN books b ON b.book_id = oi.book_id
        LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
+       LEFT JOIN refunds rf ON rf.order_item_id = oi.order_item_id
        ORDER BY o.order_date DESC, o.order_id DESC, oi.order_item_id ASC`
     );
     return rows;
@@ -214,7 +301,7 @@ module.exports = {
       `SELECT 
           o.order_id,
           o.total_price,
-          o.order_date,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
           u.username,
           u.email,
           u.address,
@@ -235,6 +322,7 @@ module.exports = {
       `SELECT 
           oi.order_item_id,
           oi.price_at_purchase,
+          b.price AS original_price,
           b.book_id,
           b.title,
           b.author,
@@ -248,5 +336,54 @@ module.exports = {
     );
 
     return { order: orderRows[0], items };
+  }
+  ,
+  async getOrderItemForBuyer(orderItemId, userId) {
+    const [rows] = await pool.execute(
+      `SELECT 
+          oi.order_item_id,
+          oi.price_at_purchase,
+          oi.delivery_status,
+          b.book_id,
+          b.title,
+          b.author,
+          b.genre,
+          b.coverImage,
+          DATE_ADD(o.order_date, INTERVAL 8 HOUR) AS order_date,
+          o.total_price,
+          p.payment_method,
+          p.payment_status,
+          r.review_id,
+          rf.refund_id,
+          rf.status AS refund_status
+       FROM order_items oi
+       JOIN orders o ON o.order_id = oi.order_id
+       LEFT JOIN payment p ON p.order_id = o.order_id
+       JOIN books b ON b.book_id = oi.book_id
+       LEFT JOIN reviews r ON r.order_item_id = oi.order_item_id
+       LEFT JOIN refunds rf ON rf.order_item_id = oi.order_item_id
+       WHERE oi.order_item_id = ? AND o.buyer_id = ?
+       LIMIT 1`,
+      [orderItemId, userId]
+    );
+    return rows[0] || null;
+  },
+
+  async getOrderItemNotification(orderItemId) {
+    const [rows] = await pool.execute(
+      `SELECT 
+          oi.order_item_id,
+          o.order_id,
+          o.buyer_id,
+          b.title,
+          b.seller_id
+       FROM order_items oi
+       JOIN orders o ON o.order_id = oi.order_id
+       JOIN books b ON b.book_id = oi.book_id
+       WHERE oi.order_item_id = ?
+       LIMIT 1`,
+      [orderItemId]
+    );
+    return rows[0] || null;
   }
 };

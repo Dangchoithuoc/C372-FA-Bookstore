@@ -1,4 +1,6 @@
 const Order = require("../models/Order");
+const Notification = require("../models/Notification");
+const PDFDocument = require("pdfkit");
 
 const DELIVERY_STATUSES = ["Pending", "Processing", "Shipping", "Delivered"];
 
@@ -47,7 +49,11 @@ module.exports = {
                     delivery_status: row.delivery_status || "Pending",
                     review_rating: row.review_rating || null,
                     review_comment: row.review_comment || null,
-                    review_created_at: row.review_created_at || null
+                    review_created_at: row.review_created_at || null,
+                    refund_id: row.refund_id || null,
+                    refund_status: row.refund_status || null,
+                    refund_method: row.refund_method || null,
+                    refund_amount: row.refund_amount || null
                 });
                 if (role === "seller") {
                     const current = index.get(row.order_id);
@@ -102,6 +108,20 @@ module.exports = {
                 return res.status(403).send("Access denied.");
             }
 
+            try {
+                const info = await Order.getOrderItemNotification(orderItemId);
+                if (info && info.buyer_id) {
+                    await Notification.create(
+                        info.buyer_id,
+                        "delivery_update",
+                        `Delivery status updated to ${status} for ${info.title}`,
+                        "/orders"
+                    );
+                }
+            } catch (err) {
+                console.error("Delivery notification error:", err);
+            }
+
             return res.redirect("/orders");
         } catch (err) {
             console.error("Update delivery status error:", err);
@@ -127,15 +147,140 @@ module.exports = {
             }
 
             const Review = require("../models/Review");
-            const created = await Review.createForOrderItem(user.id, orderItemId, rating, comment);
-            if (!created) {
-                return res.status(400).send("Unable to add review. Delivery must be completed and review must be unique.");
+            const item = await Order.getOrderItemForBuyer(orderItemId, user.id);
+            if (!item) return res.status(404).send("Order item not found.");
+            if (item.delivery_status !== "Delivered") {
+                return res.status(400).send("You can only review delivered items.");
+            }
+
+            const title = (req.body.title || "").trim();
+            const pros = (req.body.pros || "").trim();
+            const cons = (req.body.cons || "").trim();
+            const photoUrl = req.file ? `/uploads/reviews/${req.file.filename}` : null;
+            let ok = false;
+            if (item.review_id) {
+                ok = await Review.updateForOrderItem(user.id, orderItemId, rating, comment, title, pros, cons, photoUrl);
+            } else {
+                ok = await Review.createForOrderItem(user.id, orderItemId, rating, comment, title, pros, cons, photoUrl);
+            }
+            if (!ok) {
+                return res.status(400).send("Unable to save review.");
             }
 
             return res.redirect("/orders");
         } catch (err) {
             console.error("Add review error:", err);
             res.status(500).send("Failed to add review");
+        }
+    },
+
+    reviewPage: async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!user || user.role !== "buyer") {
+                return res.status(403).send("Access denied.");
+            }
+            const orderItemId = Number(req.params.id);
+            if (!Number.isFinite(orderItemId)) {
+                return res.redirect("/orders");
+            }
+
+            const item = await Order.getOrderItemForBuyer(orderItemId, user.id);
+            if (!item) return res.status(404).send("Order item not found.");
+            if (item.delivery_status !== "Delivered") {
+                return res.status(400).send("You can only review delivered items.");
+            }
+            const Review = require("../models/Review");
+            const review = item.review_id
+                ? await Review.getByOrderItemForBuyer(orderItemId, user.id)
+                : null;
+
+            res.render("review", {
+                user,
+                item,
+                review
+            });
+        } catch (err) {
+            console.error("Review page error:", err);
+            res.status(500).send("Could not load review page");
+        }
+    },
+
+    requestRefund: async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!user || user.role !== "buyer") {
+                return res.status(403).send("Access denied.");
+            }
+            const orderItemId = Number(req.params.id);
+            const method = (req.body.method || "").trim().toLowerCase();
+            const reason = (req.body.reason || "").trim();
+            const note = (req.body.note || "").trim();
+            const proofUrl = req.file ? `/uploads/refunds/${req.file.filename}` : null;
+            if (!Number.isFinite(orderItemId)) {
+                return res.redirect("/orders");
+            }
+
+            const Refund = require("../models/Refund");
+            const result = await Refund.request(user.id, orderItemId, method, reason, note, proofUrl);
+            if (!result.ok) {
+                const reasonMap = {
+                    not_found: "Order item not found.",
+                    forbidden: "You can only request refunds for your own orders.",
+                    not_delivered: "Refunds are only allowed after delivery.",
+                    invalid_amount: "Refund amount is invalid.",
+                    unsupported_method: "Original method refunds are only available for PayPal, NETS, or Stripe.",
+                };
+                return res.status(400).send(reasonMap[result.reason] || "Refund request could not be created.");
+            }
+
+            try {
+                const info = await Order.getOrderItemNotification(orderItemId);
+                if (info && info.seller_id) {
+                    await Notification.create(
+                        info.seller_id,
+                        "refund_request",
+                        `New refund request for ${info.title}`,
+                        "/seller/refunds"
+                    );
+                }
+            } catch (err) {
+                console.error("Refund request notification error:", err);
+            }
+            return res.redirect("/orders");
+        } catch (err) {
+            console.error("Refund request error:", err);
+            res.status(500).send("Failed to request refund");
+        }
+    },
+
+    refundPage: async (req, res) => {
+        try {
+            const user = req.session.user;
+            if (!user || user.role !== "buyer") {
+                return res.status(403).send("Access denied.");
+            }
+            const orderItemId = Number(req.params.id);
+            if (!Number.isFinite(orderItemId)) {
+                return res.redirect("/orders");
+            }
+
+            const item = await Order.getOrderItemForBuyer(orderItemId, user.id);
+            if (!item) return res.status(404).send("Order item not found.");
+            if (item.delivery_status !== "Delivered") {
+                return res.status(400).send("Refunds are only allowed after delivery.");
+            }
+            if (item.refund_id) {
+                return res.redirect("/orders");
+            }
+
+            res.render("refund", {
+                user,
+                item
+            });
+        } catch (err) {
+            console.error("Refund page error:", err);
+            res.status(500).send("Could not load refund page");
         }
     },
 
@@ -158,13 +303,119 @@ module.exports = {
                 order: invoice.order,
                 items: invoice.items.map(item => ({
                     ...item,
-                    price: Number(item.price_at_purchase) || 0
+                    price: Number(item.price_at_purchase) || 0,
+                    original_price: Number(item.original_price) || 0
                 })),
                 total
             });
         } catch (err) {
             console.error("Invoice error:", err);
             res.status(500).send("Could not load invoice");
+        }
+    },
+
+    invoicePdf: async (req, res) => {
+        try {
+            const userId = req.session.user.id;
+            const orderId = Number(req.params.id);
+            if (!Number.isFinite(orderId)) {
+                return res.redirect("/orders");
+            }
+
+            const invoice = await Order.getInvoice(orderId, userId);
+            if (!invoice) {
+                return res.status(404).send("Invoice not found");
+            }
+
+            const items = invoice.items.map(item => ({
+                ...item,
+                price: Number(item.price_at_purchase) || 0,
+                original_price: Number(item.original_price) || 0
+            }));
+            const total = Number(invoice.order.total_price) || 0;
+            const issuedAt = new Date(invoice.order.order_date);
+
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename="invoice-${orderId}.pdf"`);
+
+            const doc = new PDFDocument({ size: "A4", margin: 50 });
+            doc.pipe(res);
+
+            const lineGap = 6;
+            const labelColor = "#6b7280";
+
+            doc.fontSize(20).text("Invoice", { align: "left" });
+            doc.moveDown(0.4);
+            doc.fontSize(12).text(`Invoice #${orderId}`);
+            doc.fillColor(labelColor).text(`Issued on ${issuedAt.toLocaleString("en-SG", { timeZone: "Asia/Singapore" })}`);
+            doc.fillColor("black");
+
+            doc.moveDown(1);
+            doc.fontSize(12).text("Bill to", { underline: true });
+            doc.moveDown(0.4);
+            doc.fontSize(11).text(invoice.order.username || "");
+            if (invoice.order.email) doc.text(invoice.order.email);
+            if (invoice.order.contact_number) doc.text(invoice.order.contact_number);
+            if (invoice.order.address) doc.text(invoice.order.address);
+
+            doc.moveDown(1);
+            doc.fontSize(12).text("Order summary", { underline: true });
+            doc.moveDown(0.4);
+            doc.fontSize(11).text(`${items.length} item(s)`);
+            doc.text(`Payment status: ${invoice.order.payment_status || "Paid"}`);
+            doc.text(`Payment method: ${invoice.order.payment_method || "Unknown"}`);
+
+            doc.moveDown(1);
+            doc.fontSize(12).text("Items", { underline: true });
+            doc.moveDown(0.4);
+
+            const startX = doc.x;
+            const titleX = startX;
+            const priceX = 420;
+
+            items.forEach((item) => {
+                doc.fontSize(11).text(item.title || "Untitled", titleX, doc.y, { continued: false });
+                const meta = [item.author, item.genre].filter(Boolean).join(" - ");
+                if (meta) {
+                    doc.fillColor(labelColor).fontSize(10).text(meta, titleX, doc.y);
+                    doc.fillColor("black");
+                }
+                if (item.original_price && item.original_price > item.price) {
+                    doc.fillColor(labelColor).fontSize(10).text(
+                        `Original: $${Number(item.original_price).toFixed(2)}`,
+                        titleX,
+                        doc.y
+                    );
+                    doc.fillColor(labelColor).fontSize(10).text(
+                        `Offer price: $${Number(item.price).toFixed(2)}`,
+                        titleX,
+                        doc.y
+                    );
+                    const saved = Number(item.original_price) - Number(item.price);
+                    doc.fillColor(labelColor).fontSize(10).text(
+                        `You saved: $${saved.toFixed(2)}`,
+                        titleX,
+                        doc.y
+                    );
+                    doc.fillColor("black");
+                }
+                doc.fontSize(11).text(`$${item.price.toFixed(2)}`, priceX, doc.y - 24, {
+                    width: 100,
+                    align: "right"
+                });
+                doc.moveDown(0.6);
+            });
+
+            doc.moveDown(0.5);
+            doc.moveTo(startX, doc.y).lineTo(545, doc.y).strokeColor("#e5e7eb").stroke();
+            doc.moveDown(0.6);
+            doc.fontSize(12).text("Total paid", priceX - 120, doc.y, { width: 220, align: "right" });
+            doc.fontSize(13).text(`$${total.toFixed(2)}`, priceX - 120, doc.y, { width: 220, align: "right" });
+
+            doc.end();
+        } catch (err) {
+            console.error("Invoice PDF error:", err);
+            res.status(500).send("Could not generate invoice PDF");
         }
     }
 };

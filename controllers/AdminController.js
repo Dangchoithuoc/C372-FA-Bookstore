@@ -1,4 +1,10 @@
 const pool = require("../db");
+const Refund = require("../models/Refund");
+const Wallet = require("../models/Wallet");
+const Notification = require("../models/Notification");
+const paypalService = require("../services/paypal");
+const netsService = require("../services/nets");
+const stripeService = require("../services/stripe");
 
 module.exports = {
     dashboard: async (req, res) => {
@@ -166,6 +172,156 @@ module.exports = {
         } catch (err) {
             console.error("Delete user error:", err);
             res.redirect("/admin/users?error=Could not delete user");
+        }
+    },
+
+    listRefunds: async (req, res) => {
+        try {
+            const refunds = await Refund.getAll();
+            res.render("admin/refunds", {
+                user: req.session.user,
+                refunds: refunds || []
+            });
+        } catch (err) {
+            console.error("List refunds error:", err);
+            res.redirect("/admin/dashboard");
+        }
+    },
+
+    decideRefund: async (req, res) => {
+        try {
+            const refundId = Number(req.params.id);
+            const decision = (req.body.decision || "").trim().toLowerCase();
+            if (!Number.isFinite(refundId)) {
+                return res.redirect("/admin/refunds");
+            }
+            if (decision !== "approve" && decision !== "reject") {
+                return res.redirect("/admin/refunds");
+            }
+
+            const refund = await Refund.getById(refundId);
+            if (!refund || refund.status !== "Pending") {
+                return res.redirect("/admin/refunds");
+            }
+
+            if (decision === "reject") {
+                await Refund.setStatus(refundId, "Rejected", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Rejected for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/admin/refunds");
+            }
+
+            if (refund.method === "wallet") {
+                await Wallet.credit(refund.buyer_id, refund.amount, "refund_wallet");
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Approved for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/admin/refunds");
+            }
+
+            const paymentMethod = String(refund.payment_method || "").toLowerCase();
+            if (paymentMethod === "paypal") {
+                await paypalService.refundCapture(refund.provider_txn_id, refund.amount);
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Approved for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/admin/refunds");
+            }
+            if (paymentMethod === "nets") {
+                await netsService.refundNets({
+                    txnRetrievalRef: refund.provider_txn_ref,
+                    amount: refund.amount
+                });
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Approved for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/admin/refunds");
+            }
+            if (paymentMethod === "ewallet") {
+                await Wallet.credit(refund.buyer_id, refund.amount, "refund_wallet");
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Approved for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/admin/refunds");
+            }
+            if (paymentMethod === "stripe") {
+                await stripeService.refundPaymentIntent(refund.provider_txn_id, refund.amount);
+                await Refund.setStatus(refundId, "Approved", req.session.user.id);
+                try {
+                    const context = await Refund.getNotificationContext(refundId);
+                    if (context && context.buyer_id) {
+                        await Notification.create(
+                            context.buyer_id,
+                            "refund_update",
+                            `Refund Approved for ${context.title}`,
+                            "/orders"
+                        );
+                    }
+                } catch (err) {
+                    console.error("Refund update notification error:", err);
+                }
+                return res.redirect("/admin/refunds");
+            }
+
+            return res.redirect("/admin/refunds");
+        } catch (err) {
+            console.error("Decide refund error:", err);
+            res.redirect("/admin/refunds");
         }
     },
 

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Offers | The Bookmark</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="buyer-ui">
+  <%- include("partials/navbar", { user: user }) %>
+
+  <main class="shell" style="padding: 20px 0 60px;">
+    <div class="row" style="margin-bottom:16px;">
+      <h1>Your Offers</h1>
+    </div>
+
+    <% if (!offers || offers.length === 0) { %>
+      <p class="muted">You have not submitted any offers yet.</p>
+    <% } else { %>
+      <div class="card">
+        <table class="seller-table">
+          <thead>
+            <tr>
+              <th>Book</th>
+              <th>Seller</th>
+              <th>Offer</th>
+              <th>Status</th>
+              <th>Expires</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% offers.forEach(function(o) { %>
+              <tr>
+                <td>
+                  <div class="cart-item-title">
+                    <img class="cart-thumb" src="<%= o.coverImage || '/images/placeholder.svg' %>" alt="<%= o.title %> cover">
+                    <div>
+                      <div><%= o.title %></div>
+                      <div class="muted"><%= o.author %></div>
+                    </div>
+                  </div>
+                </td>
+                <td><%= o.seller_name %></td>
+                <td>$<%= Number(o.offered_price || 0).toFixed(2) %></td>
+                <td><span class="admin-pill"><%= (o.status || '').toUpperCase() %></span></td>
+                <td>
+                  <% if (o.expires_at) { %>
+                    <%= new Date(o.expires_at).toLocaleString("en-SG", { timeZone: "Asia/Singapore" }) %>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td>
+                  <% const isAccepted = String(o.status || '').toLowerCase() === 'accepted'; %>
+                  <% const isActive = Number(o.is_active || 0) === 1; %>
+                  <% const expired = o.expires_at && (new Date(o.expires_at).getTime() <= Date.now()); %>
+                  <% const offerUsable = isAccepted && isActive && !expired; %>
+                  <% if (offerUsable) { %>
+                    <a class="tag" href="/books/<%= o.book_id %>">View book</a>
+                  <% } else { %>
+                    <span class="tag tag-disabled" title="Offer no longer valid">Offer used</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>

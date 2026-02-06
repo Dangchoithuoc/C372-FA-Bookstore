@@ -125,7 +125,21 @@ async function finalizeOrderFromSession(req) {
     throw new Error("Your cart is empty.");
   }
 
-  const orderId = await Order.checkout(userId, "NETS");
+  const Membership = require("../models/Membership");
+  const applyMembership = req.session.checkoutDetails?.apply_membership !== false;
+  const totals = await Membership.computeTotals(userId, cart.total, applyMembership);
+
+  const paymentMeta = req.session.netsPayment
+    ? {
+        providerTxnId: req.session.netsPayment.txnNetsQrId || null,
+        providerTxnRef: req.session.netsPayment.txnRetrievalRef || null
+      }
+    : null;
+  const orderId = await Order.checkout(userId, "NETS", null, paymentMeta, {
+    discountPercent: totals.discountPercent,
+    discountAmount: totals.discountAmount,
+    total: totals.total
+  });
   if (!orderId) {
     throw new Error("Order could not be created.");
   }
@@ -141,7 +155,10 @@ class NetsController {
         return res.redirect("/checkout");
       }
 
-      const amount = Number(cart.total).toFixed(2);
+      const Membership = require("../models/Membership");
+      const applyMembership = req.session.checkoutDetails?.apply_membership !== false;
+      const totals = await Membership.computeTotals(req.session.user.id, cart.total, applyMembership);
+      const amount = Number(totals.total).toFixed(2);
       const courseInitId = loadCourseInitId();
       const txnId = process.env.NETS_TXN_ID || DEFAULT_TXN_ID;
 

@@ -1,6 +1,7 @@
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const Wallet = require("../models/Wallet");
+const Membership = require("../models/Membership");
 
 function isEmail(s = "") {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s).trim());
@@ -11,10 +12,12 @@ module.exports = {
     try {
       const userId = req.session.user.id;
       const { items, total } = await Cart.getCart(userId);
+      const applyMembership = req.session.checkoutDetails?.apply_membership !== false;
+      const totals = await Membership.computeTotals(userId, total, applyMembership);
 
       res.render("checkout", {
         cart: items,
-        total: total.toFixed(2),
+        totals,
         user: req.session.user,
         checkout: req.session.checkoutDetails || null
       });
@@ -79,6 +82,7 @@ module.exports = {
         details.pickup_timeslot = slot;
       }
 
+      details.apply_membership = String(body.apply_membership || "").toLowerCase() === "on";
       req.session.checkoutDetails = details;
       return res.json({ ok: true });
     } catch (err) {
@@ -91,24 +95,18 @@ module.exports = {
   processPayment: async (req, res) => {
     try {
       const userId = req.session.user.id;
-      const orderId = await Order.checkout(userId, "Manual");
+      const cart = await Cart.getCart(userId);
+      const applyMembership = req.session.checkoutDetails?.apply_membership !== false;
+      const totals = await Membership.computeTotals(userId, cart.total, applyMembership);
+      const orderId = await Order.checkout(userId, "Manual", null, null, {
+        discountPercent: totals.discountPercent,
+        discountAmount: totals.discountAmount,
+        total: totals.total
+      });
       if (!orderId) return res.status(500).send("Order could not be created");
       res.redirect(`/invoice/${orderId}`);
     } catch (err) {
       console.error("Payment error", err);
-      res.status(500).send("Payment failed");
-    }
-  },
-
-  // Skip payment (testing)
-  skipPayment: async (req, res) => {
-    try {
-      const userId = req.session.user.id;
-      const orderId = await Order.checkout(userId, "Test");
-      if (!orderId) return res.status(500).send("Order could not be created");
-      res.redirect(`/invoice/${orderId}`);
-    } catch (err) {
-      console.error("Skip payment error", err);
       res.status(500).send("Payment failed");
     }
   },
@@ -126,9 +124,16 @@ module.exports = {
         return res.redirect("/cart");
       }
 
-      const total = Number(cart.total || 0);
-      await Wallet.debit(userId, total, "purchase_wallet");
-      const orderId = await Order.checkout(userId, "eWallet");
+      const applyMembership = req.session.checkoutDetails?.apply_membership !== false;
+      const totals = await Membership.computeTotals(userId, cart.total, applyMembership);
+      await Wallet.debit(userId, totals.total, "purchase_wallet");
+      const orderId = await Order.checkout(userId, "eWallet", null, {
+        providerTxnRef: "wallet"
+      }, {
+        discountPercent: totals.discountPercent,
+        discountAmount: totals.discountAmount,
+        total: totals.total
+      });
       if (!orderId) {
         return res.status(500).send("Order could not be created");
       }

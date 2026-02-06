@@ -68,6 +68,12 @@
           <span>Subtotal</span>
           <strong>$<%= cart.totals.subtotal.toFixed(2) %></strong>
         </div>
+        <% if (discountAmount && discountAmount > 0) { %>
+          <div class="order-row">
+            <span>Membership discount (<%= discountPercent %>%)</span>
+            <strong>- $<%= Number(discountAmount).toFixed(2) %></strong>
+          </div>
+        <% } %>
         <div class="order-row">
           <span>Tax</span>
           <strong>$<%= cart.totals.tax.toFixed(2) %></strong>

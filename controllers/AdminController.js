@@ -4,6 +4,7 @@ const Wallet = require("../models/Wallet");
 const paypalService = require("../services/paypal");
 const netsService = require("../services/nets");
 const stripeService = require("../services/stripe");
+const User = require("../models/User");
 
 // Helper to mask emails for admin display
 function maskEmail(email = "") {
@@ -128,8 +129,19 @@ module.exports = {
 
   listUsers: async (req, res) => {
     try {
-      const [users] = await pool.execute(`
-        SELECT
+      const searchQuery = String(req.query.search || "").trim();
+      const params = [];
+      let whereClause = "";
+
+      if (searchQuery) {
+        whereClause = `
+          WHERE (u.username LIKE ? OR u.email LIKE ?)
+        `;
+        params.push(`%${searchQuery}%`, `%${searchQuery}%`);
+      }
+
+      const [users] = await pool.execute(
+        `SELECT
           u.user_id,
           u.username,
           u.email,
@@ -140,9 +152,11 @@ module.exports = {
           MAX(o.order_date) AS last_order_date
         FROM users u
         LEFT JOIN orders o ON o.buyer_id = u.user_id
+        ${whereClause}
         GROUP BY u.user_id, u.username, u.email, u.role, u.disabled
-        ORDER BY u.user_id DESC
-      `);
+        ORDER BY u.user_id DESC`,
+        params
+      );
 
       const safeUsers = (users || []).map(u => ({
         ...u,
@@ -153,11 +167,40 @@ module.exports = {
         user: req.session.user,
         users: safeUsers,
         success: req.query.success || null,
-        error: req.query.error || null
+        error: req.query.error || null,
+        searchQuery
       });
     } catch (err) {
       console.error("List users error:", err);
       res.redirect("/admin/dashboard");
+    }
+  },
+
+  promoteUser: async (req, res) => {
+    try {
+      const targetId = Number(req.params.id);
+      if (!Number.isFinite(targetId)) {
+        return res.redirect("/admin/users?error=Invalid user");
+      }
+
+      if (targetId === req.session.user.id) {
+        return res.redirect("/admin/users?error=You already have admin access");
+      }
+
+      const targetUser = await User.findById(targetId);
+      if (!targetUser) {
+        return res.redirect("/admin/users?error=User not found");
+      }
+
+      if (targetUser.role === "admin") {
+        return res.redirect("/admin/users?error=User is already an admin");
+      }
+
+      await User.setRole(targetId, "admin");
+      res.redirect("/admin/users?success=User promoted to admin");
+    } catch (err) {
+      console.error("Promote user error:", err);
+      res.redirect("/admin/users?error=Could not promote user");
     }
   },
 
@@ -300,18 +343,32 @@ module.exports = {
 
   listAllBooks: async (req, res) => {
     try {
+      const bookSearch = String(req.query.bookSearch || "").trim();
+      const params = [];
+      let whereClause = "";
+
+      if (bookSearch) {
+        whereClause = `
+          WHERE (b.title LIKE ? OR b.author LIKE ? OR u.username LIKE ?)
+        `;
+        params.push(`%${bookSearch}%`, `%${bookSearch}%`, `%${bookSearch}%`);
+      }
+
       const [books] = await pool.execute(
         `SELECT b.*, u.username as seller_name 
          FROM books b 
          JOIN users u ON b.seller_id = u.user_id 
-         ORDER BY b.book_id DESC`
+         ${whereClause}
+         ORDER BY b.book_id DESC`,
+        params
       );
 
       res.render("admin/books", {
         user: req.session.user,
         books: books || [],
         success: req.query.success || null,
-        error: req.query.error || null
+        error: req.query.error || null,
+        bookSearch
       });
     } catch (err) {
       console.error("List books error:", err);

@@ -40,8 +40,20 @@
       <!-- TOOLBAR -->
       <div class="admin-toolbar">
         <div class="admin-search">
-          <input type="text" placeholder="Search users (UI only)">
-          <span class="admin-muted">Search not wired</span>
+          <form method="GET" action="/admin/users" class="admin-search-form">
+            <input type="text"
+                   name="search"
+                   placeholder="Search users by name or email"
+                   value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>">
+            <button type="submit">Search</button>
+          </form>
+          <span class="admin-muted">
+            <% if (searchQuery) { %>
+              Showing results for "<%= searchQuery %>"
+            <% } else { %>
+              Search by username or email
+            <% } %>
+          </span>
         </div>
 
         <div>
@@ -135,6 +147,16 @@
                           View Sales
                         </a>
                       <% } %>
+
+                      <!-- PROMOTE -->
+                      <form method="POST"
+                            action="/admin/users/<%= u.user_id %>/promote"
+                            style="display:inline;">
+                        <button class="admin-btn"
+                                type="submit">
+                          Promote to Admin
+                        </button>
+                      </form>
 
                       <!-- ENABLE / DISABLE -->
                       <form method="POST"

@@ -34,8 +34,20 @@
 
       <div class="admin-toolbar">
         <div class="admin-search">
-          <input type="text" placeholder="Search books (UI only)">
-          <span class="admin-muted">Search not wired</span>
+          <form method="GET" action="/admin/books" class="admin-search-form">
+            <input type="text"
+                   name="bookSearch"
+                   placeholder="Search books by title, author, or seller"
+                   value="<%= typeof bookSearch !== 'undefined' ? bookSearch : '' %>">
+            <button type="submit">Search</button>
+          </form>
+          <span class="admin-muted">
+            <% if (bookSearch) { %>
+              Showing results for "<%= bookSearch %>"
+            <% } else { %>
+              Search by title, author, or seller
+            <% } %>
+          </span>
         </div>
         <div>
           <% if (success) { %>

@@ -106,5 +106,22 @@ module.exports = {
             console.error("Update profile error:", err);
             throw err;
         }
+    },
+
+    async setRole(userId, role) {
+        try {
+            const validRoles = ["buyer", "seller", "admin"];
+            if (!validRoles.includes(role)) {
+                throw new Error(`Invalid role: ${role}`);
+            }
+            const [result] = await pool.execute(
+                "UPDATE users SET role = ? WHERE user_id = ?",
+                [role, userId]
+            );
+            return result.affectedRows > 0;
+        } catch (err) {
+            console.error("Set role error:", err);
+            throw err;
+        }
     }
 };

@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const path = require("path");
@@ -321,6 +322,7 @@ app.get("/admin/sales", requireLogin, requireAdmin, AdminController.listSellerSa
 app.get("/admin/refunds", requireLogin, requireAdmin, AdminController.listRefunds);
 app.post("/admin/refunds/:id/decision", requireLogin, requireAdmin, AdminController.decideRefund);
 app.post("/admin/users/:id/delete", requireLogin, requireAdmin, AdminController.deleteUser);
+app.post("/admin/users/:id/promote", requireLogin, requireAdmin, AdminController.promoteUser);
 app.post("/admin/users/:id/disable", requireLogin, requireAdmin, AdminController.toggleUserDisabled);
 app.post("/admin/books/:id/delete", requireLogin, requireAdmin, AdminController.deleteBook);
 

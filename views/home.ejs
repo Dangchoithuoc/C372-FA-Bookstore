@@ -165,6 +165,12 @@
       align-items: center;
       margin-bottom: 20px;
     }
+
+    .results-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
     
     .results-count {
       color: #666;
@@ -212,17 +218,23 @@
     
     /* Seller Add Book Button */
     .add-book-btn {
-      background: #007bff;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 4px;
+      background: linear-gradient(180deg, #c4892f, #8c5c12);
+      color: #2d1400;
+      padding: 10px 22px;
+      border-radius: 999px;
       text-decoration: none;
       font-weight: 600;
+      font-family: "Cinzel", "Georgia", serif;
+      letter-spacing: 0.04em;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      text-transform: uppercase;
       margin-right: 10px;
     }
-    
+
     .add-book-btn:hover {
-      background: #0056b3;
+      background: linear-gradient(180deg, #d39a3d, #a26b20);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
     }
 
     .hero-cover {
@@ -372,9 +384,14 @@
               All Books
             <% } %>
           </h2>
-          <div class="results-count">
+          <div class="results-meta">
             <% if (filteredBooks && filteredBooks.length > 0) { %>
-              Showing <%= filteredBooks.length %> <%= filteredBooks.length === 1 ? 'book' : 'books' %>
+              <div class="results-count">
+                Showing <%= filteredBooks.length %> <%= filteredBooks.length === 1 ? 'book' : 'books' %>
+              </div>
+            <% } %>
+            <% if (user && user.role === 'seller') { %>
+              <a class="add-book-btn" href="/seller/books/new">Add new Book</a>
             <% } %>
           </div>
         </div>

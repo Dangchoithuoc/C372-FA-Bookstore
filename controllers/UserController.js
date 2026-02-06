@@ -2,6 +2,51 @@ require('dotenv').config();
 const User = require("../models/User");
 const bcrypt = require('bcrypt');
 
+const registerViewDefaults = {
+    error: null,
+    name: '',
+    email: '',
+    role: 'buyer'
+};
+
+const recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY || '';
+const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY || '';
+
+function buildRegisterView(opts = {}) {
+    return {
+        ...registerViewDefaults,
+        ...opts,
+        recaptchaSiteKey
+    };
+}
+
+async function verifyRecaptcha(token, remoteIp) {
+    if (!recaptchaSecretKey) {
+        console.warn("reCAPTCHA secret key missing");
+        return false;
+    }
+    try {
+        const payload = new URLSearchParams({
+            secret: recaptchaSecretKey,
+            response: token,
+            remoteip: remoteIp || ''
+        });
+        const resp = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: payload
+        });
+        const data = await resp.json();
+        if (!data.success) {
+            console.warn("reCAPTCHA verification failed", data["error-codes"]);
+        }
+        return Boolean(data.success);
+    } catch (err) {
+        console.error("reCAPTCHA verification error:", err);
+        return false;
+    }
+}
+
 module.exports = {
     loginPage: (req, res) => {
         res.render("login", { error: null });
@@ -66,12 +111,7 @@ module.exports = {
     },
 
     registerPage: (req, res) => {
-        res.render("register", { 
-            error: null,
-            name: '',
-            email: '',
-            role: 'buyer'
-        });
+        res.render("register", buildRegisterView());
     },
 
     register: async (req, res) => {
@@ -82,71 +122,86 @@ module.exports = {
             console.log("Form data:", { name, email, role, inviteCode });
             console.log("Environment codes:", {
                 buyer: process.env.BUYER_INVITE_CODE,
-                seller: process.env.SELLER_INVITE_CODE,
-                admin: process.env.ADMIN_INVITE_CODE
+                seller: process.env.SELLER_INVITE_CODE
             });
             
             if (!name || !email || !password || !role || !inviteCode) {
                 console.log("Missing fields");
-                return res.render("register", { 
+                return res.render("register", buildRegisterView({
                     error: "All fields are required.",
                     name: name || '', 
                     email: email || '',
                     role: role || 'buyer'
-                });
+                }));
             }
             
-            // Define invitation codes for each role
+            // Define security codes for each role
+            const validRoles = ['buyer', 'seller'];
+            if (!validRoles.includes(role)) {
+                return res.render("register", buildRegisterView({
+                    error: "Invalid account type selected.",
+                    name: name || '', 
+                    email: email || '',
+                    role: 'buyer'
+                }));
+            }
+            
             const roleCodes = {
                 'buyer': process.env.BUYER_INVITE_CODE || 'BUYER123',
-                'seller': process.env.SELLER_INVITE_CODE || 'SELLER123',
-                'admin': process.env.ADMIN_INVITE_CODE || 'ADMIN123'
+                'seller': process.env.SELLER_INVITE_CODE || 'SELLER123'
             };
             
             console.log("Expected code for role", role, ":", roleCodes[role]);
             console.log("User entered code:", inviteCode);
             
-            // Validate invitation code for selected role
             const validCode = roleCodes[role];
-            if (!validCode) {
-                console.log("No code defined for role:", role);
-                return res.render("register", { 
-                    error: `Registration for ${role} role is not available.`,
-                    name: name || '', 
-                    email: email || '',
-                    role: 'buyer'
-                });
-            }
-            
             if (inviteCode !== validCode) {
                 console.log("Code mismatch! Expected:", validCode, "Got:", inviteCode);
-                return res.render("register", { 
-                    error: `Invalid ${role} invitation code. Expected: ${validCode}`,
+                return res.render("register", buildRegisterView({
+                    error: `Invalid ${role} security code. Expected: ${validCode}`,
                     name: name || '', 
                     email: email || '',
                     role: role || 'buyer'
-                });
+                }));
             }
             
-            // Validate role
-            const validRoles = ['buyer', 'seller', 'admin'];
-            if (!validRoles.includes(role)) {
-                return res.render("register", { 
-                    error: "Invalid account type selected.",
-                    name: name || '', 
+            const recaptchaToken = req.body["g-recaptcha-response"];
+            if (!recaptchaToken) {
+                return res.render("register", buildRegisterView({
+                    error: "Please complete the reCAPTCHA challenge.",
+                    name: name || '',
                     email: email || '',
-                    role: 'buyer'
-                });
+                    role: role || 'buyer'
+                }));
             }
-            
+
+            if (!recaptchaSecretKey) {
+                return res.render("register", buildRegisterView({
+                    error: "reCAPTCHA is not configured. Contact the administrator.",
+                    name: name || '',
+                    email: email || '',
+                    role: role || 'buyer'
+                }));
+            }
+
+            const verified = await verifyRecaptcha(recaptchaToken, req.ip);
+            if (!verified) {
+                return res.render("register", buildRegisterView({
+                    error: "reCAPTCHA verification failed. Please try again.",
+                    name: name || '',
+                    email: email || '',
+                    role: role || 'buyer'
+                }));
+            }
+
             const existing = await User.findByEmail(email);
             if (existing) {
-                return res.render("register", { 
+                return res.render("register", buildRegisterView({
                     error: "Email already registered. Try logging in.",
                     name: name || '', 
                     email: email || '',
                     role: role || 'buyer'
-                });
+                }));
             }
             
             console.log("Creating user with role:", role);
@@ -164,12 +219,12 @@ module.exports = {
             
         } catch (err) {
             console.error("✗ Register error:", err);
-            res.render("register", { 
+            res.render("register", buildRegisterView({
                 error: "Could not register. Please try again.",
                 name: req.body.name || '',
                 email: req.body.email || '',
                 role: req.body.role || 'buyer'
-            });
+            }));
         }
     },
 

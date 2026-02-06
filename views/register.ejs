@@ -47,6 +47,15 @@
       color: var(--muted);
       margin-top: 6px;
     }
+    .recaptcha-wrapper {
+      margin-top: 16px;
+      text-align: center;
+    }
+    .recaptcha-warning {
+      color: #b91c1c;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
     .password-feedback {
       display: block;
       margin-top: 5px;
@@ -59,7 +68,7 @@
   <div class="auth-card">
     <div class="pill">The Bookmark</div>
     <h1>Create your account</h1>
-    <p class="auth-muted">Join our community with invitation codes.</p>
+    <p class="auth-muted">Join our community using your security code.</p>
 
     <% if (error) { %>
       <div class="error"><%= error %></div>
@@ -97,39 +106,40 @@
         <label>Account Type</label><br>
         <div class="role-options">
           <label class="role-option" for="role-buyer">
-            <input type="radio" id="role-buyer" name="role" value="buyer" checked>
+            <input type="radio" id="role-buyer" name="role" value="buyer" <%= role === 'buyer' ? 'checked' : '' %>>
             <div class="role-icon">📚</div>
             <div class="role-name">Buyer</div>
             <div class="role-desc">Browse & purchase books</div>
           </label>
           
           <label class="role-option" for="role-seller">
-            <input type="radio" id="role-seller" name="role" value="seller">
+            <input type="radio" id="role-seller" name="role" value="seller" <%= role === 'seller' ? 'checked' : '' %>>
             <div class="role-icon">🏪</div>
             <div class="role-name">Seller</div>
             <div class="role-desc">Sell your own books</div>
-          </label>
-          
-          <label class="role-option" for="role-admin">
-            <input type="radio" id="role-admin" name="role" value="admin">
-            <div class="role-icon">⚙️</div>
-            <div class="role-name">Admin</div>
-            <div class="role-desc">Manage bookstore</div>
           </label>
         </div>
         
         <div class="invite-code-section">
           <div class="invite-code-field">
-            <label for="inviteCode">Invitation Code</label><br>
+            <label for="inviteCode">Security Code</label><br>
             <input id="inviteCode" name="inviteCode" type="text" 
-                   placeholder="Enter invitation code for your role" 
+                   placeholder="Enter security code for your role" 
                    required>
             <p class="invite-note">
-              Buyer code: <strong>BUYER123</strong> | 
-              Seller code: <strong>SELLER123</strong> | 
-              Admin code: <strong>ADMIN123</strong>
+              Buyer security code: <strong>BUYER123</strong> | 
+              Seller security code: <strong>SELLER123</strong>
             </p>
           </div>
+        </div>
+        
+        <div class="recaptcha-wrapper">
+          <% const recaptchaKey = typeof recaptchaSiteKey !== 'undefined' ? recaptchaSiteKey : ''; %>
+          <% if (recaptchaKey) { %>
+            <div class="g-recaptcha" data-sitekey="<%= recaptchaKey %>"></div>
+          <% } else { %>
+            <p class="recaptcha-warning">reCAPTCHA is not configured. Please contact the administrator.</p>
+          <% } %>
         </div>
       </div>
 
@@ -191,5 +201,6 @@
       });
     });
   </script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 </html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Seller Sales | Admin</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="admin-ui">
+  <div class="admin-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <div class="admin-logo">Control Room</div>
+      <nav class="admin-nav">
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/books">Books</a>
+        <a href="/admin/orders">Orders</a>
+        <a href="/admin/charts">Charts</a>
+        <a href="/admin/refunds">Refunds</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+
+      <% 
+        let totalRevenue = 0;
+        let totalItems = 0;
+        let sellerName = "";
+
+        if (orders && orders.length > 0) {
+          sellerName = orders[0].items.length > 0 ? "" : "";
+        }
+
+        orders.forEach(order => {
+          order.items.forEach(item => {
+            totalRevenue += Number(item.price || 0);
+            totalItems += 1;
+          });
+        });
+      %>
+
+      <!-- HEADER -->
+      <div class="admin-topbar admin-page-header">
+        <div>
+          <h1 class="admin-page-title">
+            Seller Sales Overview
+          </h1>
+          <p class="admin-page-sub">
+            Total Revenue: <strong>$<%= totalRevenue.toFixed(2) %></strong> |
+            Items Sold: <strong><%= totalItems %></strong>
+          </p>
+        </div>
+        <div class="admin-actions">
+          <a class="admin-btn" href="/admin/users">Back to Users</a>
+        </div>
+      </div>
+
+      <!-- SALES CONTENT -->
+      <div class="admin-section">
+        <% if (!orders || orders.length === 0) { %>
+
+          <div class="admin-empty">
+            No sales found for this seller.
+          </div>
+
+        <% } else { %>
+
+          <% orders.forEach(function(order) { %>
+
+            <div class="admin-card" style="margin-bottom:20px; padding:15px; border:1px solid #ddd;">
+              <div style="margin-bottom:10px;">
+                <strong>Order ID:</strong> #<%= order.id %><br>
+                <strong>Order Date:</strong>
+                <%= new Date(order.order_date)
+                      .toLocaleString("en-SG", { timeZone: "Asia/Singapore" }) %><br>
+                <strong>Buyer:</strong>
+                <%= order.buyer_name %> (<%= order.buyer_email %>)
+              </div>
+
+              <table class="admin-table admin-table-compact">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Genre</th>
+                    <th>Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% order.items.forEach(function(item) { %>
+                    <tr>
+                      <td><%= item.title %></td>
+                      <td><%= item.author %></td>
+                      <td><%= item.genre %></td>
+                      <td>$<%= item.price.toFixed(2) %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+
+          <% }) %>
+
+        <% } %>
+      </div>
+
+    </main>
+  </div>
+</body>
+</html>

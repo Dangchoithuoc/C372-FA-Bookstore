@@ -84,8 +84,13 @@
                           <% if (item.review_comment) { %>
                             <div class="muted"><%= item.review_comment %></div>
                           <% } %>
-                        </div>
-                      <% } else if (user && user.role === "buyer" && item.delivery_status === "Delivered") { %>
+                          </div>
+                          <% if (user && user.role === "buyer") { %>
+                            <div class="review-actions">
+                              <a class="cta" href="/orders/items/<%= item.order_item_id %>/review">Edit review</a>
+                            </div>
+                          <% } %>
+                        <% } else if (user && user.role === "buyer" && item.delivery_status === "Delivered") { %>
                         <div class="review-actions">
                           <a class="cta" href="/orders/items/<%= item.order_item_id %>/review">Leave a review ⭐</a>
                         </div>

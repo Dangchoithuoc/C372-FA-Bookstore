@@ -131,13 +131,24 @@ module.exports = {
             }
 
             const Review = require("../models/Review");
+            const item = await Order.getOrderItemForBuyer(orderItemId, user.id);
+            if (!item) return res.status(404).send("Order item not found.");
+            if (item.delivery_status !== "Delivered") {
+                return res.status(400).send("You can only review delivered items.");
+            }
+
             const title = (req.body.title || "").trim();
             const pros = (req.body.pros || "").trim();
             const cons = (req.body.cons || "").trim();
             const photoUrl = req.file ? `/uploads/reviews/${req.file.filename}` : null;
-            const created = await Review.createForOrderItem(user.id, orderItemId, rating, comment, title, pros, cons, photoUrl);
-            if (!created) {
-                return res.status(400).send("Unable to add review. Delivery must be completed and review must be unique.");
+            let ok = false;
+            if (item.review_id) {
+                ok = await Review.updateForOrderItem(user.id, orderItemId, rating, comment, title, pros, cons, photoUrl);
+            } else {
+                ok = await Review.createForOrderItem(user.id, orderItemId, rating, comment, title, pros, cons, photoUrl);
+            }
+            if (!ok) {
+                return res.status(400).send("Unable to save review.");
             }
 
             return res.redirect("/orders");
@@ -163,13 +174,15 @@ module.exports = {
             if (item.delivery_status !== "Delivered") {
                 return res.status(400).send("You can only review delivered items.");
             }
-            if (item.review_id) {
-                return res.redirect("/orders");
-            }
+            const Review = require("../models/Review");
+            const review = item.review_id
+                ? await Review.getByOrderItemForBuyer(orderItemId, user.id)
+                : null;
 
             res.render("review", {
                 user,
-                item
+                item,
+                review
             });
         } catch (err) {
             console.error("Review page error:", err);

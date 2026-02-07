@@ -48,7 +48,7 @@ module.exports = {
             let sellerBooks = [];
             if (user && user.role === 'seller') {
                 const [books] = await pool.execute(
-                    "SELECT * FROM books WHERE seller_id = ? ORDER BY book_id DESC LIMIT 5",
+                    "SELECT * FROM books WHERE seller_id = ? AND stock > 0 ORDER BY book_id DESC LIMIT 5",
                     [user.id]
                 );
                 sellerBooks = books;

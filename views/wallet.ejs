@@ -53,7 +53,7 @@
                 <div class="wallet-tx-item">
                   <div>
                     <div class="order-item-title"><%= tx.transaction_type %></div>
-                    <div class="muted"><%= new Date(tx.transaction_time).toLocaleString() %></div>
+                    <div class="muted"><%= tx.transaction_time_sg || new Date(tx.transaction_time).toLocaleString() %></div>
                   </div>
                   <div class="order-item-price">$<%= Number(tx.amount || 0).toFixed(2) %></div>
                 </div>

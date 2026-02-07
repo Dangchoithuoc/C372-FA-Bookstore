@@ -16,7 +16,7 @@ module.exports = {
             
             // Get seller's books and stats
             const [books] = await pool.execute(
-                "SELECT * FROM books WHERE seller_id = ? ORDER BY book_id DESC",
+                "SELECT * FROM books WHERE seller_id = ? AND stock > 0 ORDER BY book_id DESC",
                 [sellerId]
             );
             
@@ -76,7 +76,7 @@ module.exports = {
         try {
             const sellerId = req.session.user.id;
             const [books] = await pool.execute(
-                "SELECT * FROM books WHERE seller_id = ? ORDER BY book_id DESC",
+                "SELECT * FROM books WHERE seller_id = ? AND stock > 0 ORDER BY book_id DESC",
                 [sellerId]
             );
             
@@ -241,19 +241,31 @@ module.exports = {
 
     // Delete book
     deleteBook: async (req, res) => {
+        const conn = await pool.getConnection();
         try {
             const { id } = req.params;
             const sellerId = req.session.user.id;
-            
-            await pool.execute(
-                "DELETE FROM books WHERE book_id = ? AND seller_id = ?",
+
+            await conn.beginTransaction();
+
+            // Remove open references from carts/wishlists, keep order history intact.
+            await conn.execute("DELETE FROM cart_items WHERE book_id = ?", [id]);
+            await conn.execute("DELETE FROM wishlist_items WHERE book_id = ?", [id]);
+
+            // Archive book instead of hard delete to avoid FK failures on order_items.
+            await conn.execute(
+                "UPDATE books SET stock = 0 WHERE book_id = ? AND seller_id = ?",
                 [id, sellerId]
             );
-            
+
+            await conn.commit();
             res.redirect("/seller/books");
         } catch (err) {
+            await conn.rollback();
             console.error("Delete book error:", err);
             res.redirect("/seller/books");
+        } finally {
+            conn.release();
         }
     },
 

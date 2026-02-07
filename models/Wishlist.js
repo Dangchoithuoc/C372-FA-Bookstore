@@ -12,7 +12,7 @@ module.exports = {
                     b.coverImage
              FROM wishlist_items wi
              JOIN books b ON b.book_id = wi.book_id
-             WHERE wi.user_id = ?
+             WHERE wi.user_id = ? AND b.stock > 0
              ORDER BY wi.created_at DESC`,
             [userId]
         );

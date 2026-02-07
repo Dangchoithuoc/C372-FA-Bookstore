@@ -17,7 +17,11 @@ module.exports = {
   async getWallet(userId) {
     const wallet = await ensureWallet(userId);
     const [txns] = await pool.execute(
-      `SELECT transaction_id, amount, transaction_type, transaction_time
+      `SELECT transaction_id, amount, transaction_type, transaction_time,
+              DATE_FORMAT(
+                DATE_ADD(transaction_time, INTERVAL 8 HOUR),
+                '%d/%m/%Y, %h:%i:%s %p'
+              ) AS transaction_time_sg
        FROM wallet_transactions
        WHERE wallet_id = ?
        ORDER BY transaction_id DESC

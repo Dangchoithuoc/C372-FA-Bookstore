@@ -349,9 +349,12 @@ module.exports = {
 
       if (bookSearch) {
         whereClause = `
-          WHERE (b.title LIKE ? OR b.author LIKE ? OR u.username LIKE ?)
+          WHERE b.stock > 0
+            AND (b.title LIKE ? OR b.author LIKE ? OR u.username LIKE ?)
         `;
         params.push(`%${bookSearch}%`, `%${bookSearch}%`, `%${bookSearch}%`);
+      } else {
+        whereClause = "WHERE b.stock > 0";
       }
 
       const [books] = await pool.execute(
@@ -466,13 +469,23 @@ module.exports = {
   },
 
   deleteBook: async (req, res) => {
+    const conn = await pool.getConnection();
     try {
       const { id } = req.params;
-      await pool.execute("DELETE FROM books WHERE book_id = ?", [id]);
+      await conn.beginTransaction();
+
+      await conn.execute("DELETE FROM cart_items WHERE book_id = ?", [id]);
+      await conn.execute("DELETE FROM wishlist_items WHERE book_id = ?", [id]);
+      await conn.execute("UPDATE books SET stock = 0 WHERE book_id = ?", [id]);
+
+      await conn.commit();
       res.redirect("/admin/books?success=Book deleted successfully");
     } catch (err) {
+      await conn.rollback();
       console.error("Delete book error:", err);
       res.redirect("/admin/books?error=Could not delete book");
+    } finally {
+      conn.release();
     }
   }
 };
